@@ -1,0 +1,23 @@
+# Java / Maven build artifacts
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Local environment overrides
+.env
+application-local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Resume uploads (local dev only – use object storage in production)
+uploads/
