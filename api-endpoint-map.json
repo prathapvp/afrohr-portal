@@ -1,0 +1,475 @@
+{
+  "service": "AfroHR Monolith",
+  "generatedAt": "2026-03-27T09:12:56.898Z",
+  "baseUrl": "http://localhost:8080",
+  "apiBasePath": "/api/ahrm/v3",
+  "securityModel": {
+    "type": "JWT Bearer",
+    "publicMatchers": [
+      "/api/ahrm/v3/auth/login",
+      "/auth/login",
+      "/api/ahrm/v3/users/register",
+      "/api/ahrm/v3/users/verifyOtp/**",
+      "/api/ahrm/v3/users/sendOtp/**",
+      "/api/ahrm/v3/users/changePass",
+      "/api/ahrm/v3/jobs/**",
+      "/api/ahrm/v3/departments/**",
+      "/api/ahrm/v3/industries/**",
+      "/api/ahrm/v3/employment-types/**",
+      "/api/ahrm/v3/work-modes/**",
+      "/api/dashboard/**",
+      "/api/audiences",
+      "/api/search",
+      "/api/ahrm/v3/swagger-ui/**",
+      "/api/ahrm/v3/v3/api-docs/**",
+      "/api/ahrm/v3/api-docs/**",
+      "/swagger-ui/**",
+      "/v3/api-docs/**",
+      "/actuator/**"
+    ],
+    "defaultForOtherEndpoints": "authenticated"
+  },
+  "endpoints": [
+    {
+      "group": "AuthAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/auth/login",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/auth-service.ts",
+        "frontend/src/app/services/AuthService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/AuthAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "DELETE",
+      "path": "/api/ahrm/v3/departments/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/department-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/departments/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/department-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "PUT",
+      "path": "/api/ahrm/v3/departments/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/department-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/departments",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/department-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/departments",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/department-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "DELETE",
+      "path": "/api/ahrm/v3/employment-types/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/employment-type-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/employment-types/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/employment-type-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "PUT",
+      "path": "/api/ahrm/v3/employment-types/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/employment-type-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/employment-types",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/employment-type-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/employment-types",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/employment-type-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "DELETE",
+      "path": "/api/ahrm/v3/industries/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/industry-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/industries/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/industry-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "PUT",
+      "path": "/api/ahrm/v3/industries/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/industry-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/industries",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/industry-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/industries",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/industry-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/jobs/apply/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/candidate-jobs-service.ts",
+        "frontend/src/app/services/candidate-service.ts",
+        "frontend/src/app/services/job-service.ts",
+        "frontend/src/app/services/JobService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/jobs/changeAppStatus",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/job-service.ts",
+        "frontend/src/app/services/JobService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/jobs/get/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/candidate-jobs-service.ts",
+        "frontend/src/app/services/job-service.ts",
+        "frontend/src/app/services/JobService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/jobs/getAll",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/App.tsx",
+        "frontend/src/app/features/employer/EmployerView.tsx",
+        "frontend/src/app/services/candidate-jobs-service.ts",
+        "frontend/src/app/services/job-service.ts",
+        "frontend/src/app/services/JobService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/jobs/history/{id}/{applicationStatus}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/job-service.ts",
+        "frontend/src/app/services/JobService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/jobs/postAll",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/job-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/jobs/postedBy/{id}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/job-service.ts",
+        "frontend/src/app/services/JobService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "JobAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/jobs/post",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/job-service.ts",
+        "frontend/src/app/services/JobService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/JobAPI.java"
+    },
+    {
+      "group": "NotificationAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/notification/get/{userId}",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/noti-service.tsx",
+        "frontend/src/app/services/notification-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/NotificationAPI.java"
+    },
+    {
+      "group": "NotificationAPI",
+      "method": "PUT",
+      "path": "/api/ahrm/v3/notification/read/{id}",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/noti-service.tsx",
+        "frontend/src/app/services/notification-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/NotificationAPI.java"
+    },
+    {
+      "group": "ProfileAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/profiles/get/{id}",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/profile-service.ts",
+        "frontend/src/app/services/ProfileService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/ProfileAPI.java"
+    },
+    {
+      "group": "ProfileAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/profiles/getAll",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/profile-service.ts",
+        "frontend/src/app/services/ProfileService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/ProfileAPI.java"
+    },
+    {
+      "group": "ProfileAPI",
+      "method": "PUT",
+      "path": "/api/ahrm/v3/profiles/update",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/profile-service.ts",
+        "frontend/src/app/services/ProfileService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/ProfileAPI.java"
+    },
+    {
+      "group": "UserAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/users/changePass",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/user-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/UserAPI.java"
+    },
+    {
+      "group": "UserAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/users/login",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/user-service.ts",
+        "frontend/src/app/services/UserService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/UserAPI.java"
+    },
+    {
+      "group": "UserAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/users/register",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/user-service.ts",
+        "frontend/src/app/services/UserService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/UserAPI.java"
+    },
+    {
+      "group": "UserAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/users/sendOtp/{email}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/user-service.ts",
+        "frontend/src/app/services/UserService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/UserAPI.java"
+    },
+    {
+      "group": "UserAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/users/verifyOtp/{email}/{otp}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/user-service.ts",
+        "frontend/src/app/services/UserService.tsx"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/UserAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "DELETE",
+      "path": "/api/ahrm/v3/work-modes/{id}",
+      "auth": "public",
+      "frontendConsumers": [],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/work-modes/{id}",
+      "auth": "public",
+      "frontendConsumers": [],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "PUT",
+      "path": "/api/ahrm/v3/work-modes/{id}",
+      "auth": "public",
+      "frontendConsumers": [],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "GET",
+      "path": "/api/ahrm/v3/work-modes",
+      "auth": "authenticated",
+      "frontendConsumers": [],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "MetadataAPI",
+      "method": "POST",
+      "path": "/api/ahrm/v3/work-modes",
+      "auth": "authenticated",
+      "frontendConsumers": [],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/MetadataAPI.java"
+    },
+    {
+      "group": "DashboardAPI",
+      "method": "GET",
+      "path": "/api/audiences",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/platform-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/DashboardAPI.java"
+    },
+    {
+      "group": "DashboardAPI",
+      "method": "GET",
+      "path": "/api/dashboard/{audience}",
+      "auth": "public",
+      "frontendConsumers": [
+        "frontend/src/app/services/platform-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/DashboardAPI.java"
+    },
+    {
+      "group": "DashboardAPI",
+      "method": "GET",
+      "path": "/api/dashboard",
+      "auth": "authenticated",
+      "frontendConsumers": [
+        "frontend/src/app/services/platform-service.ts"
+      ],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/DashboardAPI.java"
+    },
+    {
+      "group": "DashboardAPI",
+      "method": "GET",
+      "path": "/api/search",
+      "auth": "public",
+      "frontendConsumers": [],
+      "source": "backend/dashboard-service/src/main/java/com/jobportal/api/DashboardAPI.java"
+    }
+  ]
+}

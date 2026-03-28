@@ -1,0 +1,731 @@
+{
+  "branding": {
+    "name": "AfroHR",
+    "subtitle": "Talent Network"
+  },
+  "audiences": [
+    {
+      "id": "candidates",
+      "label": "Candidate",
+      "description": "Find jobs",
+      "accent": "blue",
+      "icon": "Users"
+    },
+    {
+      "id": "employers",
+      "label": "Employer",
+      "description": "Hire talent",
+      "accent": "green",
+      "icon": "Briefcase"
+    },
+    {
+      "id": "students",
+      "label": "Student",
+      "description": "Career guidance",
+      "accent": "purple",
+      "icon": "GraduationCap"
+    }
+  ],
+  "dashboards": {
+    "candidates": {
+      "hero": {
+        "badge": "AI-Powered",
+        "title": "Find Your Dream Job",
+        "description": "Access top opportunities with leading employers. Get AI-driven career insights and personalized job recommendations.",
+        "actionLabel": "Search",
+        "searchPlaceholder": "e.g., Operations Manager in Food Industry",
+        "chips": [
+          "Remote",
+          "High Paying",
+          "Tech",
+          "Healthcare"
+        ]
+      },
+      "stats": [
+        {
+          "value": "2,847",
+          "label": "Active Jobs",
+          "tone": "blue",
+          "icon": "TrendingUp"
+        },
+        {
+          "value": "$180k",
+          "label": "Avg Salary",
+          "tone": "green",
+          "icon": "DollarSign"
+        },
+        {
+          "value": "500+",
+          "label": "Companies",
+          "tone": "purple",
+          "icon": "Building2"
+        }
+      ],
+      "jobs": {
+        "title": "Trending Jobs Today",
+        "actionLabel": "View All",
+        "items": [
+          {
+            "company": "TechCorp",
+            "role": "Senior AI Engineer",
+            "location": "Remote",
+            "salary": "$200k-$280k",
+            "logoTone": "blue"
+          },
+          {
+            "company": "FinanceHub",
+            "role": "Lead Data Scientist",
+            "location": "New York, NY",
+            "salary": "$220k-$300k",
+            "logoTone": "green"
+          },
+          {
+            "company": "HealthTech",
+            "role": "Product Manager",
+            "location": "San Francisco",
+            "salary": "$180k-$240k",
+            "logoTone": "purple"
+          },
+          {
+            "company": "EdTech Global",
+            "role": "DevOps Engineer",
+            "location": "Remote",
+            "salary": "$160k-$200k",
+            "logoTone": "orange"
+          }
+        ],
+        "homeTrendSeries": [
+          {
+            "jobIndex": 0,
+            "values": [
+              96,
+              118,
+              136,
+              155,
+              181,
+              214
+            ]
+          },
+          {
+            "jobIndex": 1,
+            "values": [
+              84,
+              91,
+              95,
+              102,
+              110,
+              119
+            ]
+          },
+          {
+            "jobIndex": 2,
+            "values": [
+              72,
+              78,
+              83,
+              88,
+              94,
+              103
+            ]
+          }
+        ]
+      },
+      "salaryInsights": {
+        "title": "Salary Trends by Industry",
+        "description": "AI-driven insights for your career planning",
+        "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzJTIwZGFzaGJvYXJkJTIwY2hhcnRzfGVufDF8fHx8MTc3MzU2NDM4NHww&ixlib=rb-4.1.0&q=80&w=1080"
+      },
+      "videos": {
+        "title": "Career Guidance & Insights",
+        "description": "Expert talks and industry insights",
+        "items": [
+          {
+            "title": "How to Switch Careers in 2026",
+            "duration": "12 min watch",
+            "imageUrl": "https://images.unsplash.com/photo-1650525217641-891e936d3486?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXJlZXIlMjBndWlkYW5jZSUyMHN0dWRlbnRzJTIwbGVhcm5pbmd8ZW58MXx8fHwxNzczNjQzMTY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+            "alt": "Career Guidance"
+          },
+          {
+            "title": "Top Skills Employers Want",
+            "duration": "8 min watch",
+            "imageUrl": "https://images.unsplash.com/photo-1770669564689-d3e8ec8d1595?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjByZWNydWl0bWVudCUyMGhpcmluZyUyMHRlYW18ZW58MXx8fHwxNzczNjQzMTY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+            "alt": "Recruitment"
+          }
+        ]
+      },
+      "trends": {
+        "title": "Global Employment Trends",
+        "items": [
+          {
+            "title": "Remote Work Opportunities Surge in Tech Sector",
+            "description": "Canada and UAE leading in tech migration programs for skilled workers",
+            "age": "2 hours ago"
+          },
+          {
+            "title": "AI & ML Engineers in High Demand Globally",
+            "description": "Average salaries up 35% year-over-year across major markets",
+            "age": "5 hours ago"
+          },
+          {
+            "title": "Healthcare Professionals: New Migration Pathways",
+            "description": "Australia and UK announce fast-track visa programs for nurses and doctors",
+            "age": "1 day ago"
+          }
+        ]
+      },
+      "countries": {
+        "title": "Top Countries for Job Opportunities",
+        "description": "Where the best opportunities are right now",
+        "items": [
+          {
+            "flag": "🇺🇸",
+            "country": "United States",
+            "jobs": "12,847",
+            "trend": "+18%",
+            "tone": "blue"
+          },
+          {
+            "flag": "🇦🇪",
+            "country": "UAE",
+            "jobs": "8,234",
+            "trend": "+24%",
+            "tone": "green"
+          },
+          {
+            "flag": "🇨🇦",
+            "country": "Canada",
+            "jobs": "6,891",
+            "trend": "+15%",
+            "tone": "purple"
+          },
+          {
+            "flag": "🇬🇧",
+            "country": "United Kingdom",
+            "jobs": "5,423",
+            "trend": "+12%",
+            "tone": "orange"
+          }
+        ]
+      },
+      "premium": {
+        "title": "Unlock Advanced Features",
+        "description": "Register now to access our AI-powered CV Maker, personalized Q&A assistant, and get tailored job recommendations!",
+        "chips": [
+          "CV Builder",
+          "AI Q&A",
+          "Job Matching"
+        ],
+        "actionLabel": "Sign Up Free"
+      }
+    },
+    "employers": {
+      "hero": {
+        "badge": "Smart Hiring",
+        "title": "Hire Top Talent, Faster",
+        "description": "Access verified, elite candidates. Get data-driven insights on market salaries and quality hiring.",
+        "actionLabel": "Post a Job"
+      },
+      "marketInsights": {
+        "title": "Market Salary Insights",
+        "description": "Make informed hiring decisions with real-time data",
+        "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzJTIwZGFzaGJvYXJkJTIwY2hhcnRzfGVufDF8fHx8MTc3MzU2NDM4NHww&ixlib=rb-4.1.0&q=80&w=1080",
+        "metrics": [
+          {
+            "label": "Average Salary - Software Engineers",
+            "value": "$195,000",
+            "detail": "↑ 12% from last year",
+            "tone": "green"
+          },
+          {
+            "label": "Time to Hire",
+            "value": "23 days",
+            "detail": "Industry average: 31 days",
+            "tone": "blue"
+          }
+        ],
+        "homeTrendSeries": [
+          {
+            "source": "metric",
+            "index": 0,
+            "values": [
+              78,
+              89,
+              101,
+              114,
+              126
+            ]
+          },
+          {
+            "source": "optimizer",
+            "index": 0,
+            "values": [
+              71,
+              79,
+              91,
+              104,
+              117
+            ]
+          },
+          {
+            "source": "optimizer",
+            "index": 1,
+            "values": [
+              64,
+              72,
+              81,
+              92,
+              103
+            ]
+          }
+        ]
+      },
+      "optimizer": {
+        "title": "Hiring Strategy Optimizer",
+        "description": "Balance cost, quality, and quantity",
+        "cards": [
+          {
+            "label": "Budget per hire",
+            "value": "$180k",
+            "tone": "blue",
+            "icon": "DollarSign"
+          },
+          {
+            "label": "Quality match rate",
+            "value": "95%",
+            "tone": "green",
+            "icon": "Award"
+          },
+          {
+            "label": "Hires this month",
+            "value": "12",
+            "tone": "purple",
+            "icon": "Users"
+          }
+        ]
+      },
+      "verification": {
+        "title": "Verified Candidate Pool",
+        "items": [
+          {
+            "title": "2,847 Candidates",
+            "description": "All verified & background checked",
+            "badge": "Verified",
+            "tone": "blue",
+            "icon": "Users"
+          },
+          {
+            "title": "1,243 Certified Professionals",
+            "description": "Industry certifications verified",
+            "badge": "Verified",
+            "tone": "purple",
+            "icon": "Award"
+          }
+        ]
+      }
+    },
+    "students": {
+      "hero": {
+        "badge": "AI Career Advisor",
+        "title": "Plan Your Future Career",
+        "description": "Explore career paths, discover what it takes to succeed, and get personalized guidance from our AI mentor.",
+        "actionLabel": "Explore",
+        "searchPlaceholder": "What do you want to become? (e.g., Doctor, Pilot, Engineer)"
+      },
+      "careers": {
+        "title": "Popular Career Paths",
+        "description": "Start exploring these high-demand careers",
+        "items": [
+          {
+            "title": "Doctor",
+            "icon": "🩺",
+            "salary": "$200k+",
+            "duration": "11 years"
+          },
+          {
+            "title": "Pilot",
+            "icon": "✈️",
+            "salary": "$180k+",
+            "duration": "4 years"
+          },
+          {
+            "title": "Engineer",
+            "icon": "⚙️",
+            "salary": "$120k+",
+            "duration": "4 years"
+          },
+          {
+            "title": "Data Scientist",
+            "icon": "📊",
+            "salary": "$150k+",
+            "duration": "4 years"
+          },
+          {
+            "title": "Architect",
+            "icon": "🏛️",
+            "salary": "$110k+",
+            "duration": "5 years"
+          },
+          {
+            "title": "Lawyer",
+            "icon": "⚖️",
+            "salary": "$160k+",
+            "duration": "7 years"
+          }
+        ]
+      },
+      "advisor": {
+        "title": "AI Career Advisor",
+        "description": "Get personalized career guidance based on your interests",
+        "interests": [
+          "🚀 Space",
+          "💻 Technology",
+          "🎨 Arts",
+          "🏥 Healthcare",
+          "💼 Business",
+          "🔬 Science"
+        ],
+        "actionLabel": "Get Personalized Recommendations"
+      },
+      "pathway": {
+        "title": "Sample Career Path: Aeronautical Engineer",
+        "steps": [
+          {
+            "title": "Complete High School (Science/Math Focus)",
+            "description": "Physics, Chemistry, Mathematics required"
+          },
+          {
+            "title": "Bachelor's in Aeronautical Engineering",
+            "description": "4 years - Top colleges: MIT, IIT Bombay, Stanford"
+          },
+          {
+            "title": "Internships & Certifications",
+            "description": "NASA, Boeing, SpaceX programs"
+          },
+          {
+            "title": "Career Start",
+            "description": "Expected salary: $75k-$95k starting, $150k+ with experience"
+          }
+        ]
+      },
+      "resources": {
+        "title": "Educational Resources",
+        "description": "Learn from experts and industry leaders",
+        "items": [
+          {
+            "title": "Choosing the Right College Major",
+            "duration": "10 min watch",
+            "imageUrl": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHVkZW50cyUyMGNvbGxhYm9yYXRpb258ZW58MXx8fHwxNzczNjQ3ODQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+            "alt": "Students planning career"
+          },
+          {
+            "title": "How AI is Reshaping Future Careers",
+            "duration": "9 min watch",
+            "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHVkZW50JTIwbGVhcm5pbmclMjB0ZWNofGVufDF8fHx8MTc3MzY0Nzg0NXww&ixlib=rb-4.1.0&q=80&w=1080",
+            "alt": "Student learning technology"
+          }
+        ]
+      }
+    }
+  },
+  "home": {
+    "hero": {
+      "badge": "Career Intelligence Platform",
+      "title": "Your Career.",
+      "highlight": "Amplified.",
+      "description": "AfroHR connects talent, employers, and students across Africa with real-time market intelligence and guided career decisions.",
+      "primaryActions": [
+        {
+          "label": "I'm a Job Seeker",
+          "tab": "candidates"
+        },
+        {
+          "label": "I'm an Employer",
+          "tab": "employers"
+        },
+        {
+          "label": "I'm a Student",
+          "tab": "students"
+        }
+      ]
+    },
+    "cards": {
+      "candidates": {
+        "badge": "Candidates",
+        "title": "Trending Jobs & Growth",
+        "subtitle": "Track the categories attracting the most attention and hiring momentum right now.",
+        "cta": "Explore Opportunities",
+        "chart": [
+          {
+            "period": "Jan",
+            "primary": 96,
+            "secondary": 84,
+            "tertiary": 72
+          },
+          {
+            "period": "Feb",
+            "primary": 118,
+            "secondary": 91,
+            "tertiary": 78
+          },
+          {
+            "period": "Mar",
+            "primary": 136,
+            "secondary": 95,
+            "tertiary": 83
+          },
+          {
+            "period": "Apr",
+            "primary": 155,
+            "secondary": 102,
+            "tertiary": 88
+          },
+          {
+            "period": "May",
+            "primary": 181,
+            "secondary": 110,
+            "tertiary": 94
+          },
+          {
+            "period": "Jun",
+            "primary": 214,
+            "secondary": 119,
+            "tertiary": 103
+          }
+        ],
+        "series": [
+          {
+            "key": "primary",
+            "label": "AI Engineer"
+          },
+          {
+            "key": "secondary",
+            "label": "Data Scientist"
+          },
+          {
+            "key": "tertiary",
+            "label": "Product Manager"
+          }
+        ]
+      },
+      "employers": {
+        "badge": "Employers",
+        "title": "Market Salary Trends",
+        "subtitle": "Benchmark compensation and hiring pressure across the roles employers compete for most.",
+        "cta": "Access Insights",
+        "chart": [
+          {
+            "period": "2022",
+            "primary": 78,
+            "secondary": 71,
+            "tertiary": 64
+          },
+          {
+            "period": "2023",
+            "primary": 89,
+            "secondary": 79,
+            "tertiary": 72
+          },
+          {
+            "period": "2024",
+            "primary": 101,
+            "secondary": 91,
+            "tertiary": 81
+          },
+          {
+            "period": "2025",
+            "primary": 114,
+            "secondary": 104,
+            "tertiary": 92
+          },
+          {
+            "period": "2026",
+            "primary": 126,
+            "secondary": 117,
+            "tertiary": 103
+          }
+        ],
+        "series": [
+          {
+            "key": "primary",
+            "label": "Software Engineers"
+          },
+          {
+            "key": "secondary",
+            "label": "Budget per hire"
+          },
+          {
+            "key": "tertiary",
+            "label": "Quality match rate"
+          }
+        ]
+      },
+      "students": {
+        "badge": "Students",
+        "title": "Career Guidance",
+        "subtitle": "Use guided prompts to narrow your path and move toward the right future role faster.",
+        "cta": "View My Career Path",
+        "wizardSteps": [
+          {
+            "label": "What's your passion area?",
+            "options": [
+              "Technology",
+              "Business",
+              "Healthcare",
+              "Creative Arts",
+              "Engineering"
+            ]
+          },
+          {
+            "label": "Preferred work style?",
+            "options": [
+              "Remote First",
+              "Hybrid",
+              "On-site",
+              "Freelance"
+            ]
+          },
+          {
+            "label": "Years of experience?",
+            "options": [
+              "Student / Intern",
+              "0-2 years",
+              "3-5 years",
+              "5+ years"
+            ]
+          }
+        ]
+      }
+    },
+    "counters": [
+      {
+        "value": 210000,
+        "label": "Platform Visitors",
+        "suffix": "+"
+      },
+      {
+        "value": 85000,
+        "label": "Active Candidates",
+        "suffix": "+"
+      },
+      {
+        "value": 4200,
+        "label": "Verified Employers",
+        "suffix": "+"
+      },
+      {
+        "value": 31000,
+        "label": "Students Guided",
+        "suffix": "+"
+      }
+    ],
+    "growth": {
+      "eyebrow": "Platform Analytics",
+      "title": "Africa's fastest-growing",
+      "highlight": "career network",
+      "description": "From discovery to hiring, AfroHR is becoming the intelligence layer connecting talent demand and career direction.",
+      "points": [
+        "Active in 12 African countries",
+        "Real-time market intelligence",
+        "Verified employer badges"
+      ],
+      "chart": [
+        {
+          "period": "Jan",
+          "value": 40000
+        },
+        {
+          "period": "Feb",
+          "value": 65000
+        },
+        {
+          "period": "Mar",
+          "value": 95000
+        },
+        {
+          "period": "Apr",
+          "value": 130000
+        },
+        {
+          "period": "May",
+          "value": 172000
+        },
+        {
+          "period": "Jun",
+          "value": 210000
+        }
+      ]
+    },
+    "countries": {
+      "eyebrow": "Global Reach",
+      "title": "Top Hiring Markets",
+      "description": "Real-time opportunity density across the continent and beyond",
+      "items": [
+        {
+          "flag": "🇺🇸",
+          "country": "United States",
+          "jobs": "12,847",
+          "growth": "+18%"
+        },
+        {
+          "flag": "🇦🇪",
+          "country": "UAE",
+          "jobs": "8,234",
+          "growth": "+24%"
+        },
+        {
+          "flag": "🇨🇦",
+          "country": "Canada",
+          "jobs": "6,891",
+          "growth": "+15%"
+        },
+        {
+          "flag": "🇬🇧",
+          "country": "United Kingdom",
+          "jobs": "5,423",
+          "growth": "+12%"
+        }
+      ]
+    },
+    "videos": {
+      "eyebrow": "Career Insights",
+      "title": "Talks That Move Careers",
+      "items": [
+        {
+          "title": "How to Switch Careers in 2026",
+          "speaker": "AfroHR Insights",
+          "duration": "12 min watch",
+          "imageUrl": "https://images.unsplash.com/photo-1650525217641-891e936d3486?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXJlZXIlMjBndWlkYW5jZSUyMHN0dWRlbnRzJTIwbGVhcm5pbmd8ZW58MXx8fHwxNzczNjQzMTY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+          "alt": "Career Guidance"
+        },
+        {
+          "title": "Top Skills Employers Want",
+          "speaker": "Talent Lab",
+          "duration": "8 min watch",
+          "imageUrl": "https://images.unsplash.com/photo-1770669564689-d3e8ec8d1595?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjByZWNydWl0bWVudCUyMGhpcmluZyUyMHRlYW18ZW58MXx8fHwxNzczNjQzMTY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+          "alt": "Recruitment"
+        },
+        {
+          "title": "Choosing the Right College Major",
+          "speaker": "Student Futures",
+          "duration": "10 min watch",
+          "imageUrl": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHVkZW50cyUyMGNvbGxhYm9yYXRpb258ZW58MXx8fHwxNzczNjQ3ODQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+          "alt": "Students planning career"
+        },
+        {
+          "title": "How AI is Reshaping Future Careers",
+          "speaker": "Future Work Forum",
+          "duration": "9 min watch",
+          "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHVkZW50JTIwbGVhcm5pbmclMjB0ZWNofGVufDF8fHx8MTc3MzY0Nzg0NXww&ixlib=rb-4.1.0&q=80&w=1080",
+          "alt": "Student learning technology"
+        }
+      ]
+    },
+    "cta": {
+      "badge": "Smart Insights Engine",
+      "title": "Stop applying blindly.",
+      "highlight": "Start moving strategically.",
+      "description": "AfroHR tracks market shifts, salary movements, and skill demand so users can make better career and hiring decisions faster.",
+      "actionLabel": "Enter the Platform"
+    }
+  }
+}

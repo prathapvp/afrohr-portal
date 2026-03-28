@@ -1,0 +1,162 @@
+/* === BLUE/VIOLET ANIMATED THEME ENHANCEMENTS === */
+
+/* Animated floating mesh blobs */
+.animated-mesh-blob {
+	position: absolute;
+	border-radius: 50%;
+	filter: blur(44px);
+	opacity: 0.18;
+	pointer-events: none;
+	animation: mesh-float 18s ease-in-out infinite alternate;
+}
+.animated-mesh-blob.blue {
+	background: radial-gradient(circle at 30% 30%, #3b82f6 0%, #6366f1 100%);
+	left: 7vw; top: 13vh; width: 26vw; height: 26vw;
+	animation-delay: 0s;
+}
+.animated-mesh-blob.violet {
+	background: radial-gradient(circle at 70% 70%, #a78bfa 0%, #6366f1 100%);
+	right: 2vw; bottom: 2vh; width: 22vw; height: 22vw;
+	animation-delay: 6s;
+}
+@keyframes mesh-float {
+	0% { transform: translateY(0) scale(1); }
+	50% { transform: translateY(-40px) scale(1.08); }
+	100% { transform: translateY(0) scale(1); }
+}
+
+/* Card entrance animation (safe fallback: always visible) */
+.animate-card-in {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+	animation: card-in 0.8s cubic-bezier(.4,0,.2,1);
+}
+@keyframes card-in {
+	from {
+		opacity: 0;
+		transform: translateY(18px) scale(0.99);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-card-in {
+		animation: none;
+	}
+}
+
+/* Glowing hover effect for cards */
+.glow-hover {
+	transition: box-shadow 0.3s, border-color 0.3s;
+}
+.glow-hover:hover {
+	box-shadow: 0 0 0 4px #6366f1aa, 0 8px 32px 0 #3b82f633;
+	border-color: #6366f1;
+}
+
+/* Blue/violet accent gradient for buttons and badges */
+.accent-gradient {
+	background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+	color: #fff;
+	border: none;
+	box-shadow: 0 2px 8px 0 #6366f133;
+	transition: background 0.2s, box-shadow 0.2s;
+}
+.accent-gradient:hover {
+	background: linear-gradient(90deg, #6366f1 0%, #a78bfa 100%);
+	box-shadow: 0 4px 16px 0 #a78bfa33;
+}
+
+/* Animated border glow for hero/insights */
+.animated-border-glow {
+	border: 2px solid #6366f1;
+	box-shadow: 0 0 16px 2px #6366f1cc, 0 2px 8px 0 #3b82f633;
+	animation: border-glow 2.5s ease-in-out infinite alternate;
+}
+@keyframes border-glow {
+	0% { box-shadow: 0 0 8px 2px #6366f1cc, 0 2px 8px 0 #3b82f633; }
+	100% { box-shadow: 0 0 24px 6px #a78bfa99, 0 8px 32px 0 #6366f1cc; }
+}
+/* Button Microinteractions */
+.accent-btn-microinteraction {
+	box-shadow: 0 2px 8px 0 rgba(16, 185, 129, 0.08), 0 1.5px 4px 0 rgba(59, 130, 246, 0.06);
+	transition: box-shadow 0.18s cubic-bezier(.4,0,.2,1), transform 0.18s cubic-bezier(.4,0,.2,1), background 0.18s cubic-bezier(.4,0,.2,1), color 0.18s cubic-bezier(.4,0,.2,1);
+}
+.accent-btn-microinteraction:hover:not(:disabled),
+.accent-btn-microinteraction:focus-visible:not(:disabled) {
+	box-shadow: 0 6px 24px 0 rgba(16, 185, 129, 0.16), 0 4px 12px 0 rgba(59, 130, 246, 0.12);
+	transform: translateY(-2px) scale(1.045);
+	background: linear-gradient(90deg, #34d399 0%, #06b6d4 100%);
+	color: #fff;
+}
+.accent-btn-microinteraction:active:not(:disabled) {
+	transform: scale(0.98);
+	box-shadow: 0 2px 8px 0 rgba(16, 185, 129, 0.08), 0 1.5px 4px 0 rgba(59, 130, 246, 0.06);
+}
+/* Hero Card Animations */
+@keyframes shimmer {
+	0% { background-position: -200px 0; }
+	100% { background-position: 200px 0; }
+}
+.animate-shimmer-badge .animate-shimmer {
+	animation: shimmer 2s linear infinite;
+	background-size: 400px 100%;
+}
+@keyframes float-slow {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-10px); }
+}
+.animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+@keyframes float-slower {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(10px); }
+}
+.animate-float-slower { animation: float-slower 10s ease-in-out infinite; }
+@keyframes gradient-mesh {
+	0% { filter: blur(0px); opacity: 0.7; }
+	50% { filter: blur(8px); opacity: 1; }
+	100% { filter: blur(0px); opacity: 0.7; }
+}
+.animate-gradient-mesh { animation: gradient-mesh 12s ease-in-out infinite; }
+/* ========== CSS CUSTOM PROPERTIES (THEME VARIABLES) ========== */
+
+:root {
+	/* Light mode (default) */
+	--bg-primary: #ffffff;
+	--bg-secondary: #f5f5f5;
+	--bg-tertiary: #eeeeee;
+	--text-primary: #1a1a2e;
+	--text-secondary: #333333;
+	--border-color: rgba(0, 0, 0, 0.1);
+	--accent-color: #ffbd20;
+	--accent-hover: #f99b07;
+}
+
+[data-mantine-color-scheme="dark"] {
+	/* Dark mode */
+	--bg-primary: #0a0e1a;
+	--bg-secondary: #131824;
+	--bg-tertiary: #1c2235;
+	--text-primary: #f0f0f0;
+	--text-secondary: #c0c0c0;
+	--border-color: rgba(255, 255, 255, 0.1);
+	--accent-color: #ffbd20;
+	--accent-hover: #ffc649;
+}
+
+/* ========== VISUAL ENHANCEMENTS ========== */
+
+/* Glassmorphism card effect */
+.glass-card {
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+[data-mantine-color-scheme="dark"] .glass-card {
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
