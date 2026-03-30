@@ -69,8 +69,10 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public Boolean sendOTP(String email) throws Exception {
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new JobPortalException("User not found with email: " + email));
+		// User may not exist yet during registration; use their name if available
+		String recipientName = userRepository.findByEmail(email)
+				.map(User::getName)
+				.orElse("there");
 		MimeMessage mm = mailSender.createMimeMessage();
 		MimeMessageHelper message = new MimeMessageHelper(mm, true);
 		message.setTo(email);
@@ -78,7 +80,7 @@ public class UserServiceImpl implements UserService {
 		String generatedOtp = Utilities.generateOTP();
 		OTP otp = new OTP(email, generatedOtp, LocalDateTime.now());
 		otpRepository.save(otp);
-		message.setText(Data.getMessageBody(generatedOtp, user.getName()), true);
+		message.setText(Data.getMessageBody(generatedOtp, recipientName), true);
 		mailSender.send(mm);
 		return true;
 	}

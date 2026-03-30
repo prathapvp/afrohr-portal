@@ -19,12 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jobportal.dto.ProfileDTO;
 import com.jobportal.exception.JobPortalException;
+import com.jobportal.service.AiAssistantService;
 import com.jobportal.service.ProfileService;
 import com.jobportal.service.ResumeProcessingService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.Map;
@@ -42,6 +44,9 @@ public class ProfileAPI {
 	@Autowired
 	private ResumeProcessingService resumeProcessingService;
 
+	@Autowired
+	private AiAssistantService aiAssistantService;
+
 	public record UploadResumeRequest(
 			@NotNull Long profileId,
 			@NotBlank String fileName,
@@ -51,6 +56,16 @@ public class ProfileAPI {
 	public record ParseResumeRequest(
 			@NotBlank String fileData,
 			@NotBlank String fileName
+	) {}
+
+	public record ProfileAssistantChatRequest(
+			@NotBlank(message = "{assistant.message.absent}")
+			@Size(max = 2000, message = "{assistant.message.tooLong}")
+			String message,
+			@Size(max = 40, message = "{assistant.accountType.tooLong}")
+			String accountType,
+			@Size(max = 6000, message = "{assistant.profileContext.tooLong}")
+			String profileContext
 	) {}
 
 	@GetMapping("/get/{id}")
@@ -127,5 +142,16 @@ public class ProfileAPI {
 	public ResponseEntity<Map<String, Object>> parseResume(@RequestBody @Valid ParseResumeRequest request) {
 		Map<String, Object> parsed = resumeProcessingService.parseResume(request.fileData(), request.fileName());
 		return ResponseEntity.ok(parsed);
+	}
+
+	@PostMapping("/chatAssistant")
+	public ResponseEntity<Map<String, Object>> chatAssistant(@RequestBody @Valid ProfileAssistantChatRequest request)
+			throws JobPortalException {
+		String reply = aiAssistantService.getProfileAssistantReply(
+				request.message(),
+				request.accountType(),
+				request.profileContext()
+		);
+		return ResponseEntity.ok(Map.of("reply", reply));
 	}
 }

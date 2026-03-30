@@ -64,6 +64,7 @@ import {
   REQUIRED_LEGACY_FIELDS,
   parseLegacyDetailsFromDescription,
 } from "./employer-types";
+import { useNavigate } from "react-router-dom";
 
 type SalarySuggestion = {
   min: number;
@@ -175,6 +176,7 @@ function estimateSalarySuggestion(input: {
 }
 
 export default function EmployerView({ dashboard }: { dashboard: EmployerDashboard; }) {
+  const navigate = useNavigate();
   const [legacyTab, setLegacyTab] = useState<"ACTIVE" | "DRAFT" | "CLOSED">("ACTIVE");
   const [isPostJobDialogOpen, setIsPostJobDialogOpen] = useState(false);
   const [isViewJobDialogOpen, setIsViewJobDialogOpen] = useState(false);
@@ -199,6 +201,31 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   const [industryList, setIndustryList] = useState<Industry[]>([]);
   const [employmentTypeList, setEmploymentTypeList] = useState<EmploymentType[]>([]);
   const [workModeList, setWorkModeList] = useState<WorkMode[]>([]);
+  const accountType = (localStorage.getItem("accountType") ?? "").toUpperCase();
+  const token = localStorage.getItem("token");
+  const isEmployerAuthorized = Boolean(token) && accountType === "EMPLOYER";
+  const authRequiredMessage = "Please sign up or log in as an employer to perform employer operations.";
+
+  function requireEmployerAccess(): boolean {
+    if (isEmployerAuthorized) {
+      return true;
+    }
+
+    setPostJobSuccess(null);
+    setPostJobError(authRequiredMessage);
+    setLegacyJobsError(authRequiredMessage);
+    setIsPostJobDialogOpen(false);
+    return false;
+  }
+
+  function openPostJobDialog() {
+    if (!requireEmployerAccess()) {
+      return;
+    }
+
+    resetPostForm();
+    setIsPostJobDialogOpen(true);
+  }
 
   useEffect(() => {
     const rail = jobsRailRef.current;
@@ -282,6 +309,13 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
     let cancelled = false;
 
     async function loadEmployerJobs() {
+      if (!isEmployerAuthorized) {
+        setLegacyJobs([]);
+        setLegacyJobsLoading(false);
+        setLegacyJobsError(authRequiredMessage);
+        return;
+      }
+
       try {
         setLegacyJobsLoading(true);
         setLegacyJobsError(null);
@@ -314,7 +348,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isEmployerAuthorized]);
 
   const statusCounts = {
     ACTIVE: legacyJobs.filter((job) => job.jobStatus === "ACTIVE").length,
@@ -519,6 +553,10 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   }, [selectedJob]);
 
   async function handleSubmitPostJob() {
+    if (!requireEmployerAccess()) {
+      return;
+    }
+
     const status = postForm.jobStatus;
     const validationError = validateLegacyPostForm(postForm);
     if (validationError) {
@@ -577,6 +615,10 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   }
 
   async function handleViewJob(jobId: number) {
+    if (!requireEmployerAccess()) {
+      return;
+    }
+
     try {
       setViewJobBusy(true);
       setLegacyJobsError(null);
@@ -592,6 +634,10 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   }
 
   async function handleEditJob(jobId: number) {
+    if (!requireEmployerAccess()) {
+      return;
+    }
+
     try {
       setJobActionBusyId(jobId);
       setLegacyJobsError(null);
@@ -629,6 +675,10 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   }
 
   async function handleDeleteJob(jobId: number) {
+    if (!requireEmployerAccess()) {
+      return;
+    }
+
     const confirmed = window.confirm(`Delete job #${jobId}? This action cannot be undone.`);
     if (!confirmed) {
       return;
@@ -701,10 +751,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                 <Button
                   size="lg"
                   className="min-h-12 gap-2 bg-white px-6 font-semibold text-green-700 shadow-lg shadow-black/10 transition-all hover:bg-green-50 hover:shadow-xl sm:w-auto"
-                  onClick={() => {
-                    resetPostForm();
-                    setIsPostJobDialogOpen(true);
-                  }}
+                  disabled={!isEmployerAuthorized}
+                  onClick={openPostJobDialog}
                 >
                   <Plus className="h-4 w-4" />
                   {dashboard.hero.actionLabel}
@@ -734,9 +782,39 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
         </CardContent>
       </Card>
 
+      {!isEmployerAuthorized && (
+        <Card className="border border-amber-400/30 bg-amber-500/10 text-amber-100 shadow-lg">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium">{authRequiredMessage}</p>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="bg-amber-500 text-black hover:bg-amber-400"
+                onClick={() => void navigate("/signup")}
+              >
+                Sign Up as Employer
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-amber-300/50 text-amber-100 hover:bg-amber-200/10"
+                onClick={() => void navigate("/login")}
+              >
+                Log In
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Dialog
-        open={isPostJobDialogOpen}
+        open={isEmployerAuthorized && isPostJobDialogOpen}
         onOpenChange={(open) => {
+          if (!isEmployerAuthorized) {
+            setIsPostJobDialogOpen(false);
+            return;
+          }
+
           setIsPostJobDialogOpen(open);
           if (!open) {
             resetPostForm();
@@ -1019,7 +1097,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
               <div className="border-t border-white/[.07] pt-5">
                 <Button
                   className="min-h-12 w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-400 hover:to-teal-400 hover:shadow-emerald-500/40"
-                  disabled={postJobBusy}
+                  disabled={postJobBusy || !isEmployerAuthorized}
                   onClick={() => void handleSubmitPostJob()}
                 >
                   {postJobBusy ? "Saving..." : postJobMode === "edit" ? "Save Changes" : "Save Job"}
@@ -1181,7 +1259,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
               <Button
                 size="sm"
                 className="gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-xs font-semibold text-white shadow-md shadow-emerald-900/50 transition-all hover:from-emerald-400 hover:to-teal-400 hover:shadow-emerald-700/50"
-                onClick={() => { resetPostForm(); setIsPostJobDialogOpen(true); }}
+                disabled={!isEmployerAuthorized}
+                onClick={openPostJobDialog}
               >
                 <Plus className="h-3.5 w-3.5" /> New Job
               </Button>
@@ -1271,7 +1350,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                 <Button
                   size="sm"
                   className="mt-4 gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-xs font-semibold text-white shadow-md"
-                  onClick={() => { resetPostForm(); setIsPostJobDialogOpen(true); }}
+                  disabled={!isEmployerAuthorized}
+                  onClick={openPostJobDialog}
                 >
                   <Plus className="h-3.5 w-3.5" /> Post a Job
                 </Button>
@@ -1350,7 +1430,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                           variant="outline"
                           size="sm"
                           className="h-8 border-white/[.08] bg-white/[.03] text-xs text-slate-300 transition-all duration-200 hover:bg-white/[.10] hover:text-white"
-                          disabled={viewJobBusy || jobActionBusyId === job.id}
+                          disabled={viewJobBusy || jobActionBusyId === job.id || !isEmployerAuthorized}
                           onClick={() => void handleViewJob(job.id)}
                         >
                           <Eye className="mr-1 h-3 w-3" />View
@@ -1359,7 +1439,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                           variant="outline"
                           size="sm"
                           className="h-8 border-emerald-500/20 bg-emerald-500/[.08] text-xs text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all duration-200"
-                          disabled={jobActionBusyId === job.id}
+                          disabled={jobActionBusyId === job.id || !isEmployerAuthorized}
                           onClick={() => void handleEditJob(job.id)}
                         >
                           <Pencil className="mr-1 h-3 w-3" />Edit
@@ -1368,7 +1448,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                           variant="outline"
                           size="sm"
                           className="h-8 border-rose-500/20 bg-rose-500/[.08] text-xs text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition-all duration-200"
-                          disabled={jobActionBusyId === job.id}
+                          disabled={jobActionBusyId === job.id || !isEmployerAuthorized}
                           onClick={() => void handleDeleteJob(job.id)}
                         >
                           <Trash2 className="mr-1 h-3 w-3" />Delete

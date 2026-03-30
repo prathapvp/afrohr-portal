@@ -1,9 +1,12 @@
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 
 function PremiumNavbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const showHomeButton = location.pathname !== "/";
+  const showProfileButton = location.pathname !== "/profile";
 
   useEffect(() => {
     setIsAuthenticated(Boolean(localStorage.getItem("token")));
@@ -37,13 +40,17 @@ function PremiumNavbar() {
         </div>
         {/* Nav Actions */}
         <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:gap-2">
-          <button
-            onClick={() => void navigate("/")}
-            className="min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 transition-all duration-200 hover:bg-white/10 hover:text-white"
-          >
-            Home
-          </button>
-          <div className="mx-1 hidden h-6 w-px bg-white/15 sm:block" />
+          {showHomeButton && (
+            <>
+              <button
+                onClick={() => void navigate("/")}
+                className="min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 transition-all duration-200 hover:bg-white/10 hover:text-white"
+              >
+                Home
+              </button>
+              <div className="mx-1 hidden h-6 w-px bg-white/15 sm:block" />
+            </>
+          )}
           {!isAuthenticated && (
             <>
               <button
@@ -62,12 +69,14 @@ function PremiumNavbar() {
           )}
           {isAuthenticated && (
             <>
-              <button
-                onClick={() => void navigate("/profile")}
-                className="min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 transition-all duration-200 hover:bg-white/10 hover:text-white"
-              >
-                Profile
-              </button>
+              {showProfileButton && (
+                <button
+                  onClick={() => void navigate("/profile")}
+                  className="min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 transition-all duration-200 hover:bg-white/10 hover:text-white"
+                >
+                  Profile
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="min-h-10 rounded-lg bg-gradient-to-r from-rose-500 to-red-500 px-6 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-rose-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/30 hover:brightness-110"

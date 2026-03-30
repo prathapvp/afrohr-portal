@@ -1,7 +1,7 @@
 import { Button, LoadingOverlay, PasswordInput, TextInput } from "@mantine/core";
 import { IconAt, IconLock } from "@tabler/icons-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { loginValidation } from "../../services/form-validation";
 import { useDisclosure } from "@mantine/hooks";
 import ResetPassword from "./ResetPassword";
@@ -12,14 +12,12 @@ import { setJwt } from "../../store/slices/JwtSlice";
 import { loginUser } from "../../services/AuthService";
 import { jwtDecode } from "jwt-decode";
 
-const isDev = import.meta.env.DEV;
-
 const getLandingPage = (accountType: string): string => {
     switch (accountType) {
-        case "EMPLOYER": return "/find-talent";
-        case "APPLICANT": return "/find-jobs";
-        case "STUDENT": return "/home";
-        default: return "/home";
+        case "EMPLOYER": return "/dashboard?tab=employers";
+        case "APPLICANT": return "/dashboard?tab=candidates";
+        case "STUDENT": return "/dashboard?tab=students";
+        default: return "/";
     }
 };
 
@@ -48,18 +46,11 @@ const Login = () => {
         if (valid) {
             setLoading(true);
             loginUser(data).then((res) => {
-                console.log('Login successful, received response:', {
-                    hasJwt: !!res.jwt,
-                    jwtLength: res.jwt?.length,
-                    keys: Object.keys(res),
-                    timestamp: new Date().toISOString()
-                });
-                
                 if (!res.jwt) {
                     throw new Error('No JWT token in login response');
                 }
                 
-                successNotification("Login Successful", "Redirecting to home page...");
+                successNotification("Login Successful", "Redirecting to your dashboard...");
                 dispatch(setJwt(res.jwt));
                 const decoded: any = jwtDecode(res.jwt);
                 dispatch(setUser({...decoded, email:decoded.sub}));
@@ -68,15 +59,6 @@ const Login = () => {
                     navigate(landing);
                 }, 4000)
             }).catch((err) => {
-                console.error('Login error details:', {
-                    error: err,
-                    response: err.response,
-                    data: err.response?.data,
-                    status: err.response?.status,
-                    message: err.message,
-                    timestamp: new Date().toISOString()
-                });
-                
                 let message = "Login failed. Please try again.";
                 
                 if (err.response?.data?.errorMessage) {
@@ -101,7 +83,6 @@ const Login = () => {
   /><div className="w-1/2 sm-mx:w-full px-20 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center">
         <div className="text-2xl font-bold text-gray-800">Welcome Back</div>
         <p className="text-sm text-gray-500 -mt-1">Sign in to continue your journey</p>
-                {isDev && <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Dev mode: OTP-verified emails can sign in locally with the password entered here, even without a prior explicit registration.</div>}
         <TextInput value={data.email} error={formError.email} name="email" onChange={handleChange} leftSection={<IconAt size={16} />} label="Email" withAsterisk placeholder="Your email" />
         <PasswordInput value={data.password} error={formError.password} name="password" onChange={handleChange} leftSection={<IconLock size={16} />} label="Password" withAsterisk placeholder="Password" />
         <Button loading={loading} onClick={handleSubmit} variant="gradient" gradient={{ from: 'orange', to: 'pink', deg: 90 }} size="md" radius="xl" className="mt-1 shadow-lg shadow-orange-200">Login</Button>

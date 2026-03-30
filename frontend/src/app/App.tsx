@@ -68,7 +68,7 @@ export interface CandidateDashboard {
   premium: { title: string; description: string; chips: string[]; actionLabel: string };
 }
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { iconMap, toneClasses } from "./shared";
 import { TrendingUp } from "lucide-react";
@@ -150,6 +150,15 @@ interface DashboardPayload {
     employers: EmployerDashboard;
     students: StudentDashboard;
   };
+}
+
+function getTabFromAccountType(accountType: string): AudienceId | null {
+  const normalized = (accountType || "").toUpperCase();
+  if (normalized === "EMPLOYER") return "employers";
+  if (normalized === "APPLICANT") return "candidates";
+  if (normalized === "CANDIDATE") return "candidates";
+  if (normalized === "STUDENT") return "students";
+  return null;
 }
 
 const emptyPayload: DashboardPayload = {
@@ -652,7 +661,12 @@ function StudentView({
 export default function App() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = (searchParams.get("tab") as AudienceId | null) ?? "candidates";
+  const accountType = (localStorage.getItem("accountType") ?? "").toUpperCase();
+  const token = localStorage.getItem("token");
+  const roleTab = getTabFromAccountType(accountType);
+  const queryTab = searchParams.get("tab") as AudienceId | null;
+  const initialTab = roleTab ?? queryTab ?? "candidates";
+  const isEmployerAuthorized = Boolean(token) && accountType === "EMPLOYER";
   const [activeTab, setActiveTab] = useState<AudienceId>(initialTab);
   const [payload, setPayload] = useState<DashboardPayload>(emptyPayload);
   const [loading, setLoading] = useState(true);
@@ -672,6 +686,8 @@ export default function App() {
   const [industryList, setIndustryList] = useState<Industry[]>([]);
   const [employmentTypeList, setEmploymentTypeList] = useState<import("./services/employment-type-service").EmploymentType[]>([]);
   const [workModeList, setWorkModeList] = useState<WorkMode[]>([]);
+  const hasRedirectedUnauthorizedEmployer = useRef(false);
+  const unauthorizedEmployerRedirectKey = "afrohr:unauthorized-employer-redirect";
 
   useEffect(() => {
     let cancelled = false;
@@ -680,19 +696,13 @@ export default function App() {
       try {
         setLoading(true);
         setError(null);
-        const [dashboardResponse, jobsResponse] = await Promise.all([
-          fetch("/api/dashboard"),
-          fetch("/api/ahrm/v3/jobs/getAll"),
-        ]);
+        const dashboardResponse = await fetch("/api/dashboard");
 
         if (!dashboardResponse.ok) {
           throw new Error("Failed to load dashboard payload");
         }
 
         const dashboardPayload = (await dashboardResponse.json()) as Partial<DashboardPayload>;
-        const jobsRaw = jobsResponse.ok ? ((await jobsResponse.json()) as ApiJobItem[]) : [];
-        const jobItems = Array.isArray(jobsRaw) ? jobsRaw : [];
-        const mappedJobs = jobItems.map(mapApiJobToCandidateJob);
 
         const data: DashboardPayload = {
           ...emptyPayload,
@@ -706,7 +716,6 @@ export default function App() {
               jobs: {
                 ...emptyPayload.dashboards.candidates.jobs,
                 ...(dashboardPayload.dashboards?.candidates?.jobs ?? {}),
-                items: mappedJobs,
               },
             },
           },
@@ -776,6 +785,41 @@ export default function App() {
   useEffect(() => {
     setEmployerImageOverride(null);
   }, [payload.dashboards.employers.marketInsights.imageUrl]);
+
+  useEffect(() => {
+    if (!token || !roleTab) {
+      return;
+    }
+
+    if (activeTab !== roleTab) {
+      setActiveTab(roleTab);
+      return;
+    }
+
+    if (queryTab !== roleTab) {
+      setSearchParams({ tab: roleTab }, { replace: true });
+    }
+  }, [activeTab, queryTab, roleTab, setSearchParams, token]);
+
+  useEffect(() => {
+    if (activeTab !== "employers") {
+      hasRedirectedUnauthorizedEmployer.current = false;
+      sessionStorage.removeItem(unauthorizedEmployerRedirectKey);
+      return;
+    }
+
+    if (!isEmployerAuthorized) {
+      if (hasRedirectedUnauthorizedEmployer.current) {
+        return;
+      }
+      if (sessionStorage.getItem(unauthorizedEmployerRedirectKey) === "1") {
+        return;
+      }
+      hasRedirectedUnauthorizedEmployer.current = true;
+      sessionStorage.setItem(unauthorizedEmployerRedirectKey, "1");
+      navigate("/login", { replace: true });
+    }
+  }, [activeTab, isEmployerAuthorized, navigate]);
 
   async function handleSearch() {
     if (activeTab === "employers") {
@@ -851,8 +895,14 @@ export default function App() {
                 if (label === "Employer") tab = "employers";
                 else if (label === "Student") tab = "students";
                 else if (label === "Candidate") tab = "candidates";
+
+                if (tab === "employers" && !isEmployerAuthorized) {
+                  navigate("/login", { replace: true });
+                  return;
+                }
+
                 setActiveTab(tab);
-                setSearchParams({ tab });
+                setSearchParams({ tab }, { replace: true });
               }
             }}
           />

@@ -1,8 +1,11 @@
 import {
     Avatar,
+    Button,
     FileInput,
+    Loader,
     Overlay,
 } from "@mantine/core";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
 import Info from "./Info";
@@ -20,6 +23,7 @@ import AccountDetails from "./AccountDetails";
 import CompanyDetails from "./CompanyDetails";
 import AddressDetails from "./AddressDetails";
 import ProfileCard from "./ProfileCard";
+import ProfileAssistant from "./ProfileAssistant";
 import { useHover } from "@mantine/hooks";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import {
@@ -40,10 +44,12 @@ import {
     IconInfoCircle,
     IconBuilding,
     IconAddressBook,
+    IconDownload,
 } from "@tabler/icons-react";
 import { getBase64 } from "../../services/utilities";
 import { secureError } from "../../services/secure-logging-service";
 import { extractErrorMessage, formatErrorForLogging } from "../../services/error-extractor-service";
+import { parseResume } from "../../services/ProfileService";
 
 const Profile = () => {
     const dispatch = useDispatch();
@@ -57,6 +63,10 @@ const Profile = () => {
 
     const { hovered: hoveredProfile, ref: refProfile } = useHover();
     const { hovered: hoveredBanner, ref: refBanner } = useHover();
+    const [parseFile, setParseFile] = useState<File | null>(null);
+    const [parsing, setParsing] = useState(false);
+    const [downloadingPdf, setDownloadingPdf] = useState(false);
+    const [downloadingWord, setDownloadingWord] = useState(false);
 
     /* ---------------- Image Handlers ---------------- */
     const handleProfilePicChange = async (file: File | null) => {
@@ -181,6 +191,162 @@ const Profile = () => {
                 
                 errorNotification("Update Failed", errorMsg);
             });
+    };
+
+    const fileToBase64 = (file: File): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result as string;
+                resolve(result.split(",")[1]);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+    const handleParseAndFillProfile = async () => {
+        if (!parseFile) {
+            errorNotification("Parse Failed", "Please choose a PDF or Word file first.");
+            return;
+        }
+
+        try {
+            setParsing(true);
+            const fileData = await fileToBase64(parseFile);
+            const parsed = await parseResume(fileData, parseFile.name);
+
+            const rawLocation = (parsed?.location || "").trim();
+            const locationParts = rawLocation ? rawLocation.split(",") : [];
+            const inferredCity = locationParts.length > 0 ? locationParts[0].trim() : rawLocation;
+            const inferredCountry = locationParts.length > 1 ? locationParts[locationParts.length - 1].trim() : "";
+
+            const mergedSkills = parsed?.skills?.length
+                ? [...new Set([...(profile.skills || []), ...parsed.skills])].slice(0, 100)
+                : profile.skills;
+
+            const updatedProfile = {
+                ...profile,
+                name: parsed?.name || profile?.name || "",
+                email: parsed?.email || profile?.email || "",
+                jobTitle: parsed?.jobTitle || profile?.jobTitle || "",
+                about: parsed?.about || profile?.about || "",
+                profileSummary: parsed?.profileSummary || parsed?.about || profile?.profileSummary || "",
+                company: parsed?.company || profile?.company || "",
+                location: parsed?.location || profile?.location || "",
+                totalExp: parsed?.totalExp || profile?.totalExp || 0,
+                skills: mergedSkills,
+                contactPerson: parsed?.name || profile?.contactPerson || "",
+                contactDesignation: parsed?.jobTitle || profile?.contactDesignation || "",
+                phone1: parsed?.phone || profile?.phone1 || "",
+                mobileNumber: parsed?.phone || profile?.mobileNumber || "",
+                address: parsed?.address || rawLocation || profile?.address || "",
+                city: inferredCity || profile?.city || "",
+                country: inferredCountry || profile?.country || "",
+            };
+
+            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
+            setParseFile(null);
+            successNotification("Parsed Successfully", "Profile inputs were filled from the uploaded file.");
+        } catch (error: any) {
+            const errorMessage = extractErrorMessage(error) || "Could not parse the selected file.";
+            errorNotification("Parse Failed", errorMessage);
+        } finally {
+            setParsing(false);
+        }
+    };
+
+    const getExportRows = () => {
+        const rows: Array<[string, string]> = [
+            ["Name", profile?.name || ""],
+            ["Email", profile?.email || ""],
+            ["Account Type", accountType || ""],
+            ["Job Title", profile?.jobTitle || ""],
+            ["Company", profile?.company || ""],
+            ["Location", profile?.location || ""],
+            ["Mobile Number", profile?.mobileNumber || ""],
+            ["Phone 1", profile?.phone1 || ""],
+            ["Phone 2", profile?.phone2 || ""],
+            ["Address", profile?.address || ""],
+            ["City", profile?.city || ""],
+            ["Country", profile?.country || ""],
+            ["Total Experience", profile?.totalExp ? String(profile.totalExp) : ""],
+            ["Skills", Array.isArray(profile?.skills) ? profile.skills.join(", ") : ""],
+            ["Contact Person", profile?.contactPerson || ""],
+            ["Contact Designation", profile?.contactDesignation || ""],
+            ["Company Type", profile?.companyType || ""],
+            ["Industry Type", profile?.industryType || ""],
+            ["Website", profile?.websiteUrl || ""],
+            ["About", profile?.about || ""],
+        ];
+
+        return rows.filter(([, value]) => String(value || "").trim().length > 0);
+    };
+
+    const handleDownloadWord = () => {
+        try {
+            setDownloadingWord(true);
+            const rows = getExportRows();
+            const tableRows = rows
+                .map(([key, value]) => `<tr><td style=\"padding:8px;border:1px solid #d1d5db;font-weight:600;vertical-align:top;\">${key}</td><td style=\"padding:8px;border:1px solid #d1d5db;\">${String(value).replace(/\n/g, "<br/>")}</td></tr>`)
+                .join("");
+
+            const html = `
+                <html>
+                <head><meta charset=\"utf-8\" /></head>
+                <body style=\"font-family: Arial, sans-serif;\">
+                    <h2>AfroHR Profile Information</h2>
+                    <p>Generated on: ${new Date().toLocaleString()}</p>
+                    <table style=\"border-collapse:collapse;width:100%;\">${tableRows}</table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([html], { type: "application/msword" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `afrohr-profile-${(profile?.name || "user").replace(/\s+/g, "-").toLowerCase()}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } finally {
+            setDownloadingWord(false);
+        }
+    };
+
+    const handleDownloadPdf = async () => {
+        try {
+            setDownloadingPdf(true);
+            const { jsPDF } = await import("jspdf");
+            const doc = new jsPDF({ unit: "pt", format: "a4" });
+            const rows = getExportRows();
+
+            let y = 48;
+            doc.setFontSize(16);
+            doc.text("AfroHR Profile Information", 40, y);
+            y += 20;
+            doc.setFontSize(10);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 40, y);
+            y += 20;
+
+            doc.setFontSize(11);
+            for (const [key, value] of rows) {
+                const line = `${key}: ${value}`;
+                const wrapped = doc.splitTextToSize(line, 515);
+                const requiredHeight = wrapped.length * 14;
+                if (y + requiredHeight > 790) {
+                    doc.addPage();
+                    y = 48;
+                }
+                doc.text(wrapped, 40, y);
+                y += requiredHeight + 2;
+            }
+
+            doc.save(`afrohr-profile-${(profile?.name || "user").replace(/\s+/g, "-").toLowerCase()}.pdf`);
+        } finally {
+            setDownloadingPdf(false);
+        }
     };
 
     return (
@@ -316,6 +482,57 @@ const Profile = () => {
                     </div>
                 );
             })()}
+
+            {accountType === "EMPLOYER" && (
+                <div className="px-5 mb-4" data-aos="fade-up">
+                    <div className="rounded-xl border border-mine-shaft-700/60 bg-mine-shaft-900/40 p-3">
+                        <div className="mb-2 text-sm font-semibold text-mine-shaft-200">Parse and Fill Inputs (Entire Profile)</div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                            <div className="flex-1">
+                                <FileInput
+                                    value={parseFile}
+                                    onChange={setParseFile}
+                                    accept=".pdf,.doc,.docx"
+                                    placeholder="Choose PDF or Word document"
+                                    leftSection={<IconFileUpload size={16} />}
+                                />
+                            </div>
+                            <Button
+                                onClick={handleParseAndFillProfile}
+                                disabled={!parseFile || parsing}
+                                leftSection={parsing ? <Loader size={16} /> : <IconSparkles size={16} />}
+                                color="yellow"
+                            >
+                                {parsing ? "Parsing..." : "Parse and Fill Inputs"}
+                            </Button>
+                        </div>
+                        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                            <Button
+                                onClick={handleDownloadPdf}
+                                disabled={downloadingPdf}
+                                leftSection={downloadingPdf ? <Loader size={16} /> : <IconDownload size={16} />}
+                                variant="light"
+                                color="blue"
+                            >
+                                {downloadingPdf ? "Preparing PDF..." : "Download Profile as PDF"}
+                            </Button>
+                            <Button
+                                onClick={handleDownloadWord}
+                                disabled={downloadingWord}
+                                leftSection={downloadingWord ? <Loader size={16} /> : <IconDownload size={16} />}
+                                variant="light"
+                                color="grape"
+                            >
+                                {downloadingWord ? "Preparing Word..." : "Download Profile as Word"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="px-5 mb-4" data-aos="fade-up">
+                <ProfileAssistant />
+            </div>
 
             {/* ================================================================== */}
             {/* CARD-BASED SECTIONS                                                 */}

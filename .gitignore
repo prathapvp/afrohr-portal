@@ -19,6 +19,7 @@ package-lock.json
 target/
 *.log
 *.class
+**/application-local.properties
 
 # =========================
 # IDE / EDITORS

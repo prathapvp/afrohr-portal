@@ -7,8 +7,6 @@ import { signupValidation } from "../../services/form-validation";
 import { errorNotification, successNotification } from "../../services/NotificationService";
 import { useInterval } from "@mantine/hooks";
 
-const isDev = import.meta.env.DEV;
-
 const SignUp = () => {
     const form = {
         name: "",
@@ -145,11 +143,6 @@ const SignUp = () => {
   /> <div className="w-1/2 sm-mx:py-10 sm-mx:w-full px-16 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center">
         <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Create Account</div>
         <p className="text-sm text-gray-400 -mt-1 mb-1">Start your career journey today</p>
-        {isDev && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                Dev mode: use OTP <span className="font-semibold">123456</span>. After OTP verification, local login is allowed even if the account was not explicitly registered.
-            </div>
-        )}
         {!otpStep ? <>
         <TextInput value={data.name} error={formError.name} name="name" onChange={handleChange} leftSection={<IconUser size={16} stroke={1.5} />} label="Full Name" withAsterisk placeholder="Your name" size="sm" styles={{ input: { borderRadius: 12 } }} />
         <TextInput error={formError.email} value={data.email} name="email" onChange={handleChange} leftSection={<IconAt size={16} stroke={1.5} />} label="Email" withAsterisk placeholder="Your email" size="sm" styles={{ input: { borderRadius: 12 } }} />

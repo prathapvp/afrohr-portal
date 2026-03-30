@@ -1,0 +1,26 @@
+{
+  "employers": [
+    {
+      "title": "How to hire operations managers",
+      "category": "Hiring Guide",
+      "summary": "Practical checklist for sourcing and interviewing operations leaders."
+    },
+    {
+      "title": "Average salaries for HR roles",
+      "category": "Market Insight",
+      "summary": "Regional salary ranges for recruiters, HR business partners, and talent leads."
+    }
+  ],
+  "students": [
+    {
+      "title": "Graduate CV writing essentials",
+      "category": "Career Guide",
+      "summary": "Create a focused CV with measurable project outcomes."
+    },
+    {
+      "title": "Preparing for first-round interviews",
+      "category": "Interview Prep",
+      "summary": "Common behavioral questions and structured answer examples."
+    }
+  ]
+}

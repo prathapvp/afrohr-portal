@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { resolve } from 'node:path'
 
 export default defineConfig({
   root: 'frontend',
@@ -16,6 +17,8 @@ export default defineConfig({
       '@': '/src',
       // Legacy portal imports react-router-dom; v7 merged into react-router
       'react-router-dom': 'react-router',
+      // Workspace dependencies are installed at repo root while Vite root is frontend
+      'jspdf': resolve(process.cwd(), 'node_modules/jspdf/dist/jspdf.es.min.js'),
     },
   },
   server: {

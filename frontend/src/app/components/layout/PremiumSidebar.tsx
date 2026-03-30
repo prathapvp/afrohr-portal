@@ -21,6 +21,15 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
   const [open, setOpen] = useState(true);
   const [collapsedDesktop, setCollapsedDesktop] = useState(false);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
+  const accountType = (localStorage.getItem("accountType") ?? "").toUpperCase();
+  const roleToNavLabel: Record<string, string> = {
+    APPLICANT: "Candidate",
+    CANDIDATE: "Candidate",
+    EMPLOYER: "Employer",
+    STUDENT: "Student",
+  };
+  const allowedLabel = roleToNavLabel[accountType];
+  const visibleNavItems = allowedLabel ? navItems.filter((item) => item.label === allowedLabel) : navItems;
   return (
     <>
       {/* Hamburger menu for mobile/desktop */}
@@ -64,7 +73,7 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
           </button>
         </div>
         <nav className={`flex-1 flex flex-col gap-2 py-4 ${collapsedDesktop ? "px-1" : "px-2"}`}>
-          {navItems.map(({ label, icon: Icon, gradient, submenu }) => (
+          {visibleNavItems.map(({ label, icon: Icon, gradient, submenu }) => (
             <div key={label}>
               <button
                 title={collapsedDesktop ? label : undefined}

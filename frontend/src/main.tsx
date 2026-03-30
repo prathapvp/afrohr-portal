@@ -25,6 +25,7 @@ import PostedJobPage from "./app/pages/PostedJobPage.tsx";
 import PostJobPage from "./app/pages/PostJobPage.tsx";
 import ProfilePage from "./app/pages/ProfilePage.tsx";
 import NotFoundPage from "./app/pages/NotFoundPage.tsx";
+import SwipeJobsPage from "./app/pages/SwipeJobsPage.tsx";
 import Unauthorized from "./app/pages/UnauthroizedPage.tsx";
 import DepartmentPage from "./app/pages/DepartmentPage.tsx";
 import ProtectedRoute from "./app/services/protected-route.tsx";
@@ -49,6 +50,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/home" element={<HomePage />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/find-jobs" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><FindJobsPage /></ProtectedRoute>} />
+        <Route path="/swipe" element={<ProtectedRoute allowedRoles={["APPLICANT"]}><SwipeJobsPage /></ProtectedRoute>} />
         <Route path="/jobs/:id" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><JobPage /></ProtectedRoute>} />
         <Route path="/apply-job/:id" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><ApplyJobPage /></ProtectedRoute>} />
         <Route path="/find-talent" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><FindTalentPage /></ProtectedRoute>} />

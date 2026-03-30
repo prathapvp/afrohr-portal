@@ -68,4 +68,13 @@ const parseResume = async (fileData: string, fileName: string) => {
     return response.data;
 };
 
-export {getProfile, updateProfile, getAllProfiles, uploadResume, parseResume};
+const chatWithProfileAssistant = async (message: string, accountType?: string, profileContext?: string) => {
+    const response = await axiosInstance.post(`/profiles/chatAssistant`, {
+        message,
+        accountType,
+        profileContext,
+    });
+    return response.data?.reply;
+};
+
+export {getProfile, updateProfile, getAllProfiles, uploadResume, parseResume, chatWithProfileAssistant};

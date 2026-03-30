@@ -8,7 +8,8 @@ import { resetFilter } from "../../store/slices/FilterSlice";
 import { resetSort } from "../../store/slices/SortSlice";
 import { hideOverlay, showOverlay } from "../../store/slices/OverlaySlice";
 import { Button } from "@mantine/core";
-import { IconX } from "@tabler/icons-react";
+import { IconSparkles, IconX } from "@tabler/icons-react";
+import { Link } from "react-router";
 
 const Jobs = () => {
     const dispatch=useDispatch();
@@ -53,7 +54,16 @@ const Jobs = () => {
     return <div className="px-5 py-5">
         <div className="flex justify-between flex-wrap mt-5">
             <div className="text-2xl xs-mx:text-xl flex gap-3 items-center font-semibold">Recommended jobs   {Object.keys(filter).length>0&&<Button onClick={()=>dispatch(resetFilter())} className="font-body transition duration-300 " size="compact-sm" leftSection={<IconX stroke={1.5} size={20}/>} variant="filled" color="brightSun.4" autoContrast >Clear Filters</Button>}</div>
-            <Sort sort="job" />
+            <div className="flex items-center gap-3">
+                {localStorage.getItem("accountType") === "APPLICANT" && (
+                    <Link to="/swipe">
+                        <Button size="compact-sm" variant="light" color="brightSun.4" leftSection={<IconSparkles size={14} stroke={2}/>}>
+                            Swipe Mode
+                        </Button>
+                    </Link>
+                )}
+                <Sort sort="job" />
+            </div>
         </div>
         <div className="flex mt-10 flex-wrap gap-5">
             {
