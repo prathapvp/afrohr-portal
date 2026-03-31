@@ -14,6 +14,7 @@ interface OnlineProfile {
     url: string;
 }
 
+
 const OnlineProfiles = () => {
     const dispatch = useDispatch();
     const profile = useSelector((state: any) => state.profile);
@@ -21,47 +22,6 @@ const OnlineProfiles = () => {
     const [edit, setEdit] = useState(false);
     const [onlineProfiles, setOnlineProfiles] = useState<OnlineProfile[]>(profile.onlineProfiles || []);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-
-    const handleClick = () => {
-        if (!edit) {
-            setEdit(true);
-            setOnlineProfiles(profile.onlineProfiles || []);
-            setValidationErrors({});
-        } else {
-            setEdit(false);
-        }
-    };
-
-    const handleSave = async () => {
-        // Validate online profiles data before saving
-        const result = validateData({ onlineProfiles }, OnlineProfilesSchema);
-        
-        if (!result.success) {
-            setValidationErrors(
-                result.errors?.reduce((acc: Record<string, string>, err: string) => {
-                    const fieldMatch = err.match(/(\w+)/);
-                    const field = fieldMatch ? fieldMatch[0] : 'general';
-                    acc[field] = err;
-                    return acc;
-                }, {}) || {}
-            );
-            errorNotification("Validation Error", result.message || "Please check your online profiles");
-            return;
-        }
-
-        setValidationErrors({});
-        const updatedProfile = { ...profile, onlineProfiles };
-        dispatch(changeProfile(updatedProfile));
-
-        try {
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
-            setEdit(false);
-            successNotification("Success", "Online Profiles Updated Successfully");
-        } catch (error: any) {
-            const errorMessage = extractErrorMessage(error);
-            errorNotification("Update Failed", errorMessage);
-        }
-    };
 
     const handleAdd = () => {
         setOnlineProfiles([...onlineProfiles, { platform: "", url: "" }]);
@@ -79,32 +39,6 @@ const OnlineProfiles = () => {
 
     return (
         <div className="mt-2">
-            <div className="flex justify-end items-center" data-aos="zoom-out">
-                <div className="flex">
-                    {edit && (
-                        <ActionIcon onClick={handleSave} variant="subtle" color="green.8" size={matches ? "md" : "lg"}>
-                            <IconCheck className="w-4/5 h-4/5" stroke={1.5} />
-                        </ActionIcon>
-                    )}
-                    <ActionIcon
-                        onClick={handleClick}
-                        variant="subtle"
-                        color={edit ? "red.8" : "brightSun.4"}
-                        size={matches ? "md" : "lg"}
-                    >
-                        {edit ? <IconX className="w-4/5 h-4/5" stroke={1.5} /> : <IconPencil className="w-4/5 h-4/5" stroke={1.5} />}
-                    </ActionIcon>
-                </div>
-            </div>
-
-            {Object.keys(validationErrors).length > 0 && (
-                <Alert title="Validation Error" color="red" mb="md" onClose={() => setValidationErrors({})}>
-                    {Object.values(validationErrors).map((error, idx) => (
-                        <div key={idx} className="text-sm">• {error}</div>
-                    ))}
-                </Alert>
-            )}
-
             {edit ? (
                 <div className="mt-2">
                     {onlineProfiles.map((profile, index) => (

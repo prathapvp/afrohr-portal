@@ -1,7 +1,7 @@
 import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
-import { ActionIcon, Divider, TagsInput, Alert } from "@mantine/core";
+import React, { useState, useEffect } from "react";
+import { ActionIcon, Divider, TagsInput, Alert, Button } from "@mantine/core";
 import { changeProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { useForm } from "@mantine/form";
@@ -147,55 +147,137 @@ const DesiredJob = () => {
                         />
                     </div>
                 </>
+
             ) : (
-                <div className="mt-2 text-mine-shaft-200">
-                    <div className="space-y-3">
-                        {/* Designations */}
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Preferred Designations:</span>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {profile.desiredJob?.preferredDesignations?.length
-                                    ? profile.desiredJob.preferredDesignations.map((designation: string, idx: number) => (
-                                        <span key={idx} className="rounded-full px-3 py-1 text-sm font-semibold text-mine-shaft-950 border border-bright-sun-300/80 bg-gradient-to-r from-bright-sun-300 to-yellow-300 shadow-[0_3px_10px_rgba(251,191,36,0.28)]">
-                                            {designation}
-                                        </span>
-                                    ))
-                                    : <span className="text-mine-shaft-300">Not specified</span>}
-                            </div>
-                        </div>
-
-                        {/* Locations */}
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Preferred Locations:</span>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {profile.desiredJob?.preferredLocations?.length
-                                    ? profile.desiredJob.preferredLocations.map((location: string, idx: number) => (
-                                        <span key={idx} className="rounded-full px-3 py-1 text-sm font-semibold text-mine-shaft-950 border border-bright-sun-300/80 bg-gradient-to-r from-bright-sun-300 to-yellow-300 shadow-[0_3px_10px_rgba(251,191,36,0.28)]">
-                                            {location}
-                                        </span>
-                                    ))
-                                    : <span className="text-mine-shaft-300">Not specified</span>}
-                            </div>
-                        </div>
-
-                        {/* Industries */}
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Preferred Industries:</span>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {profile.desiredJob?.preferredIndustries?.length
-                                    ? profile.desiredJob.preferredIndustries.map((industry: string, idx: number) => (
-                                        <span key={idx} className="rounded-full px-3 py-1 text-sm font-semibold text-mine-shaft-950 border border-bright-sun-300/80 bg-gradient-to-r from-bright-sun-300 to-yellow-300 shadow-[0_3px_10px_rgba(251,191,36,0.28)]">
-                                            {industry}
-                                        </span>
-                                    ))
-                                    : <span className="text-mine-shaft-300">Not specified</span>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <DesiredJobPaginatedDisplay profile={profile} matches={!!matches} />
             )}
         </div>
     );
 };
+
+function DesiredJobPaginatedDisplay({ profile, matches }: { profile: any; matches: boolean }) {
+    const [pageDes, setPageDes] = useState(1);
+    const [pageLoc, setPageLoc] = useState(1);
+    const [pageInd, setPageInd] = useState(1);
+    const itemsPerPage = 3;
+    const designations = profile.desiredJob?.preferredDesignations || [];
+    const totalPagesDes = Math.ceil(designations.length / itemsPerPage) || 1;
+    const paginatedDes = designations.slice((pageDes - 1) * itemsPerPage, pageDes * itemsPerPage);
+    const locations = profile.desiredJob?.preferredLocations || [];
+    const totalPagesLoc = Math.ceil(locations.length / itemsPerPage) || 1;
+    const paginatedLoc = locations.slice((pageLoc - 1) * itemsPerPage, pageLoc * itemsPerPage);
+    const industries = profile.desiredJob?.preferredIndustries || [];
+    const totalPagesInd = Math.ceil(industries.length / itemsPerPage) || 1;
+    const paginatedInd = industries.slice((pageInd - 1) * itemsPerPage, pageInd * itemsPerPage);
+    useEffect(() => { setPageDes(1); }, [designations.length]);
+    useEffect(() => { setPageLoc(1); }, [locations.length]);
+    useEffect(() => { setPageInd(1); }, [industries.length]);
+    return (
+        <div className="mt-2 text-mine-shaft-200 space-y-3">
+            {/* Designations */}
+            <div>
+                <span className="font-semibold text-mine-shaft-100">Preferred Designations:</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                    {designations.length ? (
+                        paginatedDes.map((designation: string, idx: number) => (
+                            <span key={(pageDes - 1) * itemsPerPage + idx} className="rounded-full px-3 py-1 text-sm font-semibold text-mine-shaft-950 border border-bright-sun-300/80 bg-gradient-to-r from-bright-sun-300 to-yellow-300 shadow-[0_3px_10px_rgba(251,191,36,0.28)]">
+                                {designation}
+                            </span>
+                        ))
+                    ) : <span className="text-mine-shaft-300">Not specified</span>}
+                </div>
+                {designations.length > itemsPerPage && (
+                    <div className="flex justify-center gap-4 mt-2">
+                        <Button
+                            variant="gradient"
+                            gradient={{ from: 'brightSun.5', to: 'pink.4', deg: 90 }}
+                            size={matches ? "xs" : "sm"}
+                            onClick={() => setPageDes((p) => Math.max(1, p - 1))}
+                            disabled={pageDes === 1}
+                            className="rounded-full shadow-md px-6"
+                        >Previous</Button>
+                        <span className="text-mine-shaft-300 font-semibold self-center">Page {pageDes} of {totalPagesDes}</span>
+                        <Button
+                            variant="gradient"
+                            gradient={{ from: 'pink.4', to: 'brightSun.5', deg: 90 }}
+                            size={matches ? "xs" : "sm"}
+                            onClick={() => setPageDes((p) => Math.min(totalPagesDes, p + 1))}
+                            disabled={pageDes === totalPagesDes}
+                            className="rounded-full shadow-md px-6"
+                        >Next</Button>
+                    </div>
+                )}
+            </div>
+            {/* Locations */}
+            <div>
+                <span className="font-semibold text-mine-shaft-100">Preferred Locations:</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                    {locations.length ? (
+                        paginatedLoc.map((location: string, idx: number) => (
+                            <span key={(pageLoc - 1) * itemsPerPage + idx} className="rounded-full px-3 py-1 text-sm font-semibold text-mine-shaft-950 border border-bright-sun-300/80 bg-gradient-to-r from-bright-sun-300 to-yellow-300 shadow-[0_3px_10px_rgba(251,191,36,0.28)]">
+                                {location}
+                            </span>
+                        ))
+                    ) : <span className="text-mine-shaft-300">Not specified</span>}
+                </div>
+                {locations.length > itemsPerPage && (
+                    <div className="flex justify-center gap-4 mt-2">
+                        <Button
+                            variant="gradient"
+                            gradient={{ from: 'brightSun.5', to: 'pink.4', deg: 90 }}
+                            size={matches ? "xs" : "sm"}
+                            onClick={() => setPageLoc((p) => Math.max(1, p - 1))}
+                            disabled={pageLoc === 1}
+                            className="rounded-full shadow-md px-6"
+                        >Previous</Button>
+                        <span className="text-mine-shaft-300 font-semibold self-center">Page {pageLoc} of {totalPagesLoc}</span>
+                        <Button
+                            variant="gradient"
+                            gradient={{ from: 'pink.4', to: 'brightSun.5', deg: 90 }}
+                            size={matches ? "xs" : "sm"}
+                            onClick={() => setPageLoc((p) => Math.min(totalPagesLoc, p + 1))}
+                            disabled={pageLoc === totalPagesLoc}
+                            className="rounded-full shadow-md px-6"
+                        >Next</Button>
+                    </div>
+                )}
+            </div>
+            {/* Industries */}
+            <div>
+                <span className="font-semibold text-mine-shaft-100">Preferred Industries:</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                    {industries.length ? (
+                        paginatedInd.map((industry: string, idx: number) => (
+                            <span key={(pageInd - 1) * itemsPerPage + idx} className="rounded-full px-3 py-1 text-sm font-semibold text-mine-shaft-950 border border-bright-sun-300/80 bg-gradient-to-r from-bright-sun-300 to-yellow-300 shadow-[0_3px_10px_rgba(251,191,36,0.28)]">
+                                {industry}
+                            </span>
+                        ))
+                    ) : <span className="text-mine-shaft-300">Not specified</span>}
+                </div>
+                {industries.length > itemsPerPage && (
+                    <div className="flex justify-center gap-4 mt-2">
+                        <Button
+                            variant="gradient"
+                            gradient={{ from: 'brightSun.5', to: 'pink.4', deg: 90 }}
+                            size={matches ? "xs" : "sm"}
+                            onClick={() => setPageInd((p) => Math.max(1, p - 1))}
+                            disabled={pageInd === 1}
+                            className="rounded-full shadow-md px-6"
+                        >Previous</Button>
+                        <span className="text-mine-shaft-300 font-semibold self-center">Page {pageInd} of {totalPagesInd}</span>
+                        <Button
+                            variant="gradient"
+                            gradient={{ from: 'pink.4', to: 'brightSun.5', deg: 90 }}
+                            size={matches ? "xs" : "sm"}
+                            onClick={() => setPageInd((p) => Math.min(totalPagesInd, p + 1))}
+                            disabled={pageInd === totalPagesInd}
+                            className="rounded-full shadow-md px-6"
+                        >Next</Button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default DesiredJob;

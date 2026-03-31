@@ -84,7 +84,9 @@ const About: React.FC = () => {
       )}
 
       {edit ? (
-        <div className="flex flex-col gap-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+          <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-slate-300">Edit About Section</div>
+          <div className="flex flex-col gap-4">
           <TextInput
             label="CV Headline"
             placeholder="e.g., Immediate Joiner - Java Full Stack Developer"
@@ -108,24 +110,25 @@ const About: React.FC = () => {
             minRows={3}
           />
         </div>
+        </div>
       ) : hasContent ? (
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
           {profile.cvHeadline && (
-            <div>
-              <div className="text-xs font-semibold text-bright-sun-400 uppercase tracking-wider mb-1">Headline</div>
-              <p className="text-sm text-mine-shaft-200">{profile.cvHeadline}</p>
+            <div className="rounded-xl border border-bright-sun-300/25 bg-bright-sun-300/10 p-3">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-bright-sun-300">Headline</div>
+              <p className="text-sm text-mine-shaft-100">{profile.cvHeadline}</p>
             </div>
           )}
           {profile.about && (
-            <div>
-              <div className="text-xs font-semibold text-bright-sun-400 uppercase tracking-wider mb-1">About</div>
-              <p className="text-sm leading-7 text-mine-shaft-200 text-justify whitespace-pre-wrap">{profile.about}</p>
+            <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-cyan-100">About</div>
+              <p className="text-sm leading-7 text-mine-shaft-100 text-justify whitespace-pre-wrap">{profile.about}</p>
             </div>
           )}
           {profile.profileSummary && (
-            <div>
-              <div className="text-xs font-semibold text-bright-sun-400 uppercase tracking-wider mb-1">Summary</div>
-              <p className="text-sm leading-7 text-mine-shaft-200 text-justify whitespace-pre-wrap">{profile.profileSummary}</p>
+            <div className="rounded-xl border border-fuchsia-300/20 bg-fuchsia-400/10 p-3">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-fuchsia-100">Summary</div>
+              <p className="text-sm leading-7 text-mine-shaft-100 text-justify whitespace-pre-wrap">{profile.profileSummary}</p>
             </div>
           )}
         </div>

@@ -136,7 +136,8 @@ const Info = () => {
 
             {/* Editable Fields */}
             {edit ? (
-                <>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                    <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-slate-300">Edit Basic Information</div>
                     <div className="flex gap-10 md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
                         <TextInput 
                             label="Full Name" 
@@ -175,23 +176,23 @@ const Info = () => {
                             {...form.getInputProps("totalExp")}
                         />
                     </div>
-                </>
+                </div>
             ) : (
-                <div className="grid grid-cols-2 xs-mx:grid-cols-1 gap-x-6 gap-y-2 text-sm">
-                    <div className="flex gap-1.5 items-center text-mine-shaft-200">
+                <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                    <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-mine-shaft-200">
                         <IconBriefcase className="h-4 w-4 text-mine-shaft-400 shrink-0" stroke={1.5} />
                         {profile.jobTitle || <span className="text-mine-shaft-500 italic">No job title</span>}
                         {profile.jobTitle && profile.company ? " \u2022 " : ""}{profile.company}
                     </div>
-                    <div className="flex gap-1.5 items-center text-mine-shaft-300">
+                    <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-mine-shaft-300">
                         <IconMapPin className="h-4 w-4 text-mine-shaft-400 shrink-0" stroke={1.5} />
                         {profile.location || <span className="italic text-mine-shaft-500">Not specified</span>}
                     </div>
-                    <div className="flex gap-1.5 items-center text-mine-shaft-300">
+                    <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-mine-shaft-300">
                         <IconBriefcase className="h-4 w-4 text-mine-shaft-400 shrink-0" stroke={1.5} />
                         {profile.totalExp ? `${profile.totalExp} yrs experience` : <span className="italic text-mine-shaft-500">Experience not specified</span>}
                     </div>
-                    <div className="flex gap-1.5 items-center text-mine-shaft-200">
+                    <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-mine-shaft-200">
                         <IconMail className="h-4 w-4 text-mine-shaft-400 shrink-0" stroke={1.5} />
                         {profile.email || user?.email || <span className="text-mine-shaft-500 italic">No email</span>}
                     </div>

@@ -68,6 +68,21 @@ const Profile = () => {
     const [downloadingPdf, setDownloadingPdf] = useState(false);
     const [downloadingWord, setDownloadingWord] = useState(false);
 
+    const completenessChecks = [
+        !!profile?.name,
+        !!profile?.jobTitle,
+        !!profile?.company,
+        !!profile?.location,
+        !!profile?.picture,
+        !!profile?.about,
+        Array.isArray(profile?.skills) && profile.skills.length > 0,
+        Array.isArray(profile?.experiences) && profile.experiences.length > 0,
+        Array.isArray(profile?.certifications) && profile.certifications.length > 0,
+        !!profile?.email,
+    ];
+    const completenessFilled = completenessChecks.filter(Boolean).length;
+    const completenessPct = Math.round((completenessFilled / completenessChecks.length) * 100);
+
     /* ---------------- Image Handlers ---------------- */
     const handleProfilePicChange = async (file: File | null) => {
         if (!file) return;
@@ -350,16 +365,17 @@ const Profile = () => {
     };
 
     return (
-        <div className="relative w-4/5 lg-mx:w-full mx-auto pb-10 px-2">
-            <div className="pointer-events-none absolute -top-12 -left-16 h-56 w-56 rounded-full bg-bright-sun-400/10 blur-3xl" />
-            <div className="pointer-events-none absolute top-20 right-0 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="relative mx-auto w-full max-w-[1380px] px-3 pb-12 sm:px-4">
+            <div className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-bright-sun-400/15 blur-3xl" />
+            <div className="pointer-events-none absolute right-0 top-36 h-80 w-80 rounded-full bg-cyan-500/12 blur-3xl" />
+            <div className="pointer-events-none absolute bottom-10 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-pink-500/10 blur-3xl" />
 
-            <div className="relative rounded-3xl border border-mine-shaft-800/70 bg-gradient-to-b from-mine-shaft-900/95 via-mine-shaft-950/95 to-mine-shaft-950/95 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_38%),radial-gradient(circle_at_top_left,rgba(251,191,36,0.14),transparent_34%),linear-gradient(180deg,rgba(9,12,21,0.96),rgba(6,9,16,0.98))] shadow-[0_26px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
             {/* ---------------- Banner ---------------- */}
             <div className="relative px-5 pt-5" data-aos="zoom-out">
                 <div ref={refBanner} className="relative w-full">
                     <img
-                        className="rounded-2xl h-[180px] xs-mx:h-[120px] w-full object-cover border border-mine-shaft-700/40"
+                        className="h-[220px] w-full rounded-3xl border border-white/15 object-cover shadow-[0_18px_46px_rgba(0,0,0,0.35)] xs-mx:h-[130px]"
                         src={
                             profile.banner
                                 ? `data:image/jpeg;base64,${profile.banner}`
@@ -367,10 +383,10 @@ const Profile = () => {
                         }
                         alt={`${profile.name || "User"} profile banner`}
                     />
-                    <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-tr from-mine-shaft-950/55 via-transparent to-blue-600/20" />
+                    <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-tr from-black/45 via-transparent to-cyan-500/20" />
                     {hoveredBanner && (
                         <>
-                            <Overlay color="#000" backgroundOpacity={0.5} className="!rounded-2xl pointer-events-none" />
+                            <Overlay color="#000" backgroundOpacity={0.45} className="!rounded-3xl pointer-events-none" />
                             <IconEdit className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white w-14 h-14 z-10 pointer-events-none" />
                         </>
                     )}
@@ -389,10 +405,10 @@ const Profile = () => {
                 </div>
 
                 {/* Profile Picture */}
-                <div ref={refProfile} className="absolute -bottom-14 left-8 cursor-pointer w-32 h-32">
+                <div ref={refProfile} className="absolute -bottom-16 left-8 h-32 w-32 cursor-pointer">
                     <Avatar
                         size={128}
-                        className="border-4 border-mine-shaft-950 shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                        className="border-4 border-[#060910] shadow-[0_10px_32px_rgba(0,0,0,0.52)]"
                         src={profile.picture ? `data:image/jpeg;base64,${profile.picture}` : "/avatar.svg"}
                     />
                     {hoveredProfile && (
@@ -420,73 +436,85 @@ const Profile = () => {
             </div>
 
             {/* ---------------- Name & Title ---------------- */}
-            <div className="px-5 mt-16 mb-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-2 mt-20 flex flex-col gap-4 px-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-bright-sun-400/30 bg-bright-sun-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-bright-sun-300">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-bright-sun-400/40 bg-bright-sun-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-bright-sun-300">
                         <IconSparkles className="h-3.5 w-3.5" stroke={1.8} />
-                        Premium Profile
+                        Premium Identity
                     </div>
-                    <h1 className="mt-2 text-2xl xs-mx:text-xl font-extrabold text-mine-shaft-50 tracking-tight">{profile.name || user?.name || "Your Name"}</h1>
+                    <h1 className="mt-2 text-3xl font-black tracking-tight text-white xs-mx:text-2xl">{profile.name || user?.name || "Your Name"}</h1>
                     {(profile.jobTitle || profile.company) && (
-                        <p className="text-sm text-mine-shaft-300 mt-1">
+                        <p className="mt-1 text-sm text-slate-300">
                             {profile.jobTitle}{profile.jobTitle && profile.company ? " at " : ""}{profile.company}
                         </p>
                     )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <div className="rounded-xl border border-mine-shaft-700/60 bg-mine-shaft-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-mine-shaft-400">Skills</p>
-                        <p className="text-sm font-semibold text-mine-shaft-100">{skillsCount}</p>
+                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Skills</p>
+                        <p className="text-sm font-semibold text-white">{skillsCount}</p>
                     </div>
-                    <div className="rounded-xl border border-mine-shaft-700/60 bg-mine-shaft-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-mine-shaft-400">Experience</p>
-                        <p className="text-sm font-semibold text-mine-shaft-100">{experienceCount}</p>
+                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Experience</p>
+                        <p className="text-sm font-semibold text-white">{experienceCount}</p>
                     </div>
-                    <div className="rounded-xl border border-mine-shaft-700/60 bg-mine-shaft-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-mine-shaft-400">Certs</p>
-                        <p className="text-sm font-semibold text-mine-shaft-100">{certificationCount}</p>
+                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Certs</p>
+                        <p className="text-sm font-semibold text-white">{certificationCount}</p>
                     </div>
-                    <div className="rounded-xl border border-mine-shaft-700/60 bg-mine-shaft-900/60 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-mine-shaft-400">Resume</p>
-                        <p className="text-sm font-semibold text-mine-shaft-100">{hasCv ? "Uploaded" : "Missing"}</p>
+                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Resume</p>
+                        <p className="text-sm font-semibold text-white">{hasCv ? "Uploaded" : "Missing"}</p>
                     </div>
                 </div>
             </div>
 
             {/* ---------------- Profile Completeness ---------------- */}
-            {profile?.id && (() => {
-                const checks = [
-                    !!profile.name, !!profile.jobTitle, !!profile.company, !!profile.location,
-                    !!profile.picture, !!profile.about,
-                    Array.isArray(profile.skills) && profile.skills.length > 0,
-                    Array.isArray(profile.experiences) && profile.experiences.length > 0,
-                    Array.isArray(profile.certifications) && profile.certifications.length > 0,
-                    !!profile.email,
-                ];
-                const filled = checks.filter(Boolean).length;
-                const pct = Math.round((filled / checks.length) * 100);
-                return (
-                    <div className="px-5 mb-4" data-aos="fade-up">
-                        <div className="flex items-center gap-2 mb-1">
+            {profile?.id && (
+                <div className="mb-4 px-5" data-aos="fade-up">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div className="mb-2 flex items-center gap-2">
                             <IconCircleCheck className="h-4 w-4 text-bright-sun-400" stroke={1.5} />
-                            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-mine-shaft-300">Profile completeness</span>
-                            <span className="text-xs font-semibold text-bright-sun-400 ml-auto">{pct}%</span>
+                            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">Profile completeness</span>
+                            <span className="ml-auto text-xs font-semibold text-bright-sun-400">{completenessPct}%</span>
                         </div>
-                        <div className="w-full bg-mine-shaft-800/80 rounded-full h-2 shadow-inner">
+                        <div className="h-2 w-full rounded-full bg-slate-800/85 shadow-inner">
                             <div
-                                className="h-2 rounded-full transition-all duration-500 bg-gradient-to-r from-bright-sun-400 via-yellow-300 to-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.45)]"
-                                style={{ width: `${pct}%` }}
+                                className="h-2 rounded-full bg-gradient-to-r from-bright-sun-400 via-yellow-300 to-orange-300 shadow-[0_0_14px_rgba(251,191,36,0.45)] transition-all duration-500"
+                                style={{ width: `${completenessPct}%` }}
                             />
                         </div>
                     </div>
-                );
-            })()}
+                </div>
+            )}
+
+            <div className="mb-4 px-5" data-aos="fade-up">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                    <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-cyan-100/80">Profile Tier</p>
+                        <p className="text-sm font-semibold text-cyan-50">Premium</p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-100/80">Readiness</p>
+                        <p className="text-sm font-semibold text-emerald-50">{completenessPct >= 80 ? "High" : completenessPct >= 50 ? "Medium" : "Improving"}</p>
+                    </div>
+                    <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/10 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-fuchsia-100/80">AI Assist</p>
+                        <p className="text-sm font-semibold text-fuchsia-50">Enabled</p>
+                    </div>
+                    <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-amber-100/80">Portfolio</p>
+                        <p className="text-sm font-semibold text-amber-50">{hasCv ? "Resume Ready" : "Upload Needed"}</p>
+                    </div>
+                </div>
+            </div>
 
             {accountType === "EMPLOYER" && (
                 <div className="px-5 mb-4" data-aos="fade-up">
-                    <div className="rounded-xl border border-mine-shaft-700/60 bg-mine-shaft-900/40 p-3">
-                        <div className="mb-2 text-sm font-semibold text-mine-shaft-200">Parse and Fill Inputs (Entire Profile)</div>
+                    <div className="rounded-2xl border border-white/12 bg-white/5 p-4">
+                        <div className="mb-2 text-sm font-semibold text-white">Parse and Fill Inputs (Entire Profile)</div>
+                        <p className="mb-3 text-xs text-slate-300">Upload an existing company CV or profile document and auto-populate this page instantly.</p>
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                             <div className="flex-1">
                                 <FileInput
@@ -537,9 +565,9 @@ const Profile = () => {
             {/* ================================================================== */}
             {/* CARD-BASED SECTIONS                                                 */}
             {/* ================================================================== */}
-            <div className="px-5 flex flex-col gap-3">
+            <div className="px-5 pb-5">
                 {accountType === "EMPLOYER" ? (
-                    <>
+                    <div className="grid grid-cols-1 gap-3">
                         <ProfileCard title="About" icon={<IconUser className="w-4 h-4" stroke={1.5} />}>
                             <About />
                         </ProfileCard>
@@ -552,9 +580,9 @@ const Profile = () => {
                         <ProfileCard title="Address Details" icon={<IconAddressBook className="w-4 h-4" stroke={1.5} />}>
                             <AddressDetails />
                         </ProfileCard>
-                    </>
+                    </div>
                 ) : (
-                    <>
+                    <div className="grid grid-cols-1 gap-3">
                         {/* Primary cards — full width */}
                         <ProfileCard title="About" icon={<IconUser className="w-4 h-4" stroke={1.5} />}>
                             <About />
@@ -602,7 +630,7 @@ const Profile = () => {
                         <ProfileCard title="Update CV" icon={<IconFileUpload className="w-4 h-4" stroke={1.5} />} defaultOpen={false}>
                             <UpdateCV />
                         </ProfileCard>
-                    </>
+                    </div>
                 )}
             </div>
             </div>

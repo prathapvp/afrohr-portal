@@ -28,8 +28,9 @@ const ProfilePage = () => {
     }, [user?.profileId, dispatch, profile]);
 
     if (loading) {
-        return <div className="min-h-screen bg-mine-shaft-950 font-['poppins'] p-6">
-            <Skeleton height={180} radius="md" mb="xl" />
+        return <div className="min-h-screen bg-gradient-to-br from-[#070a12] via-[#0b1020] to-[#130f24] font-['poppins'] p-6 text-white">
+            <div className="mx-auto w-full max-w-[1380px]">
+            <Skeleton height={220} radius="md" mb="xl" />
             <div className="flex gap-4 mb-6">
                 {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height={36} width={100} radius="md" />)}
             </div>
@@ -37,22 +38,25 @@ const ProfilePage = () => {
             <Skeleton height={20} width="60%" mb="sm" />
             <Skeleton height={20} width="30%" mb="sm" />
             <Skeleton height={20} width="50%" />
+            </div>
         </div>;
     }
 
     if (error) {
-        return <div className="min-h-screen bg-mine-shaft-950 font-['poppins'] flex flex-col items-center justify-center text-mine-shaft-300">
-            <div className="text-lg font-medium mb-2">{error}</div>
-            <button
-                onClick={() => window.location.reload()}
-                className="mt-2 px-4 py-2 rounded-md bg-bright-sun-400 text-mine-shaft-950 font-medium hover:bg-bright-sun-300 transition-colors"
-            >
-                Retry
-            </button>
+        return <div className="min-h-screen bg-gradient-to-br from-[#070a12] via-[#0b1020] to-[#130f24] font-['poppins'] flex items-center justify-center px-4">
+            <div className="w-full max-w-xl rounded-2xl border border-red-300/20 bg-red-500/10 p-6 text-center text-red-100 shadow-xl">
+                <div className="mb-2 text-lg font-medium">{error}</div>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-2 rounded-md bg-bright-sun-400 px-4 py-2 font-medium text-mine-shaft-950 transition-colors hover:bg-bright-sun-300"
+                >
+                    Retry
+                </button>
+            </div>
         </div>;
     }
 
-    return <div className="min-h-screen bg-mine-shaft-950 font-['poppins'] pt-4">
+    return <div className="min-h-screen bg-gradient-to-br from-[#070a12] via-[#0b1020] to-[#130f24] font-['poppins'] pt-4">
         <Profile />
     </div>
 }

@@ -99,6 +99,7 @@ import {
   ChevronRight,
   Clock,
   DollarSign,
+  Eye,
   FileText,
   Globe,
   GraduationCap,
@@ -249,9 +250,11 @@ function CandidateView({
   searchQuery,
   onSearchQueryChange,
   onSearch,
+  onViewJob,
   onApplyToJob,
   applyingJobId,
   appliedJobIds,
+  viewedJobIds,
   searchLoading,
   searchResults,
 }: {
@@ -259,9 +262,11 @@ function CandidateView({
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   onSearch: () => void;
+  onViewJob: (job: CandidateJob) => void;
   onApplyToJob: (job: CandidateJob) => Promise<void>;
   applyingJobId: number | null;
   appliedJobIds: Set<number>;
+  viewedJobIds: Set<number>;
   searchLoading: boolean;
   searchResults: CandidateJob[] | null;
 }) {
@@ -339,6 +344,7 @@ function CandidateView({
             {jobs.map((job) => (
               (() => {
                 const safeTone = normalizeLogoTone(job.logoTone);
+                const hasViewedJob = Boolean(job.id && viewedJobIds.has(job.id));
                 return (
               <div
                 key={job.id ?? `${job.company}-${job.role}`}
@@ -359,17 +365,36 @@ function CandidateView({
                     </div>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="min-h-11 w-full rounded-xl border-cyan-300/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 sm:w-auto"
-                  disabled={!job.id || applyingJobId === job.id || (job.id ? appliedJobIds.has(job.id) : false)}
-                  onClick={() => {
-                    void onApplyToJob(job);
-                  }}
-                >
-                  {applyingJobId === job.id ? "Applying..." : job.id && appliedJobIds.has(job.id) ? "Applied" : "Apply"}
-                </Button>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+                  <div className="flex w-full gap-2 sm:w-auto">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="min-h-11 w-full rounded-xl border border-white/20 bg-white/5 text-slate-100 hover:bg-white/10 sm:w-auto"
+                      disabled={!job.id}
+                      onClick={() => {
+                        onViewJob(job);
+                      }}
+                    >
+                      <Eye className="mr-1 h-4 w-4" />
+                      {hasViewedJob ? "Viewed" : "View"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="min-h-11 w-full rounded-xl border-cyan-300/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 sm:w-auto"
+                      disabled={!job.id || !hasViewedJob || applyingJobId === job.id || (job.id ? appliedJobIds.has(job.id) : false)}
+                      onClick={() => {
+                        void onApplyToJob(job);
+                      }}
+                    >
+                      {applyingJobId === job.id ? "Applying..." : job.id && appliedJobIds.has(job.id) ? "Applied" : "Apply"}
+                    </Button>
+                  </div>
+                  {!hasViewedJob && !(job.id && appliedJobIds.has(job.id)) && (
+                    <p className="text-xs text-amber-300">View this job first to enable Apply.</p>
+                  )}
+                </div>
               </div>
                 );
               })()
@@ -677,6 +702,21 @@ export default function App() {
   const [candidateJobs, setCandidateJobs] = useState<CandidateJob[]>([]);
   const [applyingJobId, setApplyingJobId] = useState<number | null>(null);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<number>>(new Set());
+  const [viewedJobIds, setViewedJobIds] = useState<Set<number>>(() => {
+    try {
+      const raw = localStorage.getItem("afrohr:viewed-job-ids");
+      if (!raw) {
+        return new Set<number>();
+      }
+      const parsed = JSON.parse(raw) as number[];
+      if (!Array.isArray(parsed)) {
+        return new Set<number>();
+      }
+      return new Set<number>(parsed.filter((item) => typeof item === "number"));
+    } catch {
+      return new Set<number>();
+    }
+  });
   const [employerImageOverride, setEmployerImageOverride] = useState<string | null>(null);
   const [deptModalOpen, setDeptModalOpen] = useState(false);
   const [indModalOpen, setIndModalOpen] = useState(false);
@@ -688,6 +728,10 @@ export default function App() {
   const [workModeList, setWorkModeList] = useState<WorkMode[]>([]);
   const hasRedirectedUnauthorizedEmployer = useRef(false);
   const unauthorizedEmployerRedirectKey = "afrohr:unauthorized-employer-redirect";
+
+  useEffect(() => {
+    localStorage.setItem("afrohr:viewed-job-ids", JSON.stringify(Array.from(viewedJobIds)));
+  }, [viewedJobIds]);
 
   useEffect(() => {
     let cancelled = false;
@@ -853,7 +897,25 @@ export default function App() {
       return;
     }
 
+    if (!viewedJobIds.has(job.id)) {
+      setError("Please view the job details before applying.");
+      return;
+    }
+
     navigate(`/apply-job/${job.id}`);
+  }
+
+  function handleViewJob(job: CandidateJob) {
+    if (!job.id) {
+      return;
+    }
+
+    setViewedJobIds((previous) => {
+      const next = new Set(previous);
+      next.add(job.id as number);
+      return next;
+    });
+    navigate(`/jobs/${job.id}`);
   }
 
   return (
@@ -935,9 +997,11 @@ export default function App() {
                 searchQuery={searchQuery}
                 onSearchQueryChange={setSearchQuery}
                 onSearch={handleSearch}
+                onViewJob={handleViewJob}
                 onApplyToJob={handleApplyToJob}
                 applyingJobId={applyingJobId}
                 appliedJobIds={appliedJobIds}
+                viewedJobIds={viewedJobIds}
                 searchLoading={searchLoading}
                 searchResults={searchResults as CandidateJob[] | null}
               />

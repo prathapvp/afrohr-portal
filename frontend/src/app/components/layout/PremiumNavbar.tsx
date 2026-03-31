@@ -16,7 +16,7 @@ function PremiumNavbar() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setIsAuthenticated(false);
-    void navigate("/login");
+    void navigate("/");
   };
 
   return (

@@ -70,26 +70,32 @@ const Skills = () => {
             )}
 
             {edit ? (
-                <TagsInput
-                    data-aos="zoom-out"
-                    placeholder="Add skill (press Enter or comma to add)"
-                    value={skills}
-                    onChange={setSkills}
-                    splitChars={[',', '|']}
-                    error={!!validationError}
-                />
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                    <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-slate-300">Edit Skills</div>
+                    <TagsInput
+                        data-aos="zoom-out"
+                        placeholder="Add skill (press Enter or comma to add)"
+                        value={skills}
+                        onChange={setSkills}
+                        splitChars={[',', '|']}
+                        error={!!validationError}
+                    />
+                </div>
             ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+                <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-slate-300">Core Skills</div>
                 <div className="flex flex-wrap gap-2">
                     {profile?.skills?.length
                         ? profile.skills.map((skill: string, index: number) => (
                             <div
                                 key={index}
-                                className="rounded-3xl px-3 py-1.5 text-sm font-semibold text-mine-shaft-950 border border-bright-sun-300/80 bg-gradient-to-r from-bright-sun-300 to-yellow-300 shadow-[0_4px_12px_rgba(251,191,36,0.3)]"
+                                className="rounded-full border border-amber-200/80 bg-gradient-to-r from-bright-sun-300 via-yellow-300 to-amber-300 px-3 py-1.5 text-sm font-semibold text-mine-shaft-950 shadow-[0_6px_14px_rgba(251,191,36,0.28)]"
                             >
                                 {skill}
                             </div>
                         ))
                         : <span className="text-mine-shaft-300">No skills added</span>}
+                </div>
                 </div>
             )}
         </div>

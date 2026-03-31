@@ -20,12 +20,14 @@ interface DepartmentsProps {
 }
 
 const Departments = ({ opened, onClose }: DepartmentsProps) => {
+    const PAGE_SIZE = 5;
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
 
     const form = useForm({
         mode: "controlled",
@@ -103,6 +105,20 @@ const Departments = ({ opened, onClose }: DepartmentsProps) => {
             d.name.toLowerCase().includes(search.toLowerCase()) ||
             (d.description || "").toLowerCase().includes(search.toLowerCase())
     );
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const pageStart = (page - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search, opened]);
+
+    useEffect(() => {
+        if (page > totalPages) {
+            setPage(totalPages);
+        }
+    }, [page, totalPages]);
 
     return (
         <Modal
@@ -281,14 +297,14 @@ const Departments = ({ opened, onClose }: DepartmentsProps) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.map((dept, idx) => (
+                                {pageItems.map((dept, idx) => (
                                     <tr
                                         key={dept.id}
                                         className="group border-b border-white/5 transition-colors last:border-0 hover:bg-white/[0.03]"
                                     >
                                         <td className="px-5 py-3.5">
                                             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/5 text-[11px] font-bold text-slate-500">
-                                                {idx + 1}
+                                                {pageStart + idx + 1}
                                             </span>
                                         </td>
                                         <td className="px-5 py-3.5">
@@ -324,6 +340,31 @@ const Departments = ({ opened, onClose }: DepartmentsProps) => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {filtered.length > 0 && (
+                    <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-white/8 bg-white/[0.02] px-4 py-3 text-xs text-slate-400">
+                        <span>
+                            Showing {pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, filtered.length)} of {filtered.length}
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                disabled={page === 1}
+                                className="rounded-md border border-white/10 px-2.5 py-1 text-slate-300 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Prev
+                            </button>
+                            <span className="min-w-16 text-center text-slate-300">{page} / {totalPages}</span>
+                            <button
+                                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                                disabled={page === totalPages}
+                                className="rounded-md border border-white/10 px-2.5 py-1 text-slate-300 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

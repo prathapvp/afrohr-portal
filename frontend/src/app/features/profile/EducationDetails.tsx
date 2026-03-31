@@ -1,6 +1,6 @@
 import { IconCheck, IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionIcon, Button, Divider, TextInput, Alert, Select } from "@mantine/core";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
@@ -23,6 +23,15 @@ const EducationDetails = () => {
     const [edit, setEdit] = useState(false);
     const [education, setEducation] = useState<Education[]>(profile.education || []);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    // Pagination for display mode
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 3;
+    const totalPages = Math.ceil(education.length / itemsPerPage);
+    const paginatedEducation = education.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+    const handlePrev = () => setPage((p) => Math.max(1, p - 1));
+    const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
+    // Reset page if education changes
+    useEffect(() => { setPage(1); }, [education.length]);
 
     const handleClick = () => {
         if (!edit) {
@@ -154,17 +163,42 @@ const EducationDetails = () => {
             ) : (
                 <div className="mt-2">
                     {education.length > 0 ? (
-                        <div className="space-y-4">
-                            {education.map((edu, index) => (
-                                <div key={index} className="border-l-4 border-brightSun-400 pl-4">
-                                    <div className="font-semibold text-lg">
-                                        {edu.degree} in {edu.field}
+                        <>
+                            <div className="space-y-4">
+                                {paginatedEducation.map((edu, idx) => (
+                                    <div key={(page - 1) * itemsPerPage + idx} className="border-l-4 border-brightSun-400 pl-4">
+                                        <div className="font-semibold text-lg">
+                                            {edu.degree} in {edu.field}
+                                        </div>
+                                        <div className="text-mine-shaft-600">{edu.college}</div>
+                                        <div className="text-sm text-mine-shaft-500">{edu.yearOfPassing}</div>
                                     </div>
-                                    <div className="text-mine-shaft-600">{edu.college}</div>
-                                    <div className="text-sm text-mine-shaft-500">{edu.yearOfPassing}</div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-center gap-4 mt-2">
+                                <Button
+                                    variant="gradient"
+                                    gradient={{ from: 'brightSun.5', to: 'pink.4', deg: 90 }}
+                                    size={matches ? "xs" : "sm"}
+                                    onClick={handlePrev}
+                                    disabled={page === 1}
+                                    className="rounded-full shadow-md px-6"
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-mine-shaft-300 font-semibold self-center">Page {page} of {totalPages}</span>
+                                <Button
+                                    variant="gradient"
+                                    gradient={{ from: 'pink.4', to: 'brightSun.5', deg: 90 }}
+                                    size={matches ? "xs" : "sm"}
+                                    onClick={handleNext}
+                                    disabled={page === totalPages}
+                                    className="rounded-full shadow-md px-6"
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </>
                     ) : (
                         <p className="text-mine-shaft-600">No education details added yet. Click edit to add.</p>
                     )}

@@ -92,21 +92,21 @@ const ProfileAssistant = () => {
     };
 
     return (
-        <div className="rounded-2xl border border-blue-500/20 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
+        <div className="rounded-3xl border border-white/12 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.2),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(244,114,182,0.14),transparent_34%),linear-gradient(180deg,rgba(13,20,37,0.96),rgba(3,7,16,0.96))] p-4 shadow-[0_22px_54px_rgba(0,0,0,0.34)]">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-200">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
                         <IconSparkles size={14} />
-                        GPT Profile Assistant
+                        AI Profile Copilot
                     </div>
-                    <h3 className="mt-3 text-lg font-semibold text-white">Ask AI to improve this profile</h3>
+                    <h3 className="mt-3 text-lg font-semibold text-white">Make this profile sharper in seconds</h3>
                     <p className="mt-1 text-sm text-slate-300">
                         Get profile-specific suggestions using the information already filled on this page.
                     </p>
                 </div>
             </div>
 
-            <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+            <div className="mt-4 space-y-3 rounded-2xl border border-white/12 bg-black/25 p-3">
                 <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
                     {messages.map((entry, index) => (
                         <div
@@ -115,8 +115,8 @@ const ProfileAssistant = () => {
                         >
                             <div
                                 className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${entry.role === "user"
-                                    ? "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 text-white"
-                                    : "border border-white/10 bg-slate-900/80 text-slate-100"
+                                    ? "bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white"
+                                    : "border border-white/10 bg-slate-900/85 text-slate-100"
                                 }`}
                             >
                                 <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] opacity-70">
@@ -128,7 +128,7 @@ const ProfileAssistant = () => {
                     ))}
                     {sending && (
                         <div className="flex justify-start">
-                            <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-200">
+                            <div className="inline-flex items-center gap-2 rounded-2xl border border-white/12 bg-slate-900/85 px-4 py-3 text-sm text-slate-200">
                                 <Loader size={16} color="blue" />
                                 Thinking...
                             </div>

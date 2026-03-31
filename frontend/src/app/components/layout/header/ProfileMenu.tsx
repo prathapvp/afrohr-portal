@@ -11,6 +11,7 @@ import {
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { removeUser } from '../../../store/slices/UserSlice';
 import { removeJwt } from '../../../store/slices/JwtSlice';
 import { clearProfile } from '../../../store/slices/ProfileSlice';
@@ -26,11 +27,14 @@ const ProfileMenu = ({ colorScheme, toggleColorScheme }: ProfileMenuProps) => {
     const [opened, setOpened] = useState(false);
     const [checked, setChecked] = useState(colorScheme === 'dark');
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const handleLogout=()=>{
         // Clear all PII data on logout
         dispatch(removeUser());
         dispatch(removeJwt());
         dispatch(clearProfile());
+        setOpened(false);
+        void navigate('/');
     }
     // Sync checked state with colorScheme prop
     // (in case colorScheme changes from outside)

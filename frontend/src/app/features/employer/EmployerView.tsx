@@ -20,10 +20,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { deleteJob, getJob, postJob } from "../../services/job-service";
-import type { Department } from "../../services/department-service";
-import type { Industry } from "../../services/industry-service";
-import type { EmploymentType } from "../../services/employment-type-service";
-import type { WorkMode } from "../../services/workmode-service";
+import { getAllDepartments, type Department } from "../../services/department-service";
+import { getAllIndustries, type Industry } from "../../services/industry-service";
+import employmentTypeService, { type EmploymentType } from "../../services/employment-type-service";
+import workModeService, { type WorkMode } from "../../services/workmode-service";
 import { iconMap, toneClasses } from "../../shared";
 import {
   Briefcase,
@@ -243,6 +243,42 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
     target.addEventListener("scroll", updateShadow, { passive: true });
     return () => target.removeEventListener("scroll", updateShadow);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMetadata() {
+      if (!isEmployerAuthorized) {
+        setDepartmentList([]);
+        setIndustryList([]);
+        setEmploymentTypeList([]);
+        setWorkModeList([]);
+        return;
+      }
+
+      const [departments, industries, employmentTypes, workModes] = await Promise.all([
+        getAllDepartments().catch(() => [] as Department[]),
+        getAllIndustries().catch(() => [] as Industry[]),
+        employmentTypeService.getAllEmploymentTypes().catch(() => [] as EmploymentType[]),
+        workModeService.getAllWorkModes().catch(() => [] as WorkMode[]),
+      ]);
+
+      if (cancelled) {
+        return;
+      }
+
+      setDepartmentList(departments);
+      setIndustryList(industries);
+      setEmploymentTypeList(employmentTypes);
+      setWorkModeList(workModes);
+    }
+
+    void loadMetadata();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEmployerAuthorized]);
 
   function normalizeEmployerJob(item: Record<string, unknown>): EmployerPostedJob {
     const rawStatus = String(item.jobStatus ?? "ACTIVE").toUpperCase();

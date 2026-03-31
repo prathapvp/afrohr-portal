@@ -25,13 +25,15 @@ const Experience=()=>{
 
     return <div>
     <div className="flex justify-end mb-2 gap-2"><div className="flex gap-2"><ActionIcon onClick={() => setAddExp(true)} variant="subtle" color="brightSun.4" size={matches?"md":"lg"} ><IconPlus className="w-4/5 h-4/5" stroke={1.5} /></ActionIcon><ActionIcon onClick={ handleClick} variant="subtle" color={edit ? "red.8" : "brightSun.4"} size={matches?"md":"lg"} >{edit? <IconX className="w-4/5 h-4/5" stroke={1.5} /> : <IconPencil className="w-4/5 h-4/5" stroke={1.5} />}</ActionIcon></div></div>
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+    <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-slate-300">Experience Timeline</div>
     <div className="flex flex-col gap-8">
         {
             sortedExperiences.length > 0
                 ? sortedExperiences.map((exp:any, index:number) => <ExpCard edit={edit} index={index} key={index} {...exp} />)
                 : !addExp && (
-                    <div className="text-center py-8 text-mine-shaft-200">
-                        <p className="mb-3 text-base text-mine-shaft-300">No experience added yet. Employers value detailed work history.</p>
+                    <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 py-8 text-center text-mine-shaft-200">
+                        <p className="mb-3 text-base text-amber-100">No experience added yet. Employers value detailed work history.</p>
                         <Button
                             variant="light"
                             color="brightSun.4"
@@ -45,6 +47,7 @@ const Experience=()=>{
                 )
         }
         {addExp && <ExpInput add   setEdit={setAddExp} />}
+    </div>
     </div>
 </div>
 }
