@@ -41,11 +41,14 @@ const Talents=()=>{
         setFilteredTalents(filtered);
     },[filter,talents])
     return <div className="px-5 py-5">
-    <div className="flex justify-between mt-5">
-        <div className="text-2xl font-semibold">Talents</div>
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <div>
+            <div className="text-[11px] uppercase tracking-[0.15em] text-emerald-200/75">Discovery</div>
+            <div className="text-2xl font-semibold text-white">Talents</div>
+        </div>
         <Sort />
     </div>
-    <div className="flex mt-10 flex-wrap gap-5 justify-between">
+    <div className="mt-8 grid grid-cols-1 gap-5 bs-mx:grid-cols-2">
         {
             filteredTalents.map((talent:any, index:any) => <TalentCard key={index} {...talent}  />)
         }

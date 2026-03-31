@@ -1,6 +1,6 @@
 
   import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { MantineProvider } from "@mantine/core";
 import { afroTheme } from "./theme";
 import App from "./app/App.tsx";
@@ -55,6 +55,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/apply-job/:id" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><ApplyJobPage /></ProtectedRoute>} />
         <Route path="/find-talent" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><FindTalentPage /></ProtectedRoute>} />
         <Route path="/talent-profile/:id" element={<ProtectedRoute allowedRoles={["APPLICANT", "EMPLOYER", "ADMIN"]}><TalentProfilePage /></ProtectedRoute>} />
+        <Route path="/company" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><Navigate to="/find-jobs" replace /></ProtectedRoute>} />
         <Route path="/company/:name" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><CompanyPage /></ProtectedRoute>} />
         <Route path="/job-history" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><JobHistoryPage /></ProtectedRoute>} />
         <Route path="/posted-jobs/:id" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><PostedJobPage /></ProtectedRoute>} />

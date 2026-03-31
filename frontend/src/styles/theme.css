@@ -9,6 +9,13 @@
   --font-size: 16px;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* ── Motion rhythm ───────────────────────────────────────────── */
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 180ms;
+  --duration-base: 280ms;
+  --duration-slow: 420ms;
 
   /* ── Brand: bright-sun (amber/gold) ─────────────────────────── */
   --bright-sun-50:  #fffbeb;
@@ -217,26 +224,32 @@
 
   h1 {
     font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
   }
 
   h2 {
     font-size: var(--text-xl);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    line-height: 1.32;
+    letter-spacing: -0.01em;
   }
 
   h3 {
     font-size: var(--text-lg);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    line-height: 1.36;
   }
 
   h4 {
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    line-height: 1.4;
+  }
+
+  p {
+    line-height: 1.6;
   }
 
   label {
@@ -296,5 +309,41 @@
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.76));
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(6px);
+  }
+
+  .premium-enter {
+    animation: premium-fade-up var(--duration-slow) var(--ease-premium) both;
+  }
+
+  .premium-card-hover {
+    transition: transform var(--duration-base) var(--ease-premium), box-shadow var(--duration-base) var(--ease-premium), border-color var(--duration-base) var(--ease-premium), background-color var(--duration-base) var(--ease-premium);
+  }
+
+  .premium-pill {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes premium-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

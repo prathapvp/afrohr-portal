@@ -22,10 +22,10 @@ const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
         .filter((job) => job?.id && job?.id !== currentJobId && job?.jobStatus !== "CLOSED")
         .slice(0, 5);
 
-    return <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl backdrop-blur-sm sm:p-6">
+    return <div className="premium-card-hover rounded-3xl border border-white/12 bg-[linear-gradient(180deg,rgba(17,24,39,0.88),rgba(2,6,23,0.94))] p-5 shadow-[0_18px_48px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-xl font-semibold text-white">Recommended Jobs</h3>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
+            <span className="premium-pill rounded-full px-3 py-1 text-xs text-slate-200">
                 {recommended.length} matches
             </span>
         </div>
@@ -41,7 +41,7 @@ const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
                 <Link
                     key={job.id}
                     to={`/jobs/${job.id}`}
-                    className="block rounded-2xl border border-white/10 bg-slate-900/40 p-4 transition hover:border-cyan-300/30 hover:bg-slate-900/70"
+                    className="premium-card-hover block rounded-2xl border border-white/10 bg-slate-900/40 p-4 hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-slate-900/70"
                 >
                     <div className="mb-2 flex items-center gap-2 text-sm text-slate-300">
                         <IconBuilding size={16} className="text-cyan-300" />

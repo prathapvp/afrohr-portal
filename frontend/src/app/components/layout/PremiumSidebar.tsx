@@ -42,7 +42,7 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
       </button>
       {/* Sidebar */}
       <aside
-        className={`fixed top-[68px] left-0 h-[calc(100vh-68px)] z-40 bg-gradient-to-br from-[#1a2740]/80 via-[#101c2c]/90 to-[#232946]/80 glass-card shadow-2xl border-r border-white/10 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"} md:relative md:top-0 md:h-full md:translate-x-0 md:transition-[width] md:duration-300 md:ease-out ${collapsedDesktop ? "md:w-20" : "md:w-64"} w-64 flex flex-col backdrop-blur-2xl`}
+        className={`premium-enter fixed top-[68px] left-0 h-[calc(100vh-68px)] z-40 bg-gradient-to-br from-[#1a2740]/80 via-[#101c2c]/90 to-[#232946]/80 glass-card shadow-2xl border-r border-white/10 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"} md:relative md:top-0 md:h-full md:translate-x-0 md:transition-[width] md:duration-300 md:ease-out ${collapsedDesktop ? "md:w-20" : "md:w-64"} w-64 flex flex-col backdrop-blur-2xl`}
         style={{
           boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
           borderRadius: "2rem 0 0 2rem",
@@ -59,7 +59,7 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
         </button>
         {/* Highlight badge */}
         <div className={`flex items-center gap-2 pt-8 pb-4 ${collapsedDesktop ? "justify-center px-2" : "px-6"}`}>
-          <span className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 shadow-lg animate-pulse">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 shadow-lg">
             <Sparkles className="h-6 w-6 text-white drop-shadow-lg" />
           </span>
           <span className={`ml-2 text-xl font-extrabold bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-400 bg-clip-text text-transparent tracking-wide select-none ${collapsedDesktop ? "hidden" : "md:inline"}`}>
@@ -78,7 +78,7 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
               <button
                 title={collapsedDesktop ? label : undefined}
                 aria-label={collapsedDesktop ? label : undefined}
-                className={`group w-full flex items-center ${collapsedDesktop ? "justify-center gap-0 px-2" : "gap-3 px-4"} py-3 rounded-xl font-semibold text-base transition-all duration-200 focus:outline-none relative overflow-hidden ${
+                className={`premium-card-hover group w-full flex items-center ${collapsedDesktop ? "justify-center gap-0 px-2" : "gap-3 px-4"} py-3 rounded-xl font-semibold text-base focus:outline-none relative overflow-hidden ${
                   active === label
                     ? "bg-gradient-to-r from-blue-700/60 via-blue-500/40 to-indigo-600/40 text-white shadow-xl ring-2 ring-blue-400/40 animate-accent-shimmer"
                     : "text-white hover:bg-white/10 hover:scale-[1.03] hover:shadow-lg"
@@ -117,7 +117,7 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
                     <button
                       key={subLabel}
                       title={subLabel}
-                      className={`group flex items-center gap-3 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none relative overflow-hidden w-full ${
+                      className={`premium-card-hover group flex items-center gap-3 px-4 py-2 rounded-lg font-medium text-sm focus:outline-none relative overflow-hidden w-full ${
                         active === subLabel
                           ? "bg-gradient-to-r from-green-700/40 via-green-500/30 to-teal-600/30 text-white shadow-md ring-1 ring-green-400/30"
                           : "text-white/80 hover:bg-white/10 hover:text-white"

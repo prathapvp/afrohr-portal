@@ -20,13 +20,13 @@ function PremiumNavbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#0a0e1a]/95 shadow-[0_4px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+    <nav className="premium-enter sticky top-0 z-50 border-b border-white/10 bg-[#0a0e1a]/95 shadow-[0_4px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl">
       <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500" />
       <div className="mx-auto flex min-h-[68px] flex-wrap items-center justify-between gap-3 px-5 py-2.5 sm:px-8 lg:px-10">
         {/* Brand Logo */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => void navigate("/")}>
+        <div className="flex cursor-pointer items-center gap-3" onClick={() => void navigate("/")}>
           <div className="relative">
-            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400/20 via-orange-500/20 to-pink-500/20 blur-sm" />
+            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400/20 via-orange-500/20 to-pink-500/20 blur-sm transition duration-300" />
             <img
               src="/afro-hr-light.png"
               alt="AfroHR"
@@ -44,7 +44,7 @@ function PremiumNavbar() {
             <>
               <button
                 onClick={() => void navigate("/")}
-                className="min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 transition-all duration-200 hover:bg-white/10 hover:text-white"
+                className="premium-card-hover min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 hover:bg-white/10 hover:text-white"
               >
                 Home
               </button>
@@ -55,13 +55,13 @@ function PremiumNavbar() {
             <>
               <button
                 onClick={() => void navigate("/login")}
-                className="min-h-10 rounded-lg border border-white/15 px-5 text-[13px] font-medium tracking-wide text-slate-200 transition-all duration-200 hover:border-white/30 hover:bg-white/10 hover:text-white"
+                className="premium-card-hover premium-pill min-h-10 rounded-lg px-5 text-[13px] font-medium tracking-wide text-slate-200 hover:border-white/30 hover:bg-white/10 hover:text-white"
               >
                 Login
               </button>
               <button
                 onClick={() => void navigate("/signup")}
-                className="min-h-10 rounded-lg bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 px-6 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-orange-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30 hover:brightness-110"
+                className="premium-card-hover min-h-10 rounded-lg bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 px-6 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:brightness-110"
               >
                 Sign Up
               </button>
@@ -72,14 +72,14 @@ function PremiumNavbar() {
               {showProfileButton && (
                 <button
                   onClick={() => void navigate("/profile")}
-                  className="min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 transition-all duration-200 hover:bg-white/10 hover:text-white"
+                  className="premium-card-hover min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide text-slate-300 hover:bg-white/10 hover:text-white"
                 >
                   Profile
                 </button>
               )}
               <button
                 onClick={handleLogout}
-                className="min-h-10 rounded-lg bg-gradient-to-r from-rose-500 to-red-500 px-6 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-rose-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/30 hover:brightness-110"
+                className="premium-card-hover min-h-10 rounded-lg bg-gradient-to-r from-rose-500 to-red-500 px-6 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 hover:brightness-110"
               >
                 Logout
               </button>

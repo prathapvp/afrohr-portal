@@ -48,7 +48,7 @@ const Job = (props:any) => {
     }
 
     return <div data-aos="zoom-out" className="w-full">
-        <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-sm sm:p-7">
+        <div className="premium-card-hover overflow-hidden rounded-3xl border border-white/12 bg-[linear-gradient(180deg,rgba(17,24,39,0.9),rgba(2,6,23,0.95))] p-5 shadow-[0_22px_60px_rgba(0,0,0,0.4)] backdrop-blur-sm sm:p-7">
             <div className="flex flex-wrap items-start justify-between gap-5">
                 <div className="flex min-w-0 items-start gap-3">
                     <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg">
@@ -86,7 +86,7 @@ const Job = (props:any) => {
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {card.map((item, index) => (
-                    <div key={index} className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+                    <div key={index} className="premium-card-hover rounded-2xl border border-white/10 bg-slate-900/50 p-4 hover:border-bright-sun-400/25 hover:bg-slate-900/65">
                         <div className="mb-3 flex items-center justify-between">
                             <span className="text-xs uppercase tracking-[0.14em] text-slate-400">{item.name}</span>
                             <ActionIcon className="!h-8 !w-8" variant="light" color="brightSun.4" radius="xl"><item.icon className="h-4 w-4" /></ActionIcon>
@@ -105,7 +105,7 @@ const Job = (props:any) => {
                 <h2 className="text-xl font-semibold text-white">Required Skills</h2>
                 <div className="flex flex-wrap gap-2">
                     {safeSkills.length > 0 ? safeSkills.map((skill:any, index:number) => (
-                        <ActionIcon key={index} className="!h-fit !w-fit rounded-full border border-white/15 bg-white/5 !px-3 !py-1 font-medium !text-xs text-white" variant="transparent" radius="xl">{skill}</ActionIcon>
+                        <ActionIcon key={index} className="premium-pill !h-fit !w-fit rounded-full !px-3 !py-1 font-medium !text-xs text-white" variant="transparent" radius="xl">{skill}</ActionIcon>
                     )) : (
                         <p className="text-sm text-slate-400">No required skills listed for this role.</p>
                     )}
@@ -114,7 +114,7 @@ const Job = (props:any) => {
 
             <Divider size="xs" my="xl" color="rgba(255,255,255,0.14)" />
 
-            <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
+            <div className="premium-card-hover rounded-2xl border border-white/10 bg-slate-900/40 p-5 hover:border-cyan-300/20">
                 <h2 className="mb-4 text-xl font-semibold text-white">Role Details</h2>
                 <div className="[&>h4]:mb-3 [&>h4]:text-lg [&>h4]:font-semibold [&>h4]:text-mine-shaft-200 [&_*]:text-slate-300 [&_li]:mb-1 [&_li]:text-sm [&_li]:marker:text-bright-sun-300 [&_p]:text-justify [&_p]:text-sm" dangerouslySetInnerHTML={{ __html: cleanHTML }} />
             </div>
@@ -123,7 +123,7 @@ const Job = (props:any) => {
 
             <div>
                 <h2 className="mb-4 text-xl font-semibold text-white">About Company</h2>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+                <div className="premium-card-hover mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/50 p-4 hover:border-bright-sun-400/25">
                     <div className="flex items-center gap-3">
                         <div className="rounded-xl bg-mine-shaft-800 p-2">
                             <img className="h-8" src={`/Icons/${props.company}.png`} alt={props.company ?? "Company"} />

@@ -30,7 +30,7 @@ const JobCard = (props: any) => {
         >
             {match && match.score > 0 && (
                 <div
-                    className={`absolute left-3 top-3 z-10 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-md ${
+                    className={`mb-1 inline-flex items-center gap-1 self-start sm:self-end rounded-full px-2 py-0.5 text-[10px] font-bold shadow-md ${
                         match.score >= 70 ? "bg-green-500 text-white" :
                         match.score >= 40 ? "bg-yellow-400 text-black" :
                         "bg-red-500 text-white"

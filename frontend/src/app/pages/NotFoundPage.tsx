@@ -1,5 +1,5 @@
 import { Button } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 const NotFoundPage= () => {
     const navigate=useNavigate();
@@ -11,7 +11,7 @@ const NotFoundPage= () => {
         <p className="text-bright-sun-400 mb-6">
           Sorry, the page you are looking for does not exist.
         </p>
-        <Button onClick={()=>navigate('/')}>
+        <Button onClick={()=>navigate('/home')}>
           Go to Homepage
         </Button>
       </div>

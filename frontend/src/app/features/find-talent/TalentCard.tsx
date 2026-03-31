@@ -42,10 +42,10 @@ const TalentCard = (props: any) => {
         }).catch((err) => console.log(err))
         else setProfile(props);
     }, [props])
-    return <div data-aos="fade-up" className="p-4 rounded-xl bg-mine-shaft-900   hover:shadow-[0_0_5px_1px_yellow] !shadow-bright-sun-400  transition duration-300 ease-in-out w-96 bs-mx:w-[48%] md-mx:w-full flex flex-col gap-3">
+    return <div data-aos="fade-up" className="premium-card-hover w-96 bs-mx:w-[48%] md-mx:w-full flex flex-col gap-3 rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(17,24,39,0.9),rgba(2,6,23,0.95))] p-4 shadow-[0_16px_46px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:border-bright-sun-400/30">
         <div className="flex justify-between">
             <div className="flex gap-2 items-center">
-                <div className="p-2 bg-mine-shaft-800 rounded-full">
+                <div className="rounded-full border border-white/10 bg-mine-shaft-800/80 p-2">
                     <Avatar className="rounded-full" size="lg" src={profile?.picture ? `data:image/jpeg;base64,${profile?.picture}` : '/avatar.svg'} />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -57,9 +57,7 @@ const TalentCard = (props: any) => {
             <IconHeart className="cursor-pointer text-mine-shaft-300" stroke={1.5} />
         </div>
         <div className="flex gap-2 flex-wrap ">
-            {
-                profile?.skills?.map((skill: any, index: any) => index < 4 && <div key={index} className="p-2 py-1 bg-mine-shaft-800 text-bright-sun-400 rounded-lg text-xs">{skill}</div>)
-            }
+            {profile?.skills?.map((skill: any, index: any) => index < 4 && <div key={index} className="rounded-full border border-bright-sun-400/25 bg-bright-sun-400/10 px-2.5 py-1 text-xs font-medium text-bright-sun-300">{skill}</div>)}
         </div>
         <div>
             <Text className="!text-xs text-justify !text-mine-shaft-300" lineClamp={3}>{profile?.about}

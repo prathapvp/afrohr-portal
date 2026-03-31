@@ -1,48 +1,185 @@
 import { Avatar, Divider, Tabs } from "@mantine/core";
-import { IconMapPin} from "@tabler/icons-react";
+import { IconMapPin, IconBuildingSkyscraper, IconSparkles } from "@tabler/icons-react";
 import AboutComp from "./AboutComp";
 import CompanyJobs from "./CompanyJobs";
 import CompanyEmployees from "./CompanyEmployees";
+import { useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { getAllJobs } from "../../services/JobService";
+import { getAllProfiles } from "../../services/ProfileService";
+
+const COMPANY_CACHE_TTL_MS = 5 * 60 * 1000;
+
+type SourceCache = {
+    jobs: any[];
+    profiles: any[];
+    ts: number;
+};
+
+type CompanyViewCache = {
+    jobs: any[];
+    employees: any[];
+    location: string;
+    ts: number;
+};
+
+let sourceCache: SourceCache | null = null;
+const companyViewCache = new Map<string, CompanyViewCache>();
+
+const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
+
+const deriveCompanyView = (companyName: string, jobs: any[], profiles: any[]) => {
+    const key = normalize(companyName);
+
+    const companyJobs = jobs.filter((job: any) => normalize(String(job?.company || "")).includes(key));
+    const companyEmployees = profiles.filter((profile: any) => normalize(String(profile?.company || "")).includes(key));
+
+    const location =
+        companyJobs.find((job: any) => job?.location)?.location ||
+        companyEmployees.find((profile: any) => profile?.location)?.location ||
+        "Location not specified";
+
+    return {
+        jobs: companyJobs,
+        employees: companyEmployees,
+        location,
+    };
+};
 
 const Company = () => {
-    const section=["About", "Jobs", "Employees"]
-    return <div className="w-3/4">
-        <div className="relative">
-            <img className="rounded-t-2xl " src="/Profile/banner.svg" alt="" />
-            <img className="w-36 h-36 border-mine-shaft-950 p-2 bg-mine-shaft-950 border-8 absolute -bottom-1/4 left-5 rounded-3xl" src="/Icons/Google.png" alt="" />
-        </div>
-        <div className="px-7 mt-12">
-            <div className="text-3xl font-semibold flex justify-between">Google <Avatar.Group >
-                <Avatar src="/avatar.svg" />
-                <Avatar src="/avatar1.png" />
-                <Avatar src="/avatar2.png" />
-                <Avatar className="[&>span]:!text-xs">+10k</Avatar>
-            </Avatar.Group></div>
-            <div className="text-lg flex gap-1 items-center text-mine-shaft-300">
-                <IconMapPin className="h-5 w-5" stroke={1.5} /> New York, United States
+    const section = ["About", "Jobs", "Employees"];
+    const { name } = useParams();
+    const companyName = decodeURIComponent(name || "Google");
+    const companyLogo = `/Icons/${companyName}.png`;
+    const [companyJobs, setCompanyJobs] = useState<any[]>([]);
+    const [companyEmployees, setCompanyEmployees] = useState<any[]>([]);
+    const [location, setLocation] = useState("Location not specified");
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let mounted = true;
+        const key = normalize(companyName);
+        const now = Date.now();
+
+        const applyView = (view: { jobs: any[]; employees: any[]; location: string }) => {
+            if (!mounted) return;
+            setCompanyJobs(view.jobs);
+            setCompanyEmployees(view.employees);
+            setLocation(view.location);
+        };
+
+        const cachedView = companyViewCache.get(key);
+        if (cachedView && now - cachedView.ts < COMPANY_CACHE_TTL_MS) {
+            applyView(cachedView);
+            setLoading(false);
+        }
+
+        if (sourceCache && now - sourceCache.ts < COMPANY_CACHE_TTL_MS) {
+            const view = deriveCompanyView(companyName, sourceCache.jobs, sourceCache.profiles);
+            companyViewCache.set(key, { ...view, ts: Date.now() });
+            applyView(view);
+            setLoading(false);
+            return () => {
+                mounted = false;
+            };
+        }
+
+        Promise.all([getAllJobs(), getAllProfiles()])
+            .then(([jobsRes, profilesRes]) => {
+                if (!mounted) return;
+                const allJobs = Array.isArray(jobsRes) ? jobsRes : [];
+                const allProfiles = Array.isArray(profilesRes) ? profilesRes : [];
+
+                sourceCache = {
+                    jobs: allJobs,
+                    profiles: allProfiles,
+                    ts: Date.now(),
+                };
+
+                const view = deriveCompanyView(companyName, allJobs, allProfiles);
+                companyViewCache.set(key, { ...view, ts: Date.now() });
+                applyView(view);
+            })
+            .catch(() => {
+                if (!mounted) return;
+                if (!cachedView) {
+                    setCompanyJobs([]);
+                    setCompanyEmployees([]);
+                    setLocation("Location not specified");
+                }
+            })
+            .finally(() => {
+                if (mounted) setLoading(false);
+            });
+
+        return () => {
+            mounted = false;
+        };
+    }, [companyName]);
+
+    return <div className="w-full">
+        <div className="overflow-hidden rounded-3xl border border-white/12 bg-[linear-gradient(180deg,rgba(17,24,39,0.92),rgba(2,6,23,0.96))] shadow-[0_22px_62px_rgba(0,0,0,0.42)]">
+            <div className="relative">
+            <img className="h-[200px] w-full object-cover" src="/Profile/banner.svg" alt="Company Banner" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-black/55 via-transparent to-cyan-500/25" />
+                <div className="absolute right-4 top-4 rounded-full border border-bright-sun-400/35 bg-bright-sun-400/15 px-3 py-1 text-xs font-semibold text-bright-sun-200">
+                    Premium Company Profile
+                </div>
+
+                <div className="absolute -bottom-12 left-6">
+                    <div className="flex h-28 w-28 items-center justify-center rounded-3xl border-4 border-[#060910] bg-[#060910] p-2 shadow-[0_12px_28px_rgba(0,0,0,0.45)] sm:h-32 sm:w-32">
+                        <img className="h-full w-full rounded-2xl object-contain" src={companyLogo} alt={companyName} onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/Icons/Google.png"; }} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="px-6 pb-5 pt-14 sm:px-7 sm:pt-16">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h1 className="flex items-center gap-2 text-3xl font-semibold text-white sm:text-4xl">
+                            <IconBuildingSkyscraper className="h-7 w-7 text-cyan-300" stroke={1.6} />
+                            {companyName}
+                        </h1>
+                        <div className="mt-2 flex items-center gap-1 text-sm text-mine-shaft-300 sm:text-base">
+                            <IconMapPin className="h-5 w-5" stroke={1.5} /> {location}
+                        </div>
+                    </div>
+
+                    <Avatar.Group>
+                        <Avatar src="/avatar.svg" />
+                        <Avatar src="/avatar1.png" />
+                        <Avatar src="/avatar2.png" />
+                        <Avatar className="[&>span]:!text-xs">{companyEmployees.length > 0 ? `${companyEmployees.length}+` : "+0"}</Avatar>
+                    </Avatar.Group>
+                </div>
             </div>
         </div>
-        <Divider my="xl"/>
-        <div>
-            <Tabs  variant="outline"  radius="md" defaultValue={section[0].toLowerCase()}>
-                <Tabs.List className="font-semibold [&_button[data-active='true']]:!border-b-mine-shaft-950 [&_button]:!text-xl mb-5 [&_button[data-active='true']]:text-bright-sun-400">
+
+        <Divider my="lg" color="rgba(255,255,255,0.14)" />
+
+        <div className="rounded-3xl border border-white/12 bg-white/[0.03] p-3 shadow-[0_20px_52px_rgba(0,0,0,0.34)]">
+            <Tabs variant="outline" radius="xl" defaultValue={section[0].toLowerCase()}>
+            <Tabs.List className="mb-4 rounded-2xl border border-white/10 bg-white/[0.03] p-1 font-semibold [&_button]:!rounded-xl [&_button]:!text-sm sm:[&_button]:!text-base [&_button[data-active='true']]:!border-transparent [&_button[data-active='true']]:!bg-bright-sun-400/15 [&_button[data-active='true']]:!text-bright-sun-300">
                     {
                         section.map((item, index) => <Tabs.Tab key={index} value={item.toLowerCase()} >
-                            {item}
+                            <div className="flex items-center gap-1.5">
+                                <IconSparkles size={14} className="text-bright-sun-300/90" />
+                                {item}
+                            </div>
                         </Tabs.Tab>)
                     }
 
                 </Tabs.List>
                 <Tabs.Panel value="about">
-                    <AboutComp/>
+                    <AboutComp companyName={companyName} jobs={companyJobs} employees={companyEmployees} loading={loading} />
                 </Tabs.Panel>
 
                 <Tabs.Panel value="jobs">
-                    <CompanyJobs/>
+                    <CompanyJobs jobs={companyJobs} loading={loading} />
                 </Tabs.Panel>
 
                 <Tabs.Panel value="employees">
-                    <CompanyEmployees/>
+                    <CompanyEmployees employees={companyEmployees} loading={loading} />
                 </Tabs.Panel>
             </Tabs>
         </div>
