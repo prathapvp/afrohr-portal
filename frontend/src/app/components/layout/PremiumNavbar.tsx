@@ -1,22 +1,42 @@
 import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { removeUser } from "../../store/slices/UserSlice";
+import { removeJwt } from "../../store/slices/JwtSlice";
+import { clearProfile } from "../../store/slices/ProfileSlice";
 
 function PremiumNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const showHomeButton = location.pathname !== "/";
   const showProfileButton = location.pathname !== "/profile";
 
   useEffect(() => {
     setIsAuthenticated(Boolean(localStorage.getItem("token")));
-  }, []);
+
+    const syncAuthState = () => {
+      setIsAuthenticated(Boolean(localStorage.getItem("token")));
+    };
+
+    window.addEventListener("storage", syncAuthState);
+    return () => {
+      window.removeEventListener("storage", syncAuthState);
+    };
+  }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    // Ensure Redux and persisted auth/profile state are fully cleared.
+    dispatch(clearProfile());
+    dispatch(removeUser());
+    dispatch(removeJwt());
+
+    localStorage.removeItem("afrohr:viewed-job-ids");
+    sessionStorage.removeItem("afrohr:unauthorized-employer-redirect");
+
     setIsAuthenticated(false);
-    void navigate("/");
+    void navigate("/login", { replace: true });
   };
 
   return (

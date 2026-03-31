@@ -13,7 +13,7 @@ export const LegacyThemeCtx = createContext<"light" | "dark">("light");
 export const useLegacyColorScheme = () => useContext(LegacyThemeCtx);
 import { LoadingOverlay } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
-import { Provider, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import "@mantine/core/styles.css";
 import "@mantine/carousel/styles.css";
 import "@mantine/tiptap/styles.css";
@@ -23,7 +23,6 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import "../../App.css";
 import "../../../styles/index.css";
-import Store from "../../store";
 import PremiumNavbar from "./PremiumNavbar";
 import ErrorBoundary from "./common/ErrorBoundary";
 
@@ -71,9 +70,7 @@ function LegacyShell() {
 export default function LegacyLayout() {
   return (
     <ErrorBoundary>
-      <Provider store={Store}>
-        <LegacyShell />
-      </Provider>
+      <LegacyShell />
     </ErrorBoundary>
   );
 }

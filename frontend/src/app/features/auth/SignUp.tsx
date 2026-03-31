@@ -1,7 +1,7 @@
 import { Button, LoadingOverlay, PasswordInput, PinInput, TextInput } from "@mantine/core";
 import { IconAt, IconBriefcase, IconLock, IconSchool, IconUser, IconUserSearch } from "@tabler/icons-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { registerUser, sendOtp, verifyOtp } from "../../services/UserService";
 import { signupValidation } from "../../services/form-validation";
 import { errorNotification, successNotification } from "../../services/NotificationService";
@@ -134,14 +134,14 @@ const SignUp = () => {
         { value: "STUDENT", label: "Student", icon: IconSchool, desc: "Learn & grow" },
     ];
 
-    return <><LoadingOverlay
+        return <><LoadingOverlay
     visible={loading}
     zIndex={1000}
     className="translate-x-1/2"
     overlayProps={{ radius: 'sm', blur: 2 }}
     loaderProps={{ color: 'orange', type: 'bars' }}
-  /> <div className="w-1/2 sm-mx:py-10 sm-mx:w-full px-16 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center">
-        <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Create Account</div>
+    /> <div className="auth-form-panel w-1/2 sm-mx:py-10 sm-mx:w-full px-16 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center py-10">
+        <div className="auth-form-title text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Create Account</div>
         <p className="text-sm text-gray-400 -mt-1 mb-1">Start your career journey today</p>
         {!otpStep ? <>
         <TextInput value={data.name} error={formError.name} name="name" onChange={handleChange} leftSection={<IconUser size={16} stroke={1.5} />} label="Full Name" withAsterisk placeholder="Your name" size="sm" styles={{ input: { borderRadius: 12 } }} />

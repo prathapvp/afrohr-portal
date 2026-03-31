@@ -347,3 +347,51 @@
     scroll-behavior: auto !important;
   }
 }
+
+@media (max-height: 820px) {
+  .auth-stage {
+    align-items: flex-start;
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+  }
+
+  .auth-card {
+    max-height: calc(100vh - 96px);
+  }
+
+  .auth-form-panel {
+    gap: 0.625rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .auth-form-title {
+    font-size: 1.75rem;
+    line-height: 1.1;
+  }
+
+  .auth-brand-panel {
+    gap: 1rem;
+    padding-top: 1.75rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .auth-brand-logo {
+    height: 4.5rem;
+  }
+
+  .auth-brand-title {
+    font-size: 1.75rem;
+    line-height: 1.15;
+  }
+
+  .auth-brand-copy {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .auth-brand-stats {
+    gap: 1rem;
+    margin-top: 0.25rem;
+  }
+}

@@ -80,8 +80,8 @@ const Login = () => {
     zIndex={1000}
     overlayProps={{ radius: 'sm', blur: 2 }}
     loaderProps={{ color: 'orange', type: 'bars' }}
-  /><div className="w-1/2 sm-mx:w-full px-20 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center">
-        <div className="text-2xl font-bold text-gray-800">Welcome Back</div>
+    /><div className="auth-form-panel w-1/2 sm-mx:w-full px-20 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center py-10 sm-mx:py-8">
+        <div className="auth-form-title text-2xl font-bold text-gray-800">Welcome Back</div>
         <p className="text-sm text-gray-500 -mt-1">Sign in to continue your journey</p>
         <TextInput value={data.email} error={formError.email} name="email" onChange={handleChange} leftSection={<IconAt size={16} />} label="Email" withAsterisk placeholder="Your email" />
         <PasswordInput value={data.password} error={formError.password} name="password" onChange={handleChange} leftSection={<IconLock size={16} />} label="Password" withAsterisk placeholder="Password" />
