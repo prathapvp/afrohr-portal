@@ -920,7 +920,7 @@ export default function App() {
 
   return (
     <>
-      <div className="h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex flex-col">
+      <div className="premium-shell h-screen w-full flex flex-col">
         <PremiumNavbar />
         <div className="flex flex-1 min-h-0">
           <PremiumSidebar
@@ -968,8 +968,8 @@ export default function App() {
               }
             }}
           />
-          <div className="flex-1 min-w-0 overflow-y-auto p-0">
-            <div className="space-y-6">
+          <div className="flex-1 min-w-0 overflow-y-auto p-2 sm:p-3">
+            <div className="space-y-6 rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-[0_20px_56px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:p-4">
             {loading && (
               <Card>
                 <CardContent className="p-6 text-sm text-gray-500 sm:p-8">Loading dashboard data from backend...</CardContent>

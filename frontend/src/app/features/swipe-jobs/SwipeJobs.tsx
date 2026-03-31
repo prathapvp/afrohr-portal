@@ -20,7 +20,8 @@ const SwipeCard = ({ job, posX, profile }: { job: any; posX: number; profile: an
     const skipOpacity = Math.max(0, Math.min(1, -posX / SWIPE_THRESHOLD));
 
     return (
-        <div className="w-full h-full rounded-2xl bg-mine-shaft-900 border border-mine-shaft-800 p-5 flex flex-col gap-3 overflow-hidden relative shadow-2xl">
+        <div className="relative flex h-full w-full flex-col gap-3 overflow-hidden rounded-3xl border border-white/12 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.14),transparent_38%),linear-gradient(180deg,rgba(17,24,39,0.94),rgba(2,6,23,0.97))] p-5 shadow-[0_20px_56px_rgba(0,0,0,0.45)]">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
             {/* SAVE / SKIP overlays */}
             <div
                 className="absolute inset-0 rounded-2xl bg-green-500/20 border-4 border-green-400/60 flex items-center justify-center pointer-events-none z-20"
@@ -42,9 +43,9 @@ const SwipeCard = ({ job, posX, profile }: { job: any; posX: number; profile: an
             </div>
 
             {/* Header: logo + match badge */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-mine-shaft-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-mine-shaft-800/70 flex items-center justify-center">
                         <img
                             src={`/Icons/${job.company}.png`}
                             alt={job.company}
@@ -70,27 +71,27 @@ const SwipeCard = ({ job, posX, profile }: { job: any; posX: number; profile: an
             </div>
 
             {/* Tags */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex flex-wrap gap-2">
                 {job.experience && (
-                    <span className="px-2 py-0.5 bg-mine-shaft-800 text-bright-sun-400 rounded-lg text-xs flex items-center gap-1">
+                    <span className="flex items-center gap-1 rounded-full border border-bright-sun-400/25 bg-bright-sun-400/10 px-2.5 py-1 text-xs font-medium text-bright-sun-300">
                         <IconBriefcase size={11} />{job.experience}
                     </span>
                 )}
                 {job.jobType && (
-                    <span className="px-2 py-0.5 bg-mine-shaft-800 text-bright-sun-400 rounded-lg text-xs">{job.jobType}</span>
+                    <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-xs font-medium text-cyan-200">{job.jobType}</span>
                 )}
                 {job.workMode && (
-                    <span className="px-2 py-0.5 bg-mine-shaft-800 text-bright-sun-400 rounded-lg text-xs">{job.workMode}</span>
+                    <span className="rounded-full border border-fuchsia-300/25 bg-fuchsia-400/10 px-2.5 py-1 text-xs font-medium text-fuchsia-200">{job.workMode}</span>
                 )}
                 {job.location && (
-                    <span className="px-2 py-0.5 bg-mine-shaft-800 text-bright-sun-400 rounded-lg text-xs flex items-center gap-1">
+                    <span className="flex items-center gap-1 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-200">
                         <IconMapPin size={11} />{job.location}
                     </span>
                 )}
             </div>
 
             {/* Description */}
-            <Text className="!text-xs !text-mine-shaft-300 text-justify flex-1" lineClamp={5}>
+            <Text className="!text-xs !leading-5 !text-mine-shaft-300 text-justify flex-1" lineClamp={5}>
                 {job.about || job.description}
             </Text>
 
@@ -107,8 +108,8 @@ const SwipeCard = ({ job, posX, profile }: { job: any; posX: number; profile: an
             )}
 
             {/* Footer */}
-            <div className="flex justify-between items-center border-t border-mine-shaft-800 pt-2 mt-auto">
-                <span className="text-mine-shaft-200 font-semibold text-sm">
+            <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-2">
+                <span className="text-sm font-semibold text-bright-sun-200">
                     {job.hideSalary ? "Salary hidden" : `$${job.packageOffered}K${job.maxPackageOffered ? ` – $${job.maxPackageOffered}K` : ""}`}
                 </span>
                 <span className="flex items-center gap-1 text-mine-shaft-500 text-xs">
@@ -248,9 +249,10 @@ const SwipeJobs = () => {
     const progress = ((jobs.length - pendingJobs.length) / Math.max(jobs.length, 1)) * 100;
 
     return (
-        <div className="min-h-screen bg-mine-shaft-950 flex flex-col items-center px-4 pt-6 pb-12 select-none font-['poppins']">
+        <div className="min-h-screen flex flex-col items-center px-4 pb-12 pt-6 select-none font-['poppins']">
             {/* Header */}
-            <div className="w-full max-w-sm flex items-center justify-between mb-3">
+            <div className="mb-3 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.28)]">
+                <div className="mb-1 flex items-center justify-between">
                 <button
                     onClick={() => navigate("/find-jobs")}
                     className="text-mine-shaft-400 hover:text-mine-shaft-200 text-sm transition-colors"
@@ -261,11 +263,13 @@ const SwipeJobs = () => {
                     <IconSparkles size={18} stroke={2} /> Swipe Jobs
                 </div>
                 <div className="text-mine-shaft-500 text-sm">{pendingJobs.length} left</div>
+                </div>
+                <div className="text-[11px] text-mine-shaft-400">Save your favorites with right swipe and skip with left swipe.</div>
             </div>
 
             {/* Progress bar */}
-            <div className="w-full max-w-sm mb-6">
-                <div className="h-1.5 bg-mine-shaft-800 rounded-full overflow-hidden">
+            <div className="mb-6 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="h-1.5 overflow-hidden rounded-full bg-mine-shaft-800">
                     <div
                         className="h-full bg-gradient-to-r from-orange-400 to-pink-500 rounded-full transition-all duration-500"
                         style={{ width: `${progress}%` }}
@@ -278,7 +282,7 @@ const SwipeJobs = () => {
             </div>
 
             {/* Card stack container */}
-            <div className="relative w-full max-w-sm" style={{ height: 460 }}>
+            <div className="relative w-full max-w-sm" style={{ height: 480 }}>
                 {[...stack].reverse().map((job, reversedIdx) => {
                     const idx = stack.length - 1 - reversedIdx;
                     const isTop = idx === 0;
@@ -310,18 +314,18 @@ const SwipeJobs = () => {
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-10 mt-8">
+            <div className="mt-8 flex gap-10 rounded-full border border-white/10 bg-white/[0.03] px-6 py-3">
                 <button
                     onClick={doSkip}
                     aria-label="Skip job"
-                    className="w-16 h-16 rounded-full bg-mine-shaft-900 border-2 border-red-500/30 hover:border-red-500 hover:bg-red-500/10 flex items-center justify-center transition-all shadow-xl active:scale-95"
+                    className="h-16 w-16 rounded-full border-2 border-red-500/35 bg-red-500/10 flex items-center justify-center shadow-xl transition-all hover:border-red-500 hover:bg-red-500/20 active:scale-95"
                 >
                     <IconX size={28} className="text-red-400" stroke={2.5} />
                 </button>
                 <button
                     onClick={doSave}
                     aria-label="Save job"
-                    className="w-16 h-16 rounded-full bg-mine-shaft-900 border-2 border-green-500/30 hover:border-green-500 hover:bg-green-500/10 flex items-center justify-center transition-all shadow-xl active:scale-95"
+                    className="h-16 w-16 rounded-full border-2 border-green-500/35 bg-green-500/10 flex items-center justify-center shadow-xl transition-all hover:border-green-500 hover:bg-green-500/20 active:scale-95"
                 >
                     <IconHeart size={28} className="text-green-400" stroke={2} />
                 </button>

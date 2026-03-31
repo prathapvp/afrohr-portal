@@ -7,10 +7,12 @@ const SignUpPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="premium-shell relative min-h-screen w-full overflow-hidden">
+      <div className="pointer-events-none absolute -left-20 top-20 h-64 w-64 rounded-full bg-bright-sun-400/15 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-36 h-72 w-72 rounded-full bg-fuchsia-500/15 blur-3xl" />
       {/* Centered card with forms */}
       <div className="flex min-h-[calc(100vh-68px)] items-center justify-center px-4 py-8 sm-mx:py-4">
-        <div className="w-full max-w-5xl overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-2xl backdrop-blur-sm sm-mx:rounded-2xl">
+        <div className="w-full max-w-5xl overflow-hidden rounded-3xl border border-white/20 bg-white/[0.08] shadow-[0_28px_70px_rgba(0,0,0,0.45)] backdrop-blur-md sm-mx:rounded-2xl">
           <div
             className={`flex [&>*]:flex-shrink-0 transition-all relative ease-in-out duration-700 ${
               location.pathname === "/signup"

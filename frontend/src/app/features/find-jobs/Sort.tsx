@@ -36,7 +36,7 @@ const Sort=(props:any)=> {
         }}
       >
         <Combobox.Target>
-          <div onClick={() => combobox.toggleDropdown()} className="flex cursor-pointer hover:bg-mine-shaft-900 items-center text-sm xs-mx:text-xs border border-bright-sun-400 rounded-xl py-1 xsm-mx:mt-2 px-2 xs-mx:px-1 xs-mx:py-0 pr-1">{selectedItem} <ActionIcon color="brightSun.4" variant="transparent" aria-label="Settings">
+          <div onClick={() => combobox.toggleDropdown()} className="flex cursor-pointer items-center rounded-xl border border-bright-sun-400/45 bg-bright-sun-400/10 px-2 py-1 pr-1 text-sm text-bright-sun-100 transition-colors hover:bg-bright-sun-400/15 xs-mx:px-1 xs-mx:py-0 xs-mx:text-xs xsm-mx:mt-2">{selectedItem} <ActionIcon color="brightSun.4" variant="transparent" aria-label="Settings">
                 <IconAdjustments style={{ width: '70%', height: '70%' }} stroke={1.5} />
             </ActionIcon></div>
         </Combobox.Target>

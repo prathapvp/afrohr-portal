@@ -40,9 +40,12 @@ function LegacyShell() {
 
   return (
     <LegacyThemeCtx.Provider value={colorScheme}>
-    <div data-mantine-color-scheme={colorScheme} className="min-h-screen">
+    <div data-mantine-color-scheme={colorScheme} className="premium-shell min-h-screen">
         <Notifications position="top-center" zIndex={2001} />
         <div className="relative overflow-hidden">
+          <div className="pointer-events-none absolute -left-16 top-10 h-64 w-64 rounded-full bg-bright-sun-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute right-0 top-36 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-pink-500/15 blur-3xl" />
           {overlay && (
             <div className="fixed !z-[2000] w-full h-full flex items-center justify-center">
               <LoadingOverlay
@@ -54,7 +57,11 @@ function LegacyShell() {
             </div>
           )}
           <PremiumNavbar />
-          <Outlet />
+          <div className="mx-auto w-full max-w-[1500px] px-2 pb-4 pt-3 sm:px-4">
+            <div className="premium-surface overflow-hidden rounded-3xl">
+              <Outlet />
+            </div>
+          </div>
         </div>
     </div>
     </LegacyThemeCtx.Provider>

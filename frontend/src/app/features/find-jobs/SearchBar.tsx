@@ -23,13 +23,13 @@ const SearchBar = () => {
 
 
 
-    return (<div>
+    return (<div className="mt-2">
         <div className="flex justify-end">
 
-         {matches&&<Button onClick={toggle} m="sm" radius="lg" className="align" variant="outline" color="brightSun.4" autoContrast >{opened?"Close":"Filters"}</Button>}
+         {matches&&<Button onClick={toggle} m="sm" radius="xl" className="align border-white/20 bg-white/[0.03]" variant="outline" color="brightSun.4" autoContrast >{opened?"Close Filters":"Open Filters"}</Button>}
         </div>
         <Collapse in={(opened || !matches)}>
-        <div className="px-5 lg-mx:!flex-wrap py-8 items-center !text-mine-shaft-100 flex ">
+        <div className="rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(17,24,39,0.75),rgba(2,6,23,0.78))] px-4 py-5 lg-mx:!flex-wrap items-center !text-mine-shaft-100 flex shadow-[0_14px_40px_rgba(0,0,0,0.28)] sm:px-5 sm:py-6">
 
             {
                 dropdownData.map((item, index) => {
@@ -39,10 +39,10 @@ const SearchBar = () => {
 
                 })
             }
-            <div className="w-1/5 lg-mx:w-1/4 lg-mx:mt-7 bs-mx:w-[30%] xs-mx:mb-1 sm-mx:w-[48%] text-sm text-mine-shaft-300 [&_.mantine-Slider-label]:!translate-y-10 xs-mx:w-full">
+            <div className="w-1/5 lg-mx:w-1/4 lg-mx:mt-7 bs-mx:w-[30%] xs-mx:mb-1 sm-mx:w-[48%] rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-sm text-mine-shaft-300 [&_.mantine-Slider-label]:!translate-y-10 xs-mx:w-full">
                 <div className="flex mb-1 justify-between">
-                    <div>Salary</div>
-                    <div>&#36;{value[0]} K - &#36;{value[1]} K</div>
+                    <div className="text-mine-shaft-200">Salary</div>
+                    <div className="font-semibold text-bright-sun-300">&#36;{value[0]} K - &#36;{value[1]} K</div>
                 </div>
                 <RangeSlider color="brightSun.4" size="xs" value={value} onChange={setValue} onChangeEnd={handleChange} />
             </div>

@@ -516,7 +516,9 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="premium-shell relative min-h-screen overflow-hidden text-white">
+      <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-bright-sun-400/15 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-52 h-80 w-80 rounded-full bg-cyan-400/15 blur-3xl" />
       <PremiumNavbar />
 
       <section className="relative overflow-hidden px-4 pt-20 pb-16">
