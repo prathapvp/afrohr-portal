@@ -1,7 +1,7 @@
-import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
+import { IconPencil } from "@tabler/icons-react";
 import { useDispatch, useSelector } from "react-redux";
-import React, { useState, useEffect } from "react";
-import { ActionIcon, Divider, TagsInput, Alert, Button } from "@mantine/core";
+import { useState, useEffect } from "react";
+import { ActionIcon, TagsInput, Alert, Button, Modal } from "@mantine/core";
 import { changeProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { useForm } from "@mantine/form";
@@ -37,7 +37,7 @@ const DesiredJob = () => {
     const dispatch = useDispatch();
     const profile = useSelector((state: any) => state.profile);
     const matches = useMediaQuery("(max-width: 475px)");
-    const [edit, setEdit] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
     const [validationError, setValidationError] = useState<string>("");
 
     const form = useForm({
@@ -50,19 +50,19 @@ const DesiredJob = () => {
         },
     });
 
-    const handleClick = () => {
-        if (!edit) {
-            setEdit(true);
-            form.setValues({
-                preferredDesignations: profile.desiredJob?.preferredDesignations || [],
-                preferredLocations: profile.desiredJob?.preferredLocations || [],
-                preferredIndustries: profile.desiredJob?.preferredIndustries || [],
-            });
-            setValidationError("");
-        } else {
-            setEdit(false);
-            setValidationError("");
-        }
+    const handleOpenEdit = () => {
+        form.setValues({
+            preferredDesignations: profile.desiredJob?.preferredDesignations || [],
+            preferredLocations: profile.desiredJob?.preferredLocations || [],
+            preferredIndustries: profile.desiredJob?.preferredIndustries || [],
+        });
+        setValidationError("");
+        setEditOpen(true);
+    };
+
+    const handleCloseEdit = () => {
+        setValidationError("");
+        setEditOpen(false);
     };
 
     const handleSave = async () => {
@@ -82,8 +82,8 @@ const DesiredJob = () => {
         dispatch(changeProfile(updatedProfile));
 
         try {
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
-            setEdit(false);
+            await (dispatch as any)(persistProfile({ desiredJob: validation.data })).unwrap();
+            setEditOpen(false);
             successNotification("Success", "Desired Job Updated Successfully");
         } catch (error: any) {
             const errorMessage = extractErrorMessage(error);
@@ -93,64 +93,89 @@ const DesiredJob = () => {
 
     return (
         <div className="mt-2">
-            {/* Header with Edit Icons */}
-            <div className="flex justify-end items-center" data-aos="zoom-out">
-                <div className="flex">
-                    {edit && (
-                        <ActionIcon onClick={handleSave} variant="subtle" color="green.8" size={matches ? "md" : "lg"}>
-                            <IconCheck className="w-4/5 h-4/5" stroke={1.5} />
-                        </ActionIcon>
-                    )}
-                    <ActionIcon
-                        onClick={handleClick}
-                        variant="subtle"
-                        color={edit ? "red.8" : "brightSun.4"}
-                        size={matches ? "md" : "lg"}
-                    >
-                        {edit ? <IconX className="w-4/5 h-4/5" stroke={1.5} /> : <IconPencil className="w-4/5 h-4/5" stroke={1.5} />}
-                    </ActionIcon>
-                </div>
+            <div className="mb-1 flex justify-end items-center" data-aos="zoom-out">
+                <ActionIcon
+                    onClick={handleOpenEdit}
+                    variant="subtle"
+                    color="brightSun.4"
+                    size={matches ? "md" : "lg"}
+                >
+                    <IconPencil className="w-4/5 h-4/5" stroke={1.5} />
+                </ActionIcon>
             </div>
 
-            {/* Validation Error Alert */}
-            {validationError && (
-                <Alert color="red" title="Error" mb="md" withCloseButton onClose={() => setValidationError("")}>
-                    {validationError}
-                </Alert>
-            )}
+            <DesiredJobPaginatedDisplay profile={profile} matches={!!matches} />
 
-            {/* Editable Tags */}
-            {edit ? (
-                <>
-                    <div className="my-3">
-                        <TagsInput
-                            label="Preferred Designations"
-                            placeholder="Enter designation and press Enter"
-                            styles={premiumInputStyles}
-                            {...form.getInputProps("preferredDesignations")}
-                        />
-                    </div>
-                    <div className="my-3">
-                        <TagsInput
-                            label="Preferred Locations"
-                            placeholder="Enter location and press Enter"
-                            styles={premiumInputStyles}
-                            {...form.getInputProps("preferredLocations")}
-                        />
-                    </div>
-                    <div className="my-3">
-                        <TagsInput
-                            label="Preferred Industries"
-                            placeholder="Enter industry and press Enter"
-                            styles={premiumInputStyles}
-                            {...form.getInputProps("preferredIndustries")}
-                        />
-                    </div>
-                </>
+            <Modal
+                opened={editOpen}
+                onClose={handleCloseEdit}
+                title="Edit Desired Job"
+                centered
+                size="lg"
+                radius="xl"
+                transitionProps={{ transition: "fade", duration: 180 }}
+                overlayProps={{ backgroundOpacity: 0.78, blur: 4, color: "#020617" }}
+                styles={{
+                    content: {
+                        background:
+                            "radial-gradient(circle at top right, rgba(34,211,238,0.12), transparent 36%), linear-gradient(180deg, rgba(10,15,30,0.98), rgba(2,6,23,0.98))",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow: "0 28px 80px rgba(0,0,0,0.55)",
+                    },
+                    header: {
+                        background: "transparent",
+                        borderBottom: "1px solid rgba(255,255,255,0.10)",
+                        paddingBottom: "12px",
+                    },
+                    title: {
+                        color: "#f8fafc",
+                        fontWeight: 800,
+                        letterSpacing: "0.01em",
+                    },
+                    close: {
+                        color: "#cbd5e1",
+                    },
+                    body: {
+                        paddingTop: "16px",
+                    },
+                }}
+            >
+                {validationError && (
+                    <Alert color="red" title="Error" mb="md" withCloseButton onClose={() => setValidationError("")}>
+                        {validationError}
+                    </Alert>
+                )}
 
-            ) : (
-                <DesiredJobPaginatedDisplay profile={profile} matches={!!matches} />
-            )}
+                <div className="space-y-4">
+                    <TagsInput
+                        label="Preferred Designations"
+                        placeholder="Enter designation and press Enter"
+                        styles={premiumInputStyles}
+                        {...form.getInputProps("preferredDesignations")}
+                    />
+                    <TagsInput
+                        label="Preferred Locations"
+                        placeholder="Enter location and press Enter"
+                        styles={premiumInputStyles}
+                        {...form.getInputProps("preferredLocations")}
+                    />
+                    <TagsInput
+                        label="Preferred Industries"
+                        placeholder="Enter industry and press Enter"
+                        styles={premiumInputStyles}
+                        {...form.getInputProps("preferredIndustries")}
+                    />
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button variant="light" color="gray" onClick={handleCloseEdit} className="rounded-full px-5">
+                            Cancel
+                        </Button>
+                        <Button color="brightSun.4" onClick={handleSave} className="rounded-full px-5 font-semibold text-mine-shaft-950">
+                            Save
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

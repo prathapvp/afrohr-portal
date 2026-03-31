@@ -63,10 +63,10 @@ public class ProfileDTO {
     private List<@Size(max = 80, message = "profile.itSkill.item.max") String> itSkills;
 
     @Size(max = 20, message = "profile.onlineProfiles.max")
-    private List<@Size(max = 200, message = "profile.onlineProfile.item.max") String> onlineProfiles;
+    private List<@Valid OnlineProfileLink> onlineProfiles;
 
     @Size(max = 20, message = "profile.workSamples.max")
-    private List<@Size(max = 200, message = "profile.workSample.item.max") String> workSamples;
+    private List<@Valid WorkSample> workSamples;
 
     @Valid
     private List<Education> education;

@@ -8,10 +8,12 @@ import org.hibernate.type.SqlTypes;
 
 import com.jobportal.dto.Certification;
 import com.jobportal.dto.Experience;
+import com.jobportal.dto.OnlineProfileLink;
 import com.jobportal.dto.ProfileDTO;
 import com.jobportal.dto.ProfileDTO.DesiredJob;
 import com.jobportal.dto.ProfileDTO.Education;
 import com.jobportal.dto.ProfileDTO.PersonalDetails;
+import com.jobportal.dto.WorkSample;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -65,11 +67,11 @@ public class Profile {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private List<String> onlineProfiles;
+    private List<OnlineProfileLink> onlineProfiles;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private List<String> workSamples;
+    private List<WorkSample> workSamples;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

@@ -1,7 +1,7 @@
-import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
+import { IconPencil } from "@tabler/icons-react";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
-import { ActionIcon, Divider, Select, TagsInput, TextInput, Alert } from "@mantine/core";
+import { useEffect, useState } from "react";
+import { ActionIcon, Select, TagsInput, TextInput, Alert, Button, Modal } from "@mantine/core";
 import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { extractErrorMessage } from "../../services/error-extractor-service";
@@ -43,7 +43,7 @@ const PersonalDetails = () => {
     const dispatch = useDispatch();
     const profile = useSelector((state: any) => state.profile);
     const matches = useMediaQuery("(max-width: 475px)");
-    const [edit, setEdit] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
     const form = useForm({
@@ -64,18 +64,37 @@ const PersonalDetails = () => {
         },
     });
 
-    const handleClick = () => {
-        if (!edit) {
-            setEdit(true);
+    useEffect(() => {
+        if (!editOpen) {
             form.setValues({
-                ...profile.personalDetails,
                 dateOfBirth: profile.personalDetails?.dateOfBirth ? new Date(profile.personalDetails.dateOfBirth) : null,
+                gender: profile.personalDetails?.gender || "",
+                nationality: profile.personalDetails?.nationality || "",
+                maritalStatus: profile.personalDetails?.maritalStatus || "",
+                drivingLicense: profile.personalDetails?.drivingLicense || "",
+                currentLocation: profile.personalDetails?.currentLocation || "",
+                languagesKnown: profile.personalDetails?.languagesKnown || [],
+                visaStatus: profile.personalDetails?.visaStatus || "",
+                religion: profile.personalDetails?.religion || "",
+                alternateEmail: profile.personalDetails?.alternateEmail || "",
+                alternateContact: profile.personalDetails?.alternateContact || "",
             });
-            setValidationErrors({});
-        } else {
-            setEdit(false);
-            setValidationErrors({});
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [profile.personalDetails, editOpen]);
+
+    const handleOpenEdit = () => {
+        form.setValues({
+            ...profile.personalDetails,
+            dateOfBirth: profile.personalDetails?.dateOfBirth ? new Date(profile.personalDetails.dateOfBirth) : null,
+        });
+        setValidationErrors({});
+        setEditOpen(true);
+    };
+
+    const handleCloseEdit = () => {
+        setValidationErrors({});
+        setEditOpen(false);
     };
 
     const handleSave = async () => {
@@ -108,12 +127,11 @@ const PersonalDetails = () => {
         }
         
         setValidationErrors({});
-        const updatedProfile = { ...profile, personalDetails: validation.data };
         
         try {
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
+            await (dispatch as any)(persistProfile({ personalDetails: validation.data })).unwrap();
             successNotification("Success", "Personal Details Updated Successfully");
-            setEdit(false);
+            setEditOpen(false);
         } catch (error: any) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
@@ -122,119 +140,145 @@ const PersonalDetails = () => {
 
     return (
         <div className="mt-2">
-            <div className="flex justify-end items-center" data-aos="zoom-out">
-                <div className="flex">
-                    {edit && (
-                        <ActionIcon onClick={handleSave} variant="subtle" color="green.8" size={matches ? "md" : "lg"}>
-                            <IconCheck className="w-4/5 h-4/5" stroke={1.5} />
-                        </ActionIcon>
-                    )}
-                    <ActionIcon
-                        onClick={handleClick}
-                        variant="subtle"
-                        color={edit ? "red.8" : "brightSun.4"}
-                        size={matches ? "md" : "lg"}
-                    >
-                        {edit ? <IconX className="w-4/5 h-4/5" stroke={1.5} /> : <IconPencil className="w-4/5 h-4/5" stroke={1.5} />}
-                    </ActionIcon>
+            <div className="mb-1 flex justify-end items-center" data-aos="zoom-out">
+                <ActionIcon
+                    onClick={handleOpenEdit}
+                    variant="subtle"
+                    color="brightSun.4"
+                    size={matches ? "md" : "lg"}
+                >
+                    <IconPencil className="w-4/5 h-4/5" stroke={1.5} />
+                </ActionIcon>
+            </div>
+
+            <div className="mt-2">
+                <div className="grid grid-cols-2 gap-4 text-mine-shaft-200 md-mx:grid-cols-1">
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Date of Birth:</span> {
+                            profile.personalDetails?.dateOfBirth
+                                ? new Date(profile.personalDetails.dateOfBirth).toLocaleDateString()
+                                : "Not specified"
+                        }
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Gender:</span> {profile.personalDetails?.gender || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Nationality:</span> {profile.personalDetails?.nationality || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Marital Status:</span> {profile.personalDetails?.maritalStatus || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Driving License:</span> {profile.personalDetails?.drivingLicense || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Current Location:</span> {profile.personalDetails?.currentLocation || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Languages Known:</span> {profile.personalDetails?.languagesKnown?.join(", ") || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Visa Status:</span> {profile.personalDetails?.visaStatus || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Religion:</span> {profile.personalDetails?.religion || "Not specified"}
+                    </div>
+                    <div>
+                        <span className="font-semibold text-mine-shaft-100">Alternate Email:</span> {profile.personalDetails?.alternateEmail || "Not specified"}
+                    </div>
+                    <div className="col-span-2">
+                        <span className="font-semibold text-mine-shaft-100">Alternate Contact:</span> {profile.personalDetails?.alternateContact || "Not specified"}
+                    </div>
                 </div>
             </div>
 
-            {/* Validation Errors Alert */}
-            {Object.keys(validationErrors).length > 0 && (
-                <Alert color="red" title="Validation Errors" mb="md" withCloseButton onClose={() => setValidationErrors({})}>
-                    <ul style={{ marginBottom: 0, paddingLeft: '20px' }}>
-                        {Object.values(validationErrors).map((error, idx) => (
-                            <li key={idx}>{error}</li>
-                        ))}
-                    </ul>
-                </Alert>
-            )}
+            <Modal
+                opened={editOpen}
+                onClose={handleCloseEdit}
+                title="Edit Personal Details"
+                centered
+                size="lg"
+                radius="xl"
+                transitionProps={{ transition: "fade", duration: 180 }}
+                overlayProps={{ backgroundOpacity: 0.78, blur: 4, color: "#020617" }}
+                styles={{
+                    content: {
+                        background:
+                            "radial-gradient(circle at top right, rgba(34,211,238,0.12), transparent 36%), linear-gradient(180deg, rgba(10,15,30,0.98), rgba(2,6,23,0.98))",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow: "0 28px 80px rgba(0,0,0,0.55)",
+                    },
+                    header: {
+                        background: "transparent",
+                        borderBottom: "1px solid rgba(255,255,255,0.10)",
+                        paddingBottom: "12px",
+                    },
+                    title: {
+                        color: "#f8fafc",
+                        fontWeight: 800,
+                        letterSpacing: "0.01em",
+                    },
+                    close: {
+                        color: "#cbd5e1",
+                    },
+                    body: {
+                        paddingTop: "16px",
+                    },
+                }}
+            >
+                {Object.keys(validationErrors).length > 0 && (
+                    <Alert color="red" title="Validation Errors" mb="md" withCloseButton onClose={() => setValidationErrors({})}>
+                        <ul style={{ marginBottom: 0, paddingLeft: '20px' }}>
+                            {Object.values(validationErrors).map((error, idx) => (
+                                <li key={idx}>{error}</li>
+                            ))}
+                        </ul>
+                    </Alert>
+                )}
 
-            {edit ? (
-                <>
-                    <div className="flex gap-10 md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
-                        <DateInput label="Date of Birth" styles={premiumInputStyles} {...form.getInputProps("dateOfBirth")} />
-                        <Select
-                            label="Gender"
-                            data={["Male", "Female", "Other"]}
+                <div className="space-y-3">
+                    <div className="my-3 flex gap-10 md-mx:gap-5 xs-mx:flex-wrap [&>*]:w-1/2 xs-mx:[&>*]:w-full">
+                        <DateInput
+                            label="Date of Birth"
+                            placeholder="DD/MM/YYYY"
+                            maxDate={new Date(new Date().getFullYear() - 18, new Date().getMonth(), new Date().getDate())}
+                            minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
                             styles={premiumInputStyles}
-                            {...form.getInputProps("gender")}
+                            {...form.getInputProps("dateOfBirth")}
                         />
+                        <Select label="Gender" data={["Male", "Female", "Other"]} styles={premiumInputStyles} {...form.getInputProps("gender")} />
                     </div>
-                    <div className="flex gap-10 md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
+                    <div className="my-3 flex gap-10 md-mx:gap-5 xs-mx:flex-wrap [&>*]:w-1/2 xs-mx:[&>*]:w-full">
                         <TextInput label="Nationality" styles={premiumInputStyles} {...form.getInputProps("nationality")} />
-                        <Select
-                            label="Marital Status"
-                            data={["Single", "Married", "Divorced", "Widowed"]}
-                            styles={premiumInputStyles}
-                            {...form.getInputProps("maritalStatus")}
-                        />
+                        <Select label="Marital Status" data={["Single", "Married", "Divorced", "Widowed"]} styles={premiumInputStyles} {...form.getInputProps("maritalStatus")} />
                     </div>
-                    <div className="flex gap-10 md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
-                        <Select
-                            label="Do you have a Driving License?"
-                            data={["Yes", "No"]}
-                            styles={premiumInputStyles}
-                            {...form.getInputProps("drivingLicense")}
-                        />
+                    <div className="my-3 flex gap-10 md-mx:gap-5 xs-mx:flex-wrap [&>*]:w-1/2 xs-mx:[&>*]:w-full">
+                        <Select label="Do you have a Driving License?" data={["Yes", "No"]} styles={premiumInputStyles} {...form.getInputProps("drivingLicense")} />
                         <TextInput label="Current Location" styles={premiumInputStyles} {...form.getInputProps("currentLocation")} />
                     </div>
-                    <div className="flex gap-10 md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
+                    <div className="my-3 flex gap-10 md-mx:gap-5 xs-mx:flex-wrap [&>*]:w-1/2 xs-mx:[&>*]:w-full">
                         <TagsInput label="Languages Known" styles={premiumInputStyles} {...form.getInputProps("languagesKnown")} />
                         <TextInput label="Visa Status For Current Location" styles={premiumInputStyles} {...form.getInputProps("visaStatus")} />
                     </div>
-                    <div className="flex gap-10 md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
+                    <div className="my-3 flex gap-10 md-mx:gap-5 xs-mx:flex-wrap [&>*]:w-1/2 xs-mx:[&>*]:w-full">
                         <TextInput label="Religion" styles={premiumInputStyles} {...form.getInputProps("religion")} />
                         <TextInput label="Alternate Email Address" styles={premiumInputStyles} {...form.getInputProps("alternateEmail")} />
                     </div>
                     <div className="my-3">
                         <TextInput label="Alternate Contact Number" styles={premiumInputStyles} {...form.getInputProps("alternateContact")} />
                     </div>
-                </>
-            ) : (
-                <div className="mt-2">
-                    <div className="grid grid-cols-2 md-mx:grid-cols-1 gap-4 text-mine-shaft-200">
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Date of Birth:</span> {
-                                profile.personalDetails?.dateOfBirth 
-                                    ? new Date(profile.personalDetails.dateOfBirth).toLocaleDateString() 
-                                    : "Not specified"
-                            }
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Gender:</span> {profile.personalDetails?.gender || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Nationality:</span> {profile.personalDetails?.nationality || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Marital Status:</span> {profile.personalDetails?.maritalStatus || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Driving License:</span> {profile.personalDetails?.drivingLicense || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Current Location:</span> {profile.personalDetails?.currentLocation || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Languages Known:</span> {profile.personalDetails?.languagesKnown?.join(", ") || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Visa Status:</span> {profile.personalDetails?.visaStatus || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Religion:</span> {profile.personalDetails?.religion || "Not specified"}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-mine-shaft-100">Alternate Email:</span> {profile.personalDetails?.alternateEmail || "Not specified"}
-                        </div>
-                        <div className="col-span-2">
-                            <span className="font-semibold text-mine-shaft-100">Alternate Contact:</span> {profile.personalDetails?.alternateContact || "Not specified"}
-                        </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button variant="light" color="gray" onClick={handleCloseEdit} className="rounded-full px-5">
+                            Cancel
+                        </Button>
+                        <Button color="brightSun.4" onClick={handleSave} className="rounded-full px-5 font-semibold text-mine-shaft-950">
+                            Save
+                        </Button>
                     </div>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };

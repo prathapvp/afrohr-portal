@@ -1,12 +1,19 @@
 package com.jobportal.service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.jobportal.dto.ProfileDTO;
 import com.jobportal.dto.ProfileDTO.PersonalDetails;
@@ -15,6 +22,10 @@ import com.jobportal.entity.Profile;
 import com.jobportal.exception.JobPortalException;
 import com.jobportal.repository.ProfileRepository;
 import com.jobportal.security.PiiCryptoService;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 
 @Service("profileService")
 public class ProfileServiceImpl implements ProfileService {
@@ -26,6 +37,12 @@ public class ProfileServiceImpl implements ProfileService {
 
 	@Autowired
 	private PiiCryptoService piiCryptoService;
+
+	@Autowired
+	private ObjectMapper objectMapper;
+
+	@Autowired
+	private Validator validator;
 
 	@Override
 	public Long createProfile(UserDTO userDTO) throws JobPortalException {
@@ -44,6 +61,28 @@ public class ProfileServiceImpl implements ProfileService {
 		Profile profile = profileRepository.findById(id)
 				.orElseThrow(() -> new JobPortalException("Profile not found with ID: " + id));
 		return decryptProfile(profile);
+	}
+
+	@Override
+	public ProfileDTO patchProfile(Long id, Map<String, Object> updates) throws JobPortalException {
+		if (updates == null || updates.isEmpty()) {
+			return getProfile(id);
+		}
+
+		Object requestId = updates.get("id");
+		if (requestId != null && !String.valueOf(requestId).equals(String.valueOf(id))) {
+			throw new JobPortalException("Profile ID in request body does not match path ID");
+		}
+
+		ProfileDTO existingProfile = getProfile(id);
+		ProfileDTO mergedProfile = mergeProfile(existingProfile, updates);
+
+		Set<ConstraintViolation<ProfileDTO>> violations = validator.validate(mergedProfile);
+		if (!violations.isEmpty()) {
+			throw new ConstraintViolationException(violations);
+		}
+
+		return updateProfile(mergedProfile);
 	}
 
 	@Override
@@ -70,6 +109,52 @@ public class ProfileServiceImpl implements ProfileService {
 			logger.error("Failed to update profile with ID: {}", profileDTO.getId(), e);
 			throw new JobPortalException("Failed to update profile: " + e.getMessage());
 		}
+	}
+
+	private ProfileDTO mergeProfile(ProfileDTO existingProfile, Map<String, Object> updates) throws JobPortalException {
+		try {
+			ObjectNode existingNode = objectMapper.valueToTree(existingProfile);
+			JsonNode updatesNode = objectMapper.valueToTree(normalizeProfilePatch(updates));
+
+			if (!(updatesNode instanceof ObjectNode updatesObject)) {
+				throw new JobPortalException("Profile patch payload must be a JSON object");
+			}
+
+			existingNode.setAll(updatesObject);
+			ProfileDTO mergedProfile = objectMapper.treeToValue(existingNode, ProfileDTO.class);
+			mergedProfile.setId(existingProfile.getId());
+			return mergedProfile;
+		} catch (JobPortalException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new JobPortalException("Failed to merge profile patch: " + e.getMessage());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> normalizeProfilePatch(Map<String, Object> updates) {
+		Map<String, Object> normalized = new LinkedHashMap<>(updates);
+		normalized.remove("id");
+
+		Object experiences = normalized.get("experiences");
+		if (experiences instanceof List<?> experienceList) {
+			List<Object> normalizedExperiences = new ArrayList<>();
+			for (Object item : experienceList) {
+				if (item instanceof Map<?, ?> rawMap) {
+					Map<String, Object> experienceMap = new LinkedHashMap<>((Map<String, Object>) rawMap);
+					if (!experienceMap.containsKey("title") && experienceMap.containsKey("jobTitle")) {
+						experienceMap.put("title", experienceMap.get("jobTitle"));
+					}
+					experienceMap.remove("jobTitle");
+					normalizedExperiences.add(experienceMap);
+				} else {
+					normalizedExperiences.add(item);
+				}
+			}
+			normalized.put("experiences", normalizedExperiences);
+		}
+
+		return normalized;
 	}
 
 	@Override

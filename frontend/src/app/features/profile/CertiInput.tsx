@@ -16,6 +16,23 @@ const CertiInput = (props: any) => {
     const matches = useMediaQuery('(max-width: 475px)');
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+    const premiumInputStyles = {
+        label: {
+            color: "#d1d5db",
+            fontWeight: 600,
+            marginBottom: "6px",
+        },
+        input: {
+            background: "rgba(15, 23, 42, 0.55)",
+            color: "#f3f4f6",
+            borderColor: "rgba(255, 255, 255, 0.14)",
+        },
+        dropdown: {
+            background: "#111827",
+            borderColor: "rgba(255, 255, 255, 0.12)",
+        },
+    };
+
     const dispatch = useDispatch<any>();
     const profile = useSelector((state: any) => state.profile);
     const form = useForm({
@@ -70,18 +87,16 @@ const CertiInput = (props: any) => {
             certis[props.index] = certiData;
         }
         
-        let updatedProfile = { ...profile, certifications: certis };
         setValidationErrors({});
         props.setEdit(false);
         try {
-            await dispatch(persistProfile(updatedProfile)).unwrap();
+            await dispatch(persistProfile({ certifications: certis })).unwrap();
             successNotification("Success", `Certificate ${props.add ? "Added" : "Updated"} Successfully`);
         } catch {
             errorNotification("Error", "Failed to save certification");
         }
     }
-    return <div data-aos="zoom-out">
-        <div className="text-lg font-semibold">Add Certificate</div>
+    return <div data-aos="zoom-out" className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
         
         {Object.keys(validationErrors).length > 0 && (
             <Alert title="Validation Error" color="red" mb="md" onClose={() => setValidationErrors({})}>
@@ -92,16 +107,16 @@ const CertiInput = (props: any) => {
         )}
         
         <div className=" flex gap-10  md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3" >
-            <TextInput withAsterisk {...form.getInputProps('name')} label="Title" placeholder="Enter title" />
-            <SelectInput form={form} name="issuer" {...select[1]} />
+            <TextInput withAsterisk {...form.getInputProps('name')} label="Title" placeholder="Enter title" styles={premiumInputStyles} />
+            <SelectInput form={form} name="issuer" styles={premiumInputStyles} {...select[1]} />
         </div>
         <div className=" flex gap-10  md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
-            <MonthPickerInput  {...form.getInputProps('issueDate')} maxDate={new Date()} withAsterisk label="Issue Date" placeholder="Pick date"  />
-            <TextInput  {...form.getInputProps('certificateId')} withAsterisk label="Certificate ID" placeholder="Enter ID" />
+            <MonthPickerInput  {...form.getInputProps('issueDate')} maxDate={new Date()} withAsterisk label="Issue Date" placeholder="Pick date" styles={premiumInputStyles} />
+            <TextInput  {...form.getInputProps('certificateId')} withAsterisk label="Certificate ID" placeholder="Enter ID" styles={premiumInputStyles} />
         </div>
         <div className="my-3 flex gap-5">
-            <Button  color="green.8" onClick={handleSave} variant="light">Save</Button>
-            <Button  color="red.8" onClick={()=>props.setEdit(false)} variant="light">Cancel</Button>
+            <Button color="green.8" onClick={handleSave} variant="light" className="rounded-full px-5">Save</Button>
+            <Button color="red.8" onClick={()=>props.setEdit(false)} variant="light" className="rounded-full px-5">Cancel</Button>
         </div>
     </div>
 }

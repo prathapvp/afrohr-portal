@@ -5,7 +5,7 @@ import {
     Loader,
     Overlay,
 } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
 import Info from "./Info";
@@ -45,6 +45,10 @@ import {
     IconBuilding,
     IconAddressBook,
     IconDownload,
+    IconChevronLeft,
+    IconChevronRight,
+    IconMapPin,
+    IconBriefcase2,
 } from "@tabler/icons-react";
 import { getBase64 } from "../../services/utilities";
 import { secureError } from "../../services/secure-logging-service";
@@ -67,6 +71,7 @@ const Profile = () => {
     const [parsing, setParsing] = useState(false);
     const [downloadingPdf, setDownloadingPdf] = useState(false);
     const [downloadingWord, setDownloadingWord] = useState(false);
+    const [activeSectionIndex, setActiveSectionIndex] = useState(0);
 
     const completenessChecks = [
         !!profile?.name,
@@ -82,6 +87,140 @@ const Profile = () => {
     ];
     const completenessFilled = completenessChecks.filter(Boolean).length;
     const completenessPct = Math.round((completenessFilled / completenessChecks.length) * 100);
+
+    type ProfileSection = {
+        title: string;
+        icon: ReactNode;
+        defaultOpen?: boolean;
+        content: ReactNode;
+    };
+
+    const employerSections = useMemo<ProfileSection[]>(() => [
+        {
+            title: "About",
+            icon: <IconUser className="w-4 h-4" stroke={1.5} />,
+            content: <About />,
+        },
+        {
+            title: "Account Details",
+            icon: <IconInfoCircle className="w-4 h-4" stroke={1.5} />,
+            content: <AccountDetails />,
+        },
+        {
+            title: "Company Details",
+            icon: <IconBuilding className="w-4 h-4" stroke={1.5} />,
+            content: <CompanyDetails />,
+        },
+        {
+            title: "Address Details",
+            icon: <IconAddressBook className="w-4 h-4" stroke={1.5} />,
+            content: <AddressDetails />,
+        },
+    ], []);
+
+    const candidateSections = useMemo<ProfileSection[]>(() => [
+        {
+            title: "About",
+            icon: <IconUser className="w-4 h-4" stroke={1.5} />,
+            content: <About />,
+        },
+        {
+            title: "Basic Information",
+            icon: <IconInfoCircle className="w-4 h-4" stroke={1.5} />,
+            content: <Info />,
+        },
+        {
+            title: "Key Skills",
+            icon: <IconCode className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: !!(profile.skills?.length),
+            content: <Skills />,
+        },
+        {
+            title: "Experience",
+            icon: <IconBriefcase className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: !!(profile.experiences?.length),
+            content: <Experience />,
+        },
+        {
+            title: "Education",
+            icon: <IconSchool className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: !!(profile.education?.length),
+            content: <EducationDetails />,
+        },
+        {
+            title: "Certifications",
+            icon: <IconCertificate className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: !!(profile.certifications?.length),
+            content: <Certification />,
+        },
+        {
+            title: "Online Profiles",
+            icon: <IconWorld className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: false,
+            content: <OnlineProfiles />,
+        },
+        {
+            title: "Work Samples",
+            icon: <IconFolder className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: false,
+            content: <WorkSamples />,
+        },
+        {
+            title: "Personal Details",
+            icon: <IconHeart className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: false,
+            content: <PersonalDetails />,
+        },
+        {
+            title: "Desired Job",
+            icon: <IconTarget className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: false,
+            content: <DesiredJob />,
+        },
+        {
+            title: "Update CV",
+            icon: <IconFileUpload className="w-4 h-4" stroke={1.5} />,
+            defaultOpen: false,
+            content: <UpdateCV />,
+        },
+    ], [
+        profile.skills?.length,
+        profile.experiences?.length,
+        profile.education?.length,
+        profile.certifications?.length,
+    ]);
+
+    const profileSections = accountType === "EMPLOYER" ? employerSections : candidateSections;
+    const activeSection = profileSections[activeSectionIndex];
+    const prevSection = activeSectionIndex > 0 ? profileSections[activeSectionIndex - 1] : null;
+    const nextSection = activeSectionIndex < profileSections.length - 1 ? profileSections[activeSectionIndex + 1] : null;
+
+    useEffect(() => {
+        setActiveSectionIndex(0);
+    }, [accountType]);
+
+    useEffect(() => {
+        setActiveSectionIndex((current) => {
+            if (profileSections.length === 0) return 0;
+            return Math.min(current, profileSections.length - 1);
+        });
+    }, [profileSections.length]);
+
+    const animateSectionChange = (nextIndex: number) => {
+        if (nextIndex === activeSectionIndex || nextIndex < 0 || nextIndex >= profileSections.length) {
+            return;
+        }
+
+        setActiveSectionIndex(nextIndex);
+    };
+
+    const handlePrevSection = () => {
+        animateSectionChange(activeSectionIndex - 1);
+    };
+
+    const handleNextSection = () => {
+        animateSectionChange(activeSectionIndex + 1);
+    };
 
     /* ---------------- Image Handlers ---------------- */
     const handleProfilePicChange = async (file: File | null) => {
@@ -436,41 +575,60 @@ const Profile = () => {
             </div>
 
             {/* ---------------- Name & Title ---------------- */}
-            <div className="mb-2 mt-20 flex flex-col gap-4 px-5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-bright-sun-400/40 bg-bright-sun-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-bright-sun-300">
-                        <IconSparkles className="h-3.5 w-3.5" stroke={1.8} />
-                        Premium Identity
-                    </div>
-                    <h1 className="mt-2 text-3xl font-black tracking-tight text-white xs-mx:text-2xl">{profile.name || user?.name || "Your Name"}</h1>
-                    {(profile.jobTitle || profile.company) && (
-                        <p className="mt-1 text-sm text-slate-300">
-                            {profile.jobTitle}{profile.jobTitle && profile.company ? " at " : ""}{profile.company}
+            <div className="mb-3 mt-20 px-5">
+                <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
+                    <div className="rounded-[26px] border border-white/12 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.16),transparent_30%),linear-gradient(180deg,rgba(17,24,39,0.92),rgba(2,6,23,0.96))] px-5 py-5 shadow-[0_18px_48px_rgba(0,0,0,0.32)]">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-bright-sun-400/40 bg-bright-sun-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-bright-sun-300">
+                            <IconSparkles className="h-3.5 w-3.5" stroke={1.8} />
+                            Profile Studio
+                        </div>
+                        <h1 className="mt-3 text-3xl font-black tracking-tight text-white xs-mx:text-2xl">{profile.name || user?.name || "Your Name"}</h1>
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
+                            {(profile.jobTitle || profile.company) && (
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.05] px-3 py-1.5">
+                                    <IconBriefcase2 className="h-3.5 w-3.5 text-bright-sun-300" stroke={1.7} />
+                                    <span>{profile.jobTitle}{profile.jobTitle && profile.company ? " at " : ""}{profile.company}</span>
+                                </div>
+                            )}
+                            {(profile.location || profile.city || profile.country) && (
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.05] px-3 py-1.5">
+                                    <IconMapPin className="h-3.5 w-3.5 text-cyan-300" stroke={1.7} />
+                                    <span>{profile.location || [profile.city, profile.country].filter(Boolean).join(", ")}</span>
+                                </div>
+                            )}
+                            {accountType && (
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.05] px-3 py-1.5">
+                                    <IconCircleCheck className="h-3.5 w-3.5 text-emerald-300" stroke={1.7} />
+                                    <span>{accountType}</span>
+                                </div>
+                            )}
+                        </div>
+                        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
+                            {profile.about || profile.profileSummary || "Shape a sharper profile with stronger sections, better positioning, and a complete hiring-ready presence."}
                         </p>
-                    )}
-                </div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Skills</p>
-                        <p className="text-sm font-semibold text-white">{skillsCount}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Experience</p>
-                        <p className="text-sm font-semibold text-white">{experienceCount}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Certs</p>
-                        <p className="text-sm font-semibold text-white">{certificationCount}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">Resume</p>
-                        <p className="text-sm font-semibold text-white">{hasCv ? "Uploaded" : "Missing"}</p>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-2">
+                        <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 px-3 py-3">
+                            <p className="text-[10px] uppercase tracking-wider text-amber-100/75">Skills</p>
+                            <p className="mt-1 text-lg font-semibold text-white">{skillsCount}</p>
+                        </div>
+                        <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-3">
+                            <p className="text-[10px] uppercase tracking-wider text-cyan-100/75">Experience</p>
+                            <p className="mt-1 text-lg font-semibold text-white">{experienceCount}</p>
+                        </div>
+                        <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/10 px-3 py-3">
+                            <p className="text-[10px] uppercase tracking-wider text-fuchsia-100/75">Certifications</p>
+                            <p className="mt-1 text-lg font-semibold text-white">{certificationCount}</p>
+                        </div>
+                        <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-3">
+                            <p className="text-[10px] uppercase tracking-wider text-emerald-100/75">Resume</p>
+                            <p className="mt-1 text-lg font-semibold text-white">{hasCv ? "Ready" : "Needed"}</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* ---------------- Profile Completeness ---------------- */}
             {profile?.id && (
                 <div className="mb-4 px-5" data-aos="fade-up">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
@@ -566,72 +724,119 @@ const Profile = () => {
             {/* CARD-BASED SECTIONS                                                 */}
             {/* ================================================================== */}
             <div className="px-5 pb-5">
-                {accountType === "EMPLOYER" ? (
-                    <div className="grid grid-cols-1 gap-3">
-                        <ProfileCard title="About" icon={<IconUser className="w-4 h-4" stroke={1.5} />}>
-                            <About />
-                        </ProfileCard>
-                        <ProfileCard title="Account Details" icon={<IconInfoCircle className="w-4 h-4" stroke={1.5} />}>
-                            <AccountDetails />
-                        </ProfileCard>
-                        <ProfileCard title="Company Details" icon={<IconBuilding className="w-4 h-4" stroke={1.5} />}>
-                            <CompanyDetails />
-                        </ProfileCard>
-                        <ProfileCard title="Address Details" icon={<IconAddressBook className="w-4 h-4" stroke={1.5} />}>
-                            <AddressDetails />
-                        </ProfileCard>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                        {/* Primary cards — full width */}
-                        <ProfileCard title="About" icon={<IconUser className="w-4 h-4" stroke={1.5} />}>
-                            <About />
-                        </ProfileCard>
-
-                        <ProfileCard title="Basic Information" icon={<IconInfoCircle className="w-4 h-4" stroke={1.5} />}>
-                            <Info />
-                        </ProfileCard>
-
-                        <ProfileCard title="Key Skills" icon={<IconCode className="w-4 h-4" stroke={1.5} />} defaultOpen={!!(profile.skills?.length)}>
-                            <Skills />
-                        </ProfileCard>
-
-                        <ProfileCard title="Experience" icon={<IconBriefcase className="w-4 h-4" stroke={1.5} />} defaultOpen={!!(profile.experiences?.length)}>
-                            <Experience />
-                        </ProfileCard>
-
-                        <ProfileCard title="Education" icon={<IconSchool className="w-4 h-4" stroke={1.5} />} defaultOpen={!!(profile.education?.length)}>
-                            <EducationDetails />
-                        </ProfileCard>
-
-                        <ProfileCard title="Certifications" icon={<IconCertificate className="w-4 h-4" stroke={1.5} />} defaultOpen={!!(profile.certifications?.length)}>
-                            <Certification />
-                        </ProfileCard>
-
-                        {/* Secondary cards — two-column grid */}
-                        <div className="grid grid-cols-2 md-mx:grid-cols-1 gap-3">
-                            <ProfileCard title="Online Profiles" icon={<IconWorld className="w-4 h-4" stroke={1.5} />} defaultOpen={false}>
-                                <OnlineProfiles />
-                            </ProfileCard>
-
-                            <ProfileCard title="Work Samples" icon={<IconFolder className="w-4 h-4" stroke={1.5} />} defaultOpen={false}>
-                                <WorkSamples />
-                            </ProfileCard>
-
-                            <ProfileCard title="Personal Details" icon={<IconHeart className="w-4 h-4" stroke={1.5} />} defaultOpen={false}>
-                                <PersonalDetails />
-                            </ProfileCard>
-
-                            <ProfileCard title="Desired Job" icon={<IconTarget className="w-4 h-4" stroke={1.5} />} defaultOpen={false}>
-                                <DesiredJob />
-                            </ProfileCard>
+                <div className="rounded-[26px] border border-white/12 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_30%),linear-gradient(180deg,rgba(17,24,39,0.92),rgba(2,6,23,0.96))] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
+                    <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Section Navigator</div>
+                            <div className="mt-1 flex items-center gap-2 text-sm text-slate-200">
+                                <span className="rounded-full border border-bright-sun-400/25 bg-bright-sun-400/10 p-1.5 text-bright-sun-300">{activeSection?.icon}</span>
+                                <span className="font-semibold text-white">{activeSection?.title}</span>
+                                <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
+                                    {profileSections.length > 0 ? `${activeSectionIndex + 1} of ${profileSections.length}` : "0 of 0"}
+                                </span>
+                            </div>
                         </div>
 
-                        <ProfileCard title="Update CV" icon={<IconFileUpload className="w-4 h-4" stroke={1.5} />} defaultOpen={false}>
-                            <UpdateCV />
-                        </ProfileCard>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                            <Button
+                                variant="gradient"
+                                gradient={{ from: "brightSun.5", to: "pink.4", deg: 90 }}
+                                size="xs"
+                                onClick={handlePrevSection}
+                                disabled={activeSectionIndex === 0}
+                                className="rounded-full px-5"
+                                leftSection={<IconChevronLeft size={14} />}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="gradient"
+                                gradient={{ from: "pink.4", to: "brightSun.5", deg: 90 }}
+                                size="xs"
+                                onClick={handleNextSection}
+                                disabled={activeSectionIndex >= profileSections.length - 1}
+                                className="rounded-full px-5"
+                                rightSection={<IconChevronRight size={14} />}
+                            >
+                                Next
+                            </Button>
+                        </div>
                     </div>
-                )}
+
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+                            <div className="mb-2 text-[10px] uppercase tracking-[0.12em] text-slate-400">Previous</div>
+                            <div className="flex items-center gap-2">
+                                {prevSection ? (
+                                    <>
+                                        <span className="text-bright-sun-300">{prevSection.icon}</span>
+                                        <span className="truncate text-xs font-semibold text-slate-200">{prevSection.title}</span>
+                                    </>
+                                ) : (
+                                    <span className="text-xs text-slate-500">Start</span>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-bright-sun-400/30 bg-bright-sun-400/10 px-3 py-3 text-center shadow-[0_0_18px_rgba(251,191,36,0.12)]">
+                            <div className="mb-2 text-[10px] uppercase tracking-[0.12em] text-bright-sun-100/80">Current</div>
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="text-bright-sun-300">{activeSection?.icon}</span>
+                                <span className="text-xs font-semibold text-bright-sun-100">{activeSection?.title}</span>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+                            <div className="mb-2 text-right text-[10px] uppercase tracking-[0.12em] text-slate-400">Next</div>
+                            <div className="flex items-center justify-end gap-2">
+                                {nextSection ? (
+                                    <>
+                                        <span className="text-bright-sun-300">{nextSection.icon}</span>
+                                        <span className="truncate text-xs font-semibold text-slate-200">{nextSection.title}</span>
+                                    </>
+                                ) : (
+                                    <span className="text-xs text-slate-500">End</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {profileSections.map((section, index) => (
+                            <button
+                                key={section.title}
+                                onClick={() => animateSectionChange(index)}
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                    activeSectionIndex === index
+                                        ? "border-bright-sun-400/70 bg-bright-sun-400/20 text-bright-sun-200 shadow-[0_0_14px_rgba(251,191,36,0.16)]"
+                                        : "border-white/15 bg-white/5 text-mine-shaft-300 hover:bg-white/10"
+                                }`}
+                            >
+                                <span className={activeSectionIndex === index ? "text-bright-sun-300" : "text-slate-400"}>{section.icon}</span>
+                                {section.title}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="mt-4 overflow-hidden rounded-3xl">
+                        <div
+                            style={{ transform: `translateX(-${activeSectionIndex * 100}%)` }}
+                            className="flex transition-transform duration-500 ease-out"
+                        >
+                            {profileSections.map((section) => (
+                                <div key={section.title} className="min-w-full">
+                                    <ProfileCard
+                                        title={section.title}
+                                        icon={section.icon}
+                                        defaultOpen={section.defaultOpen ?? true}
+                                    >
+                                        {section.content}
+                                    </ProfileCard>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
             </div>
         </div>

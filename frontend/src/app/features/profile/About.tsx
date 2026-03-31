@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ActionIcon, Textarea, TextInput, Alert, Divider } from '@mantine/core';
-import { IconCheck, IconPencil, IconX } from '@tabler/icons-react';
+import { ActionIcon, Button, Modal, Textarea, TextInput, Alert } from '@mantine/core';
+import { IconPencil } from '@tabler/icons-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { persistProfile } from '../../store/slices/ProfileSlice';
 import { successNotification, errorNotification } from '../../services/NotificationService';
@@ -19,37 +19,52 @@ const About: React.FC = () => {
   const [about, setAbout] = useState<string>(profile.about || '');
   const [cvHeadline, setCvHeadline] = useState<string>(profile.cvHeadline || '');
   const [profileSummary, setProfileSummary] = useState<string>(profile.profileSummary || '');
-  const [edit, setEdit] = useState<boolean>(false);
+  const [editOpen, setEditOpen] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string>('');
+
+  const premiumInputStyles = {
+    label: {
+      color: '#d1d5db',
+      fontWeight: 600,
+      marginBottom: '6px',
+    },
+    input: {
+      background: 'rgba(15, 23, 42, 0.55)',
+      color: '#f3f4f6',
+      borderColor: 'rgba(255, 255, 255, 0.14)',
+    },
+  };
 
   const matches = useMediaQuery('(max-width: 475px)');
 
   useEffect(() => {
-    if (!edit) {
+    if (!editOpen) {
       setAbout(profile.about || '');
       setCvHeadline(profile.cvHeadline || '');
       setProfileSummary(profile.profileSummary || '');
     }
-  }, [profile.about, profile.cvHeadline, profile.profileSummary, edit]);
+  }, [profile.about, profile.cvHeadline, profile.profileSummary, editOpen]);
 
-  const handleClick = () => {
-    if (!edit) {
-      setAbout(profile.about || '');
-      setCvHeadline(profile.cvHeadline || '');
-      setProfileSummary(profile.profileSummary || '');
-    }
-    setEdit((prev) => !prev);
+  const handleOpenEdit = () => {
+    setAbout(profile.about || '');
+    setCvHeadline(profile.cvHeadline || '');
+    setProfileSummary(profile.profileSummary || '');
+    setEditOpen(true);
+    setValidationError('');
+  };
+
+  const handleCloseEdit = () => {
+    setEditOpen(false);
     setValidationError('');
   };
 
   const handleSave = async () => {
     setValidationError('');
-    const updatedProfile = { ...profile, about, cvHeadline, profileSummary };
 
     try {
-      await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
+      await (dispatch as any)(persistProfile({ about, cvHeadline, profileSummary })).unwrap();
       successNotification('Success', 'About section updated');
-      setEdit(false);
+      setEditOpen(false);
     } catch (error: any) {
       const errorMessage = extractErrorMessage(error);
       errorNotification('Update Failed', errorMessage);
@@ -60,58 +75,18 @@ const About: React.FC = () => {
 
   return (
     <div className="mt-2">
-      {/* Edit Controls */}
       <div className="flex justify-end mb-1">
-        {edit && (
-          <ActionIcon onClick={handleSave} variant="subtle" color="green.8" size={matches ? 'md' : 'lg'}>
-            <IconCheck className="w-4/5 h-4/5" stroke={1.5} />
-          </ActionIcon>
-        )}
         <ActionIcon
-          onClick={handleClick}
+          onClick={handleOpenEdit}
           variant="subtle"
-          color={edit ? 'red.8' : 'brightSun.4'}
+          color="brightSun.4"
           size={matches ? 'md' : 'lg'}
         >
-          {edit ? <IconX className="w-4/5 h-4/5" stroke={1.5} /> : <IconPencil className="w-4/5 h-4/5" stroke={1.5} />}
+          <IconPencil className="w-4/5 h-4/5" stroke={1.5} />
         </ActionIcon>
       </div>
 
-      {validationError && (
-        <Alert color="red" title="Error" mb="md" withCloseButton onClose={() => setValidationError('')}>
-          {validationError}
-        </Alert>
-      )}
-
-      {edit ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
-          <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-slate-300">Edit About Section</div>
-          <div className="flex flex-col gap-4">
-          <TextInput
-            label="CV Headline"
-            placeholder="e.g., Immediate Joiner - Java Full Stack Developer"
-            value={cvHeadline}
-            onChange={(e) => setCvHeadline(e.currentTarget.value)}
-          />
-          <Textarea
-            label="About Me"
-            placeholder="Tell employers about yourself"
-            value={about}
-            onChange={(e) => setAbout(e.currentTarget.value)}
-            autosize
-            minRows={3}
-          />
-          <Textarea
-            label="Profile Summary"
-            placeholder="Summarize your professional background and expertise"
-            value={profileSummary}
-            onChange={(e) => setProfileSummary(e.currentTarget.value)}
-            autosize
-            minRows={3}
-          />
-        </div>
-        </div>
-      ) : hasContent ? (
+      {hasContent ? (
         <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
           {profile.cvHeadline && (
             <div className="rounded-xl border border-bright-sun-300/25 bg-bright-sun-300/10 p-3">
@@ -133,8 +108,87 @@ const About: React.FC = () => {
           )}
         </div>
       ) : (
-        <p className="text-sm text-mine-shaft-400 italic">No information provided. Click edit to add your headline, about, and summary.</p>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-sm text-mine-shaft-400 sm:p-4">
+          <p className="italic">No information added yet. Click edit to add your headline, about, and summary.</p>
+        </div>
       )}
+
+      <Modal
+        opened={editOpen}
+        onClose={handleCloseEdit}
+        title="Edit About"
+        centered
+        size="lg"
+        radius="xl"
+        transitionProps={{ transition: 'fade', duration: 180 }}
+        overlayProps={{ backgroundOpacity: 0.78, blur: 4, color: '#020617' }}
+        styles={{
+          content: {
+            background:
+              'radial-gradient(circle at top right, rgba(34,211,238,0.12), transparent 36%), linear-gradient(180deg, rgba(10,15,30,0.98), rgba(2,6,23,0.98))',
+            border: '1px solid rgba(255,255,255,0.12)',
+            boxShadow: '0 28px 80px rgba(0,0,0,0.55)',
+          },
+          header: {
+            background: 'transparent',
+            borderBottom: '1px solid rgba(255,255,255,0.10)',
+            paddingBottom: '12px',
+          },
+          title: {
+            color: '#f8fafc',
+            fontWeight: 800,
+            letterSpacing: '0.01em',
+          },
+          close: {
+            color: '#cbd5e1',
+          },
+          body: {
+            paddingTop: '16px',
+          },
+        }}
+      >
+        {validationError && (
+          <Alert color="red" title="Error" mb="md" withCloseButton onClose={() => setValidationError('')}>
+            {validationError}
+          </Alert>
+        )}
+
+        <div className="flex flex-col gap-4">
+          <TextInput
+            label="CV Headline"
+            placeholder="e.g., Immediate Joiner - Java Full Stack Developer"
+            value={cvHeadline}
+            onChange={(e) => setCvHeadline(e.currentTarget.value)}
+            styles={premiumInputStyles}
+          />
+          <Textarea
+            label="About Me"
+            placeholder="Tell employers about yourself"
+            value={about}
+            onChange={(e) => setAbout(e.currentTarget.value)}
+            autosize
+            minRows={3}
+            styles={premiumInputStyles}
+          />
+          <Textarea
+            label="Profile Summary"
+            placeholder="Summarize your professional background and expertise"
+            value={profileSummary}
+            onChange={(e) => setProfileSummary(e.currentTarget.value)}
+            autosize
+            minRows={3}
+            styles={premiumInputStyles}
+          />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="light" color="gray" onClick={handleCloseEdit} className="rounded-full px-5">
+              Cancel
+            </Button>
+            <Button color="brightSun.4" onClick={handleSave} className="rounded-full px-5 font-semibold text-mine-shaft-950">
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

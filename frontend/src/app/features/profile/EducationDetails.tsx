@@ -1,7 +1,7 @@
-import { IconCheck, IconPencil, IconPlus, IconX } from "@tabler/icons-react";
+import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { ActionIcon, Button, Divider, TextInput, Alert, Select } from "@mantine/core";
+import { ActionIcon, Button, TextInput, Alert, Select, Modal } from "@mantine/core";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { extractErrorMessage } from "../../services/error-extractor-service";
@@ -20,7 +20,7 @@ const EducationDetails = () => {
     const dispatch = useDispatch();
     const profile = useSelector((state: any) => state.profile);
     const matches = useMediaQuery("(max-width: 475px)");
-    const [edit, setEdit] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
     const [education, setEducation] = useState<Education[]>(profile.education || []);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     // Pagination for display mode
@@ -33,15 +33,56 @@ const EducationDetails = () => {
     // Reset page if education changes
     useEffect(() => { setPage(1); }, [education.length]);
 
-    const handleClick = () => {
-        if (!edit) {
-            setEdit(true);
-            // Create deep copy to avoid mutating Redux state
-            setEducation(profile.education ? JSON.parse(JSON.stringify(profile.education)) : []);
-            setValidationErrors({});
-        } else {
-            setEdit(false);
+    const premiumInputStyles = {
+        label: {
+            color: "#d1d5db",
+            fontWeight: 600,
+            marginBottom: "6px",
+        },
+        input: {
+            background: "rgba(15, 23, 42, 0.55)",
+            color: "#f3f4f6",
+            borderColor: "rgba(255, 255, 255, 0.14)",
+            "::placeholder": {
+                color: "rgba(156, 163, 175, 0.7)",
+            },
+        },
+        dropdown: {
+            background: "#111827",
+            borderColor: "rgba(255, 255, 255, 0.14)",
+        },
+        option: {
+            color: "#f3f4f6",
+            "&[data-combobox-selected]": {
+                background: "rgba(251, 191, 36, 0.18)",
+                color: "#fbbf24",
+            },
+            "&[data-combobox-active]": {
+                background: "rgba(251, 191, 36, 0.18)",
+                color: "#fbbf24",
+            },
+            "&:hover": {
+                background: "rgba(255, 255, 255, 0.08)",
+                color: "#f9fafb",
+            },
+        },
+    };
+
+    useEffect(() => {
+        if (!editOpen) {
+            setEducation(profile.education || []);
         }
+    }, [profile.education, editOpen]);
+
+    const handleOpenEdit = () => {
+        setEducation(profile.education ? JSON.parse(JSON.stringify(profile.education)) : []);
+        setValidationErrors({});
+        setEditOpen(true);
+    };
+
+    const handleCloseEdit = () => {
+        setValidationErrors({});
+        setEditOpen(false);
     };
 
     const handleSave = async () => {
@@ -66,8 +107,8 @@ const EducationDetails = () => {
         dispatch(changeProfile(updatedProfile));
 
         try {
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
-            setEdit(false);
+            await (dispatch as any)(persistProfile({ education })).unwrap();
+            setEditOpen(false);
             successNotification("Success", "Education Details Updated Successfully");
         } catch (error: any) {
             const errorMessage = extractErrorMessage(error);
@@ -92,118 +133,165 @@ const EducationDetails = () => {
 
     return (
         <div className="mt-2">
-            <div className="flex justify-end items-center" data-aos="zoom-out">
-                <div className="flex">
-                    {edit && (
-                        <ActionIcon onClick={handleSave} variant="subtle" color="green.8" size={matches ? "md" : "lg"}>
-                            <IconCheck className="w-4/5 h-4/5" stroke={1.5} />
-                        </ActionIcon>
-                    )}
-                    <ActionIcon
-                        onClick={handleClick}
-                        variant="subtle"
-                        color={edit ? "red.8" : "brightSun.4"}
-                        size={matches ? "md" : "lg"}
-                    >
-                        {edit ? <IconX className="w-4/5 h-4/5" stroke={1.5} /> : <IconPencil className="w-4/5 h-4/5" stroke={1.5} />}
-                    </ActionIcon>
-                </div>
+            <div className="mb-1 flex justify-end items-center" data-aos="zoom-out">
+                <ActionIcon
+                    onClick={handleOpenEdit}
+                    variant="subtle"
+                    color="brightSun.4"
+                    size={matches ? "md" : "lg"}
+                >
+                    <IconPencil className="w-4/5 h-4/5" stroke={1.5} />
+                </ActionIcon>
             </div>
 
-            {Object.keys(validationErrors).length > 0 && (
-                <Alert title="Validation Error" color="red" mb="md" onClose={() => setValidationErrors({})}>
-                    {Object.values(validationErrors).map((error, idx) => (
-                        <div key={idx} className="text-sm">• {error}</div>
-                    ))}
-                </Alert>
-            )}
+            <div className="mt-2">
+                {education.length > 0 ? (
+                    <>
+                        <div className="space-y-4">
+                            {paginatedEducation.map((edu, idx) => (
+                                <div key={(page - 1) * itemsPerPage + idx} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                                    <div className="text-lg font-semibold text-mine-shaft-100">
+                                        {edu.degree} in {edu.field}
+                                    </div>
+                                    <div className="text-mine-shaft-300">{edu.college}</div>
+                                    <div className="text-sm text-mine-shaft-400">{edu.yearOfPassing}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-2 flex justify-center gap-4">
+                            <Button
+                                variant="gradient"
+                                gradient={{ from: 'brightSun.5', to: 'pink.4', deg: 90 }}
+                                size={matches ? "xs" : "sm"}
+                                onClick={handlePrev}
+                                disabled={page === 1}
+                                className="rounded-full px-6 shadow-md"
+                            >
+                                Previous
+                            </Button>
+                            <span className="self-center font-semibold text-mine-shaft-300">Page {page} of {totalPages}</span>
+                            <Button
+                                variant="gradient"
+                                gradient={{ from: 'pink.4', to: 'brightSun.5', deg: 90 }}
+                                size={matches ? "xs" : "sm"}
+                                onClick={handleNext}
+                                disabled={page === totalPages}
+                                className="rounded-full px-6 shadow-md"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-sm text-mine-shaft-400 sm:p-4">
+                        No education added yet. Click edit to add your academic background.
+                    </div>
+                )}
+            </div>
 
-            {edit ? (
-                <div className="mt-2">
+            <Modal
+                opened={editOpen}
+                onClose={handleCloseEdit}
+                title="Edit Education Details"
+                centered
+                size="lg"
+                radius="xl"
+                transitionProps={{ transition: "fade", duration: 180 }}
+                overlayProps={{ backgroundOpacity: 0.78, blur: 4, color: "#020617" }}
+                styles={{
+                    content: {
+                        background:
+                            "radial-gradient(circle at top right, rgba(34,211,238,0.12), transparent 36%), linear-gradient(180deg, rgba(10,15,30,0.98), rgba(2,6,23,0.98))",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow: "0 28px 80px rgba(0,0,0,0.55)",
+                    },
+                    header: {
+                        background: "transparent",
+                        borderBottom: "1px solid rgba(255,255,255,0.10)",
+                        paddingBottom: "12px",
+                    },
+                    title: {
+                        color: "#f8fafc",
+                        fontWeight: 800,
+                        letterSpacing: "0.01em",
+                    },
+                    close: {
+                        color: "#cbd5e1",
+                    },
+                    body: {
+                        paddingTop: "16px",
+                    },
+                }}
+            >
+                {Object.keys(validationErrors).length > 0 && (
+                    <Alert title="Validation Error" color="red" mb="md" withCloseButton onClose={() => setValidationErrors({})}>
+                        {Object.values(validationErrors).map((error, idx) => (
+                            <div key={idx} className="text-sm">• {error}</div>
+                        ))}
+                    </Alert>
+                )}
+
+                <div className="flex flex-col gap-4">
                     {education.map((edu, index) => (
-                        <div key={index} className="mb-4 p-4 border rounded-md">
-                            <div className="flex gap-4 mb-3 xs-mx:flex-wrap">
+                        <div key={index} className="rounded-xl border border-white/10 bg-slate-900/45 p-4">
+                            <div className="mb-3 flex gap-4 xs-mx:flex-wrap">
                                 <Select
                                     className="flex-1"
                                     label="Degree"
+                                    placeholder="Select degree"
                                     data={["Bachelors", "Masters", "Doctorate", "Diploma", "Certificate"]}
                                     value={edu.degree}
                                     onChange={(value) => handleChange(index, "degree", value || "")}
+                                    styles={premiumInputStyles}
                                 />
                                 <TextInput
                                     className="flex-1"
                                     label="Field of Study"
+                                    placeholder="e.g. Computer Science"
                                     value={edu.field}
                                     onChange={(e) => handleChange(index, "field", e.currentTarget.value)}
+                                    styles={premiumInputStyles}
                                 />
                             </div>
-                            <div className="flex gap-4 mb-3 xs-mx:flex-wrap">
+                            <div className="mb-3 flex gap-4 xs-mx:flex-wrap">
                                 <TextInput
                                     className="flex-1"
                                     label="College/University"
+                                    placeholder="e.g. Anna University"
                                     value={edu.college}
                                     onChange={(e) => handleChange(index, "college", e.currentTarget.value)}
+                                    styles={premiumInputStyles}
                                 />
                                 <TextInput
                                     className="flex-1"
                                     label="Year of Passing"
+                                    placeholder="e.g. 2022"
                                     value={edu.yearOfPassing}
                                     onChange={(e) => handleChange(index, "yearOfPassing", e.currentTarget.value)}
+                                    styles={premiumInputStyles}
                                 />
                             </div>
-                            <Button color="red" size="xs" onClick={() => handleRemove(index)}>
+                            <Button color="red" variant="light" size="xs" onClick={() => handleRemove(index)}>
                                 Remove
                             </Button>
                         </div>
                     ))}
-                    <Button leftSection={<IconPlus size={16} />} onClick={handleAdd}>
-                        Add Education
-                    </Button>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                        <Button variant="light" color="brightSun.4" leftSection={<IconPlus size={16} />} onClick={handleAdd}>
+                            Add Education
+                        </Button>
+                        <div className="flex gap-3">
+                            <Button variant="light" color="gray" onClick={handleCloseEdit} className="rounded-full px-5">
+                                Cancel
+                            </Button>
+                            <Button color="brightSun.4" onClick={handleSave} className="rounded-full px-5 font-semibold text-mine-shaft-950">
+                                Save
+                            </Button>
+                        </div>
+                    </div>
                 </div>
-            ) : (
-                <div className="mt-2">
-                    {education.length > 0 ? (
-                        <>
-                            <div className="space-y-4">
-                                {paginatedEducation.map((edu, idx) => (
-                                    <div key={(page - 1) * itemsPerPage + idx} className="border-l-4 border-brightSun-400 pl-4">
-                                        <div className="font-semibold text-lg">
-                                            {edu.degree} in {edu.field}
-                                        </div>
-                                        <div className="text-mine-shaft-600">{edu.college}</div>
-                                        <div className="text-sm text-mine-shaft-500">{edu.yearOfPassing}</div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex justify-center gap-4 mt-2">
-                                <Button
-                                    variant="gradient"
-                                    gradient={{ from: 'brightSun.5', to: 'pink.4', deg: 90 }}
-                                    size={matches ? "xs" : "sm"}
-                                    onClick={handlePrev}
-                                    disabled={page === 1}
-                                    className="rounded-full shadow-md px-6"
-                                >
-                                    Previous
-                                </Button>
-                                <span className="text-mine-shaft-300 font-semibold self-center">Page {page} of {totalPages}</span>
-                                <Button
-                                    variant="gradient"
-                                    gradient={{ from: 'pink.4', to: 'brightSun.5', deg: 90 }}
-                                    size={matches ? "xs" : "sm"}
-                                    onClick={handleNext}
-                                    disabled={page === totalPages}
-                                    className="rounded-full shadow-md px-6"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </>
-                    ) : (
-                        <p className="text-mine-shaft-600">No education details added yet. Click edit to add.</p>
-                    )}
-                </div>
-            )}
+            </Modal>
         </div>
     );
 };

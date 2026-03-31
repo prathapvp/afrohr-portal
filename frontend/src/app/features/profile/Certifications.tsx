@@ -1,9 +1,9 @@
-import { ActionIcon, Button } from "@mantine/core"
+import { ActionIcon, Button, Modal } from "@mantine/core"
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import CertiInput from "./CertiInput";
 import CertiCard from "./CertiCard";
-import { IconDeviceFloppy, IconPencil, IconPlus, IconX } from "@tabler/icons-react";
+import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useMediaQuery } from "@mantine/hooks";
 
 const Certification = () => {
@@ -67,16 +67,51 @@ const Certification = () => {
                     </>
                 ) : (
                     !addCerti && (
-                        <div className="text-center py-8 text-mine-shaft-400">
-                            <p className="mb-3">No certifications added yet. Showcase your credentials to stand out.</p>
-                            <Button variant="outline" color="brightSun.4" leftSection={<IconPlus size={16} />} onClick={() => setAddCerti(true)}>
+                        <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 py-8 text-center text-mine-shaft-200">
+                            <p className="mb-3 text-base text-amber-100">No certifications added yet. Showcase your credentials to stand out.</p>
+                            <Button variant="light" color="brightSun.4" leftSection={<IconPlus size={16} />} onClick={() => setAddCerti(true)} className="rounded-full font-semibold">
                                 Add your first certification
                             </Button>
                         </div>
                     )
                 )}
-                {addCerti && <CertiInput add setEdit={setAddCerti} />}
             </div>
+
+            <Modal
+                opened={addCerti}
+                onClose={() => setAddCerti(false)}
+                title="Add Certificate"
+                centered
+                size="lg"
+                radius="xl"
+                transitionProps={{ transition: "fade", duration: 180 }}
+                overlayProps={{ backgroundOpacity: 0.78, blur: 4, color: "#020617" }}
+                styles={{
+                    content: {
+                        background: "radial-gradient(circle at top right, rgba(251,191,36,0.12), transparent 36%), linear-gradient(180deg, rgba(10,15,30,0.98), rgba(2,6,23,0.98))",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow: "0 28px 80px rgba(0,0,0,0.55)",
+                    },
+                    header: {
+                        background: "transparent",
+                        borderBottom: "1px solid rgba(255,255,255,0.10)",
+                        paddingBottom: "12px",
+                    },
+                    title: {
+                        color: "#f8fafc",
+                        fontWeight: 800,
+                        letterSpacing: "0.01em",
+                    },
+                    close: {
+                        color: "#cbd5e1",
+                    },
+                    body: {
+                        paddingTop: "16px",
+                    },
+                }}
+            >
+                <CertiInput add setEdit={setAddCerti} />
+            </Modal>
         </div>
     );
 };

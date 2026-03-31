@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import SelectInput from "./SelectInput";
-import fields from "../../data/Profile";
 import { MonthPickerInput } from "@mantine/dates";
-import { Button, Checkbox, Textarea, Alert } from "@mantine/core";
+import { Button, Checkbox, Textarea, Alert, TextInput } from "@mantine/core";
 import { isNotEmpty, useForm } from "@mantine/form";
 import { useDispatch, useSelector } from "react-redux";
 import { persistProfile } from "../../store/slices/ProfileSlice";
@@ -14,7 +12,22 @@ const ExpInput = (props: any) => {
     const dispatch = useDispatch<any>();
     const profile = useSelector((state: any) => state.profile);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-    const select = fields;
+    const premiumInputStyles = {
+        label: {
+            color: "#d1d5db",
+            fontWeight: 600,
+            marginBottom: "6px",
+        },
+        input: {
+            background: "rgba(15, 23, 42, 0.55)",
+            color: "#f3f4f6",
+            borderColor: "rgba(255, 255, 255, 0.14)",
+        },
+        dropdown: {
+            background: "#111827",
+            borderColor: "rgba(255, 255, 255, 0.12)",
+        },
+    };
     const form = useForm({
         mode: 'controlled',
         validateInputOnChange: true,
@@ -85,20 +98,17 @@ const ExpInput = (props: any) => {
         else {
             exp[props.index] = expData;
         }
-        let updatedProfile = { ...profile, experiences: exp };
-        
         setValidationErrors({});
         props.setEdit(false);
         try {
-            await dispatch(persistProfile(updatedProfile)).unwrap();
+            await dispatch(persistProfile({ experiences: exp })).unwrap();
             successNotification("Success", `Experience ${props.add?"Added":"Updated"} Successfully`);
         } catch {
             errorNotification("Error", "Failed to save experience");
         }
     }
 
-    return <div data-aos="zoom-out">
-        <div className="text-lg font-semibold">{props.add ? "Add" : "Edit"} Experience</div>
+    return <div data-aos="zoom-out" className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
         
         {Object.keys(validationErrors).length > 0 && (
             <Alert title="Validation Error" color="red" mb="md" onClose={() => setValidationErrors({})}>
@@ -109,20 +119,59 @@ const ExpInput = (props: any) => {
         )}
         
         <div className=" flex gap-10  md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3" >
-            <SelectInput form={form} name="jobTitle"  {...select[0]} />
-            <SelectInput form={form} name="company" {...select[1]} />
+            <TextInput
+                withAsterisk
+                label="Job Title"
+                placeholder="Enter Job Title"
+                {...form.getInputProps("jobTitle")}
+                styles={premiumInputStyles}
+            />
+            <TextInput
+                withAsterisk
+                label="Company"
+                placeholder="Enter Company Name"
+                {...form.getInputProps("company")}
+                styles={premiumInputStyles}
+            />
         </div>
-        <SelectInput form={form} name="location"   {...select[2]} />
-        <Textarea {...form.getInputProps("description")} withAsterisk className="my-3" label="Summary" autosize minRows={2} placeholder="Enter Summary" />
+        <TextInput
+            withAsterisk
+            label="Location"
+            placeholder="Enter Job Location"
+            {...form.getInputProps("location")}
+            styles={premiumInputStyles}
+        />
+        <Textarea {...form.getInputProps("description")} withAsterisk className="my-3" label="Summary" autosize minRows={2} placeholder="Enter Summary" styles={premiumInputStyles} />
         <div className=" flex gap-10  md-mx:gap-5 [&>*]:w-1/2 xs-mx:[&>*]:w-full xs-mx:flex-wrap my-3">
-            <MonthPickerInput {...form.getInputProps("startDate")} maxDate={form.getValues().endDate || undefined} withAsterisk label="Start Date" />
-            <MonthPickerInput disabled={form.getValues().working} minDate={form.getValues().startDate || undefined} maxDate={new Date()} withAsterisk label="End Date" placeholder="Pick date" {...form.getInputProps("endDate")} />
+            <MonthPickerInput {...form.getInputProps("startDate")} maxDate={form.getValues().endDate || undefined} withAsterisk label="Start Date" styles={premiumInputStyles} />
+            <MonthPickerInput disabled={form.getValues().working} minDate={form.getValues().startDate || undefined} maxDate={new Date()} withAsterisk label="End Date" placeholder="Pick date" {...form.getInputProps("endDate")} styles={premiumInputStyles} />
         </div>
-        <Checkbox autoContrast label="Currently working here" checked={form.getValues().working} onChange={(event) => form.setFieldValue("working", event.currentTarget.checked)}
+        <Checkbox
+            color="brightSun.4"
+            label="Currently working here"
+            checked={form.getValues().working}
+            onChange={(event) => form.setFieldValue("working", event.currentTarget.checked)}
+            styles={{
+                label: {
+                    color: "#e5e7eb",
+                    fontWeight: 600,
+                },
+                input: {
+                    borderColor: "rgba(255, 255, 255, 0.35)",
+                    background: "rgba(15, 23, 42, 0.55)",
+                    '&[data-checked]': {
+                        background: "#facc15",
+                        borderColor: "#facc15",
+                    },
+                },
+                icon: {
+                    color: "#111827",
+                },
+            }}
         />
         <div className="my-3 flex gap-5">
-            <Button color="green.8" onClick={handleSave} variant="light">Save</Button>
-            <Button color="red.8" onClick={() => props.setEdit(false)} variant="light">Cancel</Button>
+            <Button color="green.8" onClick={handleSave} variant="light" className="rounded-full px-5">Save</Button>
+            <Button color="red.8" onClick={() => props.setEdit(false)} variant="light" className="rounded-full px-5">Cancel</Button>
         </div>
     </div>
 }

@@ -1,8 +1,8 @@
-import { IconUpload, IconFileText, IconCheck, IconX, IconRefresh } from "@tabler/icons-react";
+import { IconUpload, IconFileText, IconCheck, IconX, IconRefresh, IconPencil } from "@tabler/icons-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-import { Button, FileInput, Loader, Badge, Text, Divider } from "@mantine/core";
-import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
+import { Button, FileInput, Loader, Badge, Text, Divider, Modal, ActionIcon } from "@mantine/core";
+import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { parseResume, uploadResume } from "../../services/ProfileService";
 
@@ -49,10 +49,10 @@ const UpdateCV = () => {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [parsed, setParsed] = useState<ParsedData | null>(null);
+    const [manageOpen, setManageOpen] = useState(false);
 
     const buildProfileUpdates = (parsedData: ParsedData) => {
         const updates: any = {
-            ...profile,
             cvFileName: cvFile?.name,
             cvLastUpdated: new Date().toISOString(),
         };
@@ -168,6 +168,12 @@ const UpdateCV = () => {
 
     return (
         <div className="mt-2">
+            <div className="mb-1 flex justify-end">
+                <ActionIcon onClick={() => setManageOpen(true)} variant="subtle" color="brightSun.4" size="lg">
+                    <IconPencil className="h-4/5 w-4/5" stroke={1.5} />
+                </ActionIcon>
+            </div>
+
             {/* Current CV info */}
             {profile.cvFileName && (
                 <div className="mb-3 px-3 py-2 bg-mine-shaft-800/60 rounded-lg flex items-center gap-3">
@@ -182,126 +188,167 @@ const UpdateCV = () => {
                 </div>
             )}
 
-            {/* Upload section */}
-            <div className="space-y-3">
-                <FileInput
-                    label="Upload Resume"
-                    placeholder="Choose PDF or Word file"
-                    accept=".pdf,.doc,.docx"
-                    value={cvFile}
-                    onChange={(file) => { setCvFile(file); setParsed(null); }}
-                    leftSection={<IconUpload size={16} />}
-                    styles={premiumInputStyles}
-                />
-                <Button
-                    onClick={handleUpload}
-                    disabled={!cvFile || uploading}
-                    leftSection={uploading ? <Loader size={16} color="white" /> : <IconUpload size={16} />}
-                    variant="light"
-                    color="yellow"
-                    size="sm"
-                    className="font-semibold"
-                >
-                    {uploading ? "Uploading…" : "Upload Resume"}
-                </Button>
-                <Button
-                    onClick={handleParse}
-                    disabled={!cvFile || loading}
-                    leftSection={loading ? <Loader size={16} color="white" /> : <IconRefresh size={16} />}
-                    variant="filled"
-                    color="yellow"
-                    size="sm"
-                    className="font-semibold text-mine-shaft-950"
-                >
-                    {loading ? "Parsing…" : "Parse Resume"}
-                </Button>
-            </div>
+            {!profile.cvFileName && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-sm text-mine-shaft-400 sm:p-4">
+                    No resume uploaded yet. Click edit to upload or parse your CV.
+                </div>
+            )}
 
-            {/* Parsed data preview */}
-            {parsed && (
-                <div className="mt-4 space-y-3">
-                    <Divider label="Extracted Profile Data" labelPosition="center" />
-
-                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 text-sm">
-                        {parsed.name && <Field label="Name" value={parsed.name} />}
-                        {parsed.email && <Field label="Email" value={parsed.email} />}
-                        {parsed.phone && <Field label="Phone" value={parsed.phone} />}
-                        {parsed.jobTitle && <Field label="Job Title" value={parsed.jobTitle} />}
-                        {parsed.company && <Field label="Company" value={parsed.company} />}
-                        {parsed.location && <Field label="Location" value={parsed.location} />}
-                        {parsed.totalExp ? <Field label="Experience" value={`${parsed.totalExp} year(s)`} /> : null}
-                    </div>
-
-                    {parsed.about && (
-                        <div>
-                            <Text size="xs" fw={600} c="dimmed" className="mb-1">Summary</Text>
-                            <Text size="sm" className="text-mine-shaft-300 line-clamp-3">{parsed.about}</Text>
-                        </div>
-                    )}
-
-                    {parsed.skills && parsed.skills.length > 0 && (
-                        <div>
-                            <Text size="xs" fw={600} c="dimmed" className="mb-1">Skills</Text>
-                            <div className="flex flex-wrap gap-1">
-                                {parsed.skills.map((s, i) => (
-                                    <Badge key={i} size="sm" variant="light">{s}</Badge>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {parsed.experiences && parsed.experiences.length > 0 && (
-                        <div>
-                            <Text size="xs" fw={600} c="dimmed" className="mb-1">Experience ({parsed.experiences.length})</Text>
-                            {parsed.experiences.map((exp: any, i: number) => (
-                                <Text key={i} size="sm" className="text-mine-shaft-300">
-                                    {exp.title || "Role"} — {exp.startDate} to {exp.endDate}
-                                </Text>
-                            ))}
-                        </div>
-                    )}
-
-                    {parsed.certifications && parsed.certifications.length > 0 && (
-                        <div>
-                            <Text size="xs" fw={600} c="dimmed" className="mb-1">Certifications ({parsed.certifications.length})</Text>
-                            {parsed.certifications.map((c: any, i: number) => (
-                                <Text key={i} size="sm" className="text-mine-shaft-300">{c.name}</Text>
-                            ))}
-                        </div>
-                    )}
-
-                    {parsed.education && parsed.education.length > 0 && (
-                        <div>
-                            <Text size="xs" fw={600} c="dimmed" className="mb-1">Education ({parsed.education.length})</Text>
-                            {parsed.education.map((ed: any, i: number) => (
-                                <Text key={i} size="sm" className="text-mine-shaft-300">
-                                    {ed.degree}{ed.college ? ` — ${ed.college}` : ""}{ed.yearOfPassing ? ` (${ed.yearOfPassing})` : ""}
-                                </Text>
-                            ))}
-                        </div>
-                    )}
-
-                    {parsed.personalDetails?.languagesKnown && parsed.personalDetails.languagesKnown.length > 0 && (
-                        <div>
-                            <Text size="xs" fw={600} c="dimmed" className="mb-1">Languages</Text>
-                            <div className="flex flex-wrap gap-1">
-                                {parsed.personalDetails.languagesKnown.map((l: string, i: number) => (
-                                    <Badge key={i} size="sm" variant="outline">{l}</Badge>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex gap-2 pt-2">
-                        <Button onClick={handleApplyToProfile} leftSection={<IconCheck size={16} />} size="sm">
-                            Apply to Profile
+            <Modal
+                opened={manageOpen}
+                onClose={() => setManageOpen(false)}
+                title="Manage Resume"
+                centered
+                size="lg"
+                radius="xl"
+                transitionProps={{ transition: "fade", duration: 180 }}
+                overlayProps={{ backgroundOpacity: 0.78, blur: 4, color: "#020617" }}
+                styles={{
+                    content: {
+                        background:
+                            "radial-gradient(circle at top right, rgba(34,211,238,0.12), transparent 36%), linear-gradient(180deg, rgba(10,15,30,0.98), rgba(2,6,23,0.98))",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow: "0 28px 80px rgba(0,0,0,0.55)",
+                    },
+                    header: {
+                        background: "transparent",
+                        borderBottom: "1px solid rgba(255,255,255,0.10)",
+                        paddingBottom: "12px",
+                    },
+                    title: {
+                        color: "#f8fafc",
+                        fontWeight: 800,
+                        letterSpacing: "0.01em",
+                    },
+                    close: {
+                        color: "#cbd5e1",
+                    },
+                    body: {
+                        paddingTop: "16px",
+                    },
+                }}
+            >
+                <div className="space-y-3">
+                    <FileInput
+                        label="Upload Resume"
+                        placeholder="Choose PDF or Word file"
+                        accept=".pdf,.doc,.docx"
+                        value={cvFile}
+                        onChange={(file) => { setCvFile(file); setParsed(null); }}
+                        leftSection={<IconUpload size={16} />}
+                        styles={premiumInputStyles}
+                    />
+                    <div className="flex flex-wrap gap-3">
+                        <Button
+                            onClick={handleUpload}
+                            disabled={!cvFile || uploading}
+                            leftSection={uploading ? <Loader size={16} color="white" /> : <IconUpload size={16} />}
+                            variant="light"
+                            color="yellow"
+                            size="sm"
+                            className="font-semibold"
+                        >
+                            {uploading ? "Uploading…" : "Upload Resume"}
                         </Button>
-                        <Button variant="subtle" color="gray" onClick={() => { setParsed(null); setCvFile(null); }} leftSection={<IconX size={16} />} size="sm">
-                            Discard
+                        <Button
+                            onClick={handleParse}
+                            disabled={!cvFile || loading}
+                            leftSection={loading ? <Loader size={16} color="white" /> : <IconRefresh size={16} />}
+                            variant="filled"
+                            color="yellow"
+                            size="sm"
+                            className="font-semibold text-mine-shaft-950"
+                        >
+                            {loading ? "Parsing…" : "Parse Resume"}
                         </Button>
                     </div>
                 </div>
-            )}
+
+                {parsed && (
+                    <div className="mt-4 space-y-3">
+                        <Divider label="Extracted Profile Data" labelPosition="center" />
+
+                        <div className="grid grid-cols-1 gap-2 text-sm xs:grid-cols-2">
+                            {parsed.name && <Field label="Name" value={parsed.name} />}
+                            {parsed.email && <Field label="Email" value={parsed.email} />}
+                            {parsed.phone && <Field label="Phone" value={parsed.phone} />}
+                            {parsed.jobTitle && <Field label="Job Title" value={parsed.jobTitle} />}
+                            {parsed.company && <Field label="Company" value={parsed.company} />}
+                            {parsed.location && <Field label="Location" value={parsed.location} />}
+                            {parsed.totalExp ? <Field label="Experience" value={`${parsed.totalExp} year(s)`} /> : null}
+                        </div>
+
+                        {parsed.about && (
+                            <div>
+                                <Text size="xs" fw={600} c="dimmed" className="mb-1">Summary</Text>
+                                <Text size="sm" className="line-clamp-3 text-mine-shaft-300">{parsed.about}</Text>
+                            </div>
+                        )}
+
+                        {parsed.skills && parsed.skills.length > 0 && (
+                            <div>
+                                <Text size="xs" fw={600} c="dimmed" className="mb-1">Skills</Text>
+                                <div className="flex flex-wrap gap-1">
+                                    {parsed.skills.map((s, i) => (
+                                        <Badge key={i} size="sm" variant="light">{s}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {parsed.experiences && parsed.experiences.length > 0 && (
+                            <div>
+                                <Text size="xs" fw={600} c="dimmed" className="mb-1">Experience ({parsed.experiences.length})</Text>
+                                {parsed.experiences.map((exp: any, i: number) => (
+                                    <Text key={i} size="sm" className="text-mine-shaft-300">
+                                        {exp.title || "Role"} - {exp.startDate} to {exp.endDate}
+                                    </Text>
+                                ))}
+                            </div>
+                        )}
+
+                        {parsed.certifications && parsed.certifications.length > 0 && (
+                            <div>
+                                <Text size="xs" fw={600} c="dimmed" className="mb-1">Certifications ({parsed.certifications.length})</Text>
+                                {parsed.certifications.map((c: any, i: number) => (
+                                    <Text key={i} size="sm" className="text-mine-shaft-300">{c.name}</Text>
+                                ))}
+                            </div>
+                        )}
+
+                        {parsed.education && parsed.education.length > 0 && (
+                            <div>
+                                <Text size="xs" fw={600} c="dimmed" className="mb-1">Education ({parsed.education.length})</Text>
+                                {parsed.education.map((ed: any, i: number) => (
+                                    <Text key={i} size="sm" className="text-mine-shaft-300">
+                                        {ed.degree}{ed.college ? ` — ${ed.college}` : ""}{ed.yearOfPassing ? ` (${ed.yearOfPassing})` : ""}
+                                    </Text>
+                                ))}
+                            </div>
+                        )}
+
+                        {parsed.personalDetails?.languagesKnown && parsed.personalDetails.languagesKnown.length > 0 && (
+                            <div>
+                                <Text size="xs" fw={600} c="dimmed" className="mb-1">Languages</Text>
+                                <div className="flex flex-wrap gap-1">
+                                    {parsed.personalDetails.languagesKnown.map((l: string, i: number) => (
+                                        <Badge key={i} size="sm" variant="outline">{l}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 pt-2">
+                            <Button onClick={handleApplyToProfile} leftSection={<IconCheck size={16} />} size="sm">
+                                Apply to Profile
+                            </Button>
+                            <Button variant="subtle" color="gray" onClick={() => { setParsed(null); setCvFile(null); }} leftSection={<IconX size={16} />} size="sm">
+                                Discard
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };

@@ -35,10 +35,15 @@ export const DateOfBirthSchema = z
   .refine(
     (date) => {
       const birthDate = new Date(date);
-      const age = new Date().getFullYear() - birthDate.getFullYear();
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
       return age >= 18 && age <= 100;
     },
-    "You must be at least 18 years old and not more than 100"
+    "You must be at least 18 years old and not more than 100 years old"
   )
   .optional();
 

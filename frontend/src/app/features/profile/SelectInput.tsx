@@ -47,6 +47,7 @@ const SelectInput=(props:any)=> {
       <Combobox.Target>
         <InputBase data-aos="zoom-out"
         label={props.label} withAsterisk
+          styles={props.styles}
           rightSection={<Combobox.Chevron />}
           leftSection={<props.leftSection className="" stroke={1.5}/>}
           {...props.form.getInputProps(props.name)}

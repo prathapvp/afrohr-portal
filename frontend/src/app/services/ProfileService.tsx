@@ -2,6 +2,27 @@ import axiosInstance from "../interceptor/AxiosInterceptor";
 import { secureInfo, secureError } from "./secure-logging-service";
 import { extractErrorMessage, formatErrorForLogging } from "./error-extractor-service";
 
+const normalizeProfilePayload = (profile: any) => {
+    const normalizedExperiences = Array.isArray(profile?.experiences)
+        ? profile.experiences.map((experience: any) => {
+            if (!experience || typeof experience !== "object") {
+                return experience;
+            }
+
+            const { jobTitle, ...rest } = experience;
+            return {
+                ...rest,
+                title: experience.title ?? jobTitle ?? "",
+            };
+        })
+        : profile?.experiences;
+
+    return {
+        ...profile,
+        experiences: normalizedExperiences,
+    };
+};
+
 const getProfile = async (id:any)=>{
     secureInfo('Fetching profile', { profileId: id }, 'ProfileService');
     try {
@@ -24,8 +45,9 @@ const updateProfile = async (profile:any)=>{
     // Note: PII data in profile is automatically sanitized by SecureLoggingService
     secureInfo('Updating profile', { profileId: profile?.id }, 'ProfileService');
     try {
+        const normalizedProfile = normalizeProfilePayload(profile);
         console.log('Sending profile update request for ID:', profile?.id);
-        const response = await axiosInstance.put(`/profiles/update`, profile);
+        const response = await axiosInstance.put(`/profiles/update`, normalizedProfile);
         console.log('Update profile response:', {
             status: response.status,
             profileId: response.data?.id,
@@ -36,6 +58,20 @@ const updateProfile = async (profile:any)=>{
     } catch (error:any) {
         console.error('Update profile error:', formatErrorForLogging(error, 'UpdateProfile'));
         secureError('Failed to update profile', error, 'ProfileService');
+        throw error;
+    }
+}
+
+const patchProfile = async (profileId: number, changes: any) => {
+    secureInfo('Patching profile section', { profileId, changedKeys: Object.keys(changes || {}) }, 'ProfileService');
+    try {
+        const normalizedChanges = normalizeProfilePayload(changes);
+        const response = await axiosInstance.patch(`/profiles/${profileId}`, normalizedChanges);
+        secureInfo('Profile section patched successfully', undefined, 'ProfileService');
+        return response.data;
+    } catch (error:any) {
+        console.error('Patch profile error:', formatErrorForLogging(error, 'PatchProfile'));
+        secureError('Failed to patch profile section', error, 'ProfileService');
         throw error;
     }
 }
@@ -77,4 +113,4 @@ const chatWithProfileAssistant = async (message: string, accountType?: string, p
     return response.data?.reply;
 };
 
-export {getProfile, updateProfile, getAllProfiles, uploadResume, parseResume, chatWithProfileAssistant};
+export {getProfile, updateProfile, patchProfile, getAllProfiles, uploadResume, parseResume, chatWithProfileAssistant};

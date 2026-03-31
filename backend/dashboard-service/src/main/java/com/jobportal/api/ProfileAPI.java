@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -99,6 +100,20 @@ public class ProfileAPI {
 			logger.error("Error fetching all profiles", e);
 			throw new JobPortalException("Error fetching profiles: " + e.getMessage());
 		}
+	}
+
+	@PatchMapping("/{id}")
+	public ResponseEntity<ProfileDTO> patchProfile(
+			@PathVariable Long id,
+			@RequestBody Map<String, Object> updates) throws JobPortalException {
+		logger.info("Partial update request received for profile ID: {}", id);
+		if (id == null || id <= 0) {
+			throw new JobPortalException("Profile ID is required and must be positive");
+		}
+
+		ProfileDTO updatedProfile = profileService.patchProfile(id, updates);
+		logger.info("Successfully partially updated profile with ID: {}", updatedProfile.getId());
+		return new ResponseEntity<>(updatedProfile, HttpStatus.OK);
 	}
 
 	@PutMapping("/update")

@@ -1,13 +1,12 @@
-import { ActionIcon, Button } from "@mantine/core";
-import { IconDeviceFloppy, IconPencil, IconPlus, IconX } from "@tabler/icons-react";
+import { ActionIcon, Button, Modal } from "@mantine/core";
+import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import ExpInput from "./ExpInput";
 import ExpCard from "./ExpCard";
 import { useMediaQuery } from "@mantine/hooks";
 
 const Experience=()=>{
-    const dispatch = useDispatch();
     const matches = useMediaQuery('(max-width: 475px)');
     const profile=useSelector((state:any)=>state.profile);
     const [edit, setEdit] = useState(false);
@@ -26,7 +25,6 @@ const Experience=()=>{
     return <div>
     <div className="flex justify-end mb-2 gap-2"><div className="flex gap-2"><ActionIcon onClick={() => setAddExp(true)} variant="subtle" color="brightSun.4" size={matches?"md":"lg"} ><IconPlus className="w-4/5 h-4/5" stroke={1.5} /></ActionIcon><ActionIcon onClick={ handleClick} variant="subtle" color={edit ? "red.8" : "brightSun.4"} size={matches?"md":"lg"} >{edit? <IconX className="w-4/5 h-4/5" stroke={1.5} /> : <IconPencil className="w-4/5 h-4/5" stroke={1.5} />}</ActionIcon></div></div>
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-    <div className="mb-3 text-[11px] uppercase tracking-[0.14em] text-slate-300">Experience Timeline</div>
     <div className="flex flex-col gap-8">
         {
             sortedExperiences.length > 0
@@ -39,16 +37,51 @@ const Experience=()=>{
                             color="brightSun.4"
                             leftSection={<IconPlus size={16} />}
                             onClick={() => setAddExp(true)}
-                            className="font-semibold"
+                            className="rounded-full font-semibold"
                         >
                             Add your first experience
                         </Button>
                     </div>
                 )
         }
-        {addExp && <ExpInput add   setEdit={setAddExp} />}
     </div>
     </div>
+
+    <Modal
+        opened={addExp}
+        onClose={() => setAddExp(false)}
+        title="Add Experience"
+        centered
+        size="lg"
+        radius="xl"
+        transitionProps={{ transition: "fade", duration: 180 }}
+        overlayProps={{ backgroundOpacity: 0.78, blur: 4, color: "#020617" }}
+        styles={{
+            content: {
+                background: "radial-gradient(circle at top right, rgba(34,211,238,0.12), transparent 36%), linear-gradient(180deg, rgba(10,15,30,0.98), rgba(2,6,23,0.98))",
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow: "0 28px 80px rgba(0,0,0,0.55)",
+            },
+            header: {
+                background: "transparent",
+                borderBottom: "1px solid rgba(255,255,255,0.10)",
+                paddingBottom: "12px",
+            },
+            title: {
+                color: "#f8fafc",
+                fontWeight: 800,
+                letterSpacing: "0.01em",
+            },
+            close: {
+                color: "#cbd5e1",
+            },
+            body: {
+                paddingTop: "16px",
+            },
+        }}
+    >
+        <ExpInput add setEdit={setAddExp} />
+    </Modal>
 </div>
 }
 export default Experience;
