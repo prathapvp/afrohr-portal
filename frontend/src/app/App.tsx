@@ -250,6 +250,7 @@ function CandidateView({
   searchQuery,
   onSearchQueryChange,
   onSearch,
+  onViewAllJobs,
   onViewJob,
   onApplyToJob,
   applyingJobId,
@@ -262,6 +263,7 @@ function CandidateView({
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   onSearch: () => void;
+  onViewAllJobs: () => void;
   onViewJob: (job: CandidateJob) => void;
   onApplyToJob: (job: CandidateJob) => Promise<void>;
   applyingJobId: number | null;
@@ -271,19 +273,47 @@ function CandidateView({
   searchResults: CandidateJob[] | null;
 }) {
   const jobs = searchResults ?? dashboard.jobs.items;
+  const [activeJobFilter, setActiveJobFilter] = useState<"all" | "remote" | "hybrid" | "onsite">("all");
+
+  const filteredJobs = jobs.filter((job) => {
+    const location = String(job.location || "").toLowerCase();
+    if (activeJobFilter === "remote") return location.includes("remote");
+    if (activeJobFilter === "hybrid") return location.includes("hybrid");
+    if (activeJobFilter === "onsite") return !location.includes("remote") && !location.includes("hybrid");
+    return true;
+  });
+
+  const filterCounts = {
+    all: jobs.length,
+    remote: jobs.filter((job) => String(job.location || "").toLowerCase().includes("remote")).length,
+    hybrid: jobs.filter((job) => String(job.location || "").toLowerCase().includes("hybrid")).length,
+    onsite: jobs.filter((job) => {
+      const location = String(job.location || "").toLowerCase();
+      return !location.includes("remote") && !location.includes("hybrid");
+    }).length,
+  };
+
+  const filterChips: Array<{ key: "all" | "remote" | "hybrid" | "onsite"; label: string }> = [
+    { key: "all", label: "All Jobs" },
+    { key: "remote", label: "Remote" },
+    { key: "hybrid", label: "Hybrid" },
+    { key: "onsite", label: "On-site" },
+  ];
 
   return (
-    <div className="space-y-6">
-      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-cyan-700 text-white shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-        <CardContent className="p-6 sm:p-8">
+    <div className="space-y-7">
+      <Card className="group premium-enter relative overflow-hidden border border-white/15 bg-[linear-gradient(125deg,rgba(20,44,94,0.92),rgba(38,44,122,0.9)_45%,rgba(12,87,120,0.86))] text-white shadow-[0_32px_90px_rgba(3,8,24,0.58)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_36px_96px_rgba(3,8,24,0.62)]">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl" />
+        <CardContent className="relative p-5 sm:p-8">
           <div className="mb-4 flex items-start gap-2">
             <Sparkles className="h-6 w-6 text-yellow-300" />
             <Badge className="border border-cyan-300/40 bg-cyan-500/20 text-cyan-100">{dashboard.hero.badge}</Badge>
           </div>
-          <h1 className="mb-4 text-3xl font-bold leading-tight sm:text-4xl">{dashboard.hero.title}</h1>
-          <p className="mb-6 text-base text-cyan-100/90 sm:text-lg">{dashboard.hero.description}</p>
+          <h1 className="mb-4 text-2xl font-bold leading-tight sm:text-4xl">{dashboard.hero.title}</h1>
+          <p className="mb-6 text-sm text-cyan-100/90 sm:text-lg">{dashboard.hero.description}</p>
           <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-            <div className="flex w-full flex-1 items-center gap-2 rounded-lg border border-white/20 bg-white/95 px-4 py-3">
+            <div className="flex w-full flex-1 items-center gap-2 rounded-xl border border-white/25 bg-white/95 px-4 py-3 shadow-[0_8px_20px_rgba(15,23,42,0.2)]">
               <Search className="h-5 w-5 text-slate-400" />
               <Input
                 value={searchQuery}
@@ -292,13 +322,13 @@ function CandidateView({
                 className="h-auto border-0 p-0 text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
             </div>
-            <Button size="lg" onClick={onSearch} className="min-h-11 w-full bg-white text-indigo-700 hover:bg-indigo-50 sm:w-auto" disabled={searchLoading}>
+            <Button size="lg" onClick={onSearch} className="min-h-11 w-full rounded-xl bg-white text-indigo-700 shadow-[0_10px_28px_rgba(15,23,42,0.22)] hover:bg-indigo-50 sm:w-auto" disabled={searchLoading}>
               {searchLoading ? "Searching..." : dashboard.hero.actionLabel}
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {dashboard.hero.chips?.map((chip) => (
-              <Badge key={chip} variant="outline" className="border-white/40 bg-white/15 text-white">
+              <Badge key={chip} variant="outline" className="shrink-0 border-white/40 bg-white/15 text-white">
                 {chip}
               </Badge>
             ))}
@@ -310,8 +340,8 @@ function CandidateView({
         {dashboard.stats.map((item) => {
           const Icon = iconMap[item.icon];
           return (
-            <Card key={item.label} className="border border-white/10 bg-white/[.04] shadow-lg backdrop-blur-sm">
-              <CardContent className="p-4">
+            <Card key={item.label} className="premium-card-hover border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.7),rgba(2,6,23,0.8))] shadow-lg backdrop-blur-sm">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className={`text-2xl font-bold ${toneClasses[item.tone].text}`}>{item.value}</p>
@@ -325,39 +355,54 @@ function CandidateView({
         })}
       </div>
 
-      <Card className="overflow-hidden border border-white/10 bg-[#0f172a]/90 shadow-xl ring-1 ring-white/10">
+      <Card className="premium-enter overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(2,6,23,0.9))] shadow-xl ring-1 ring-white/10 [animation-delay:80ms]">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-cyan-400" />
               <CardTitle className="text-xl tracking-tight text-white">{dashboard.jobs.title}</CardTitle>
             </div>
-            <Button variant="ghost" size="sm" className="min-h-11 text-slate-200 hover:bg-white/10 hover:text-white">
+            <Button variant="ghost" size="sm" onClick={onViewAllJobs} className="hidden min-h-11 text-slate-200 hover:bg-white/10 hover:text-white sm:flex">
               {dashboard.jobs.actionLabel ?? "View All"} <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
           {searchResults && <CardDescription className="text-slate-400">Search results for &quot;{searchQuery}&quot;</CardDescription>}
+          <div className="sticky top-0 z-10 -mx-2 mt-3 flex flex-nowrap gap-2 overflow-x-auto bg-[#0f172a]/85 px-2 py-1.5 backdrop-blur-sm">
+            {filterChips.map((chip) => (
+              <Button
+                key={chip.key}
+                size="sm"
+                variant={activeJobFilter === chip.key ? "default" : "ghost"}
+                onClick={() => setActiveJobFilter(chip.key)}
+                className={activeJobFilter === chip.key
+                  ? "min-h-8 shrink-0 rounded-full bg-cyan-500/20 px-3 text-cyan-100 hover:bg-cyan-500/30"
+                  : "min-h-8 shrink-0 rounded-full border border-white/15 bg-white/[0.03] px-3 text-slate-300 hover:bg-white/[0.08] hover:text-white"}
+              >
+                {chip.label} <span className="ml-1 text-[11px] opacity-80">({filterCounts[chip.key]})</span>
+              </Button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {jobs.length === 0 && <p className="text-sm text-slate-400">No jobs matched your search.</p>}
-            {jobs.map((job) => (
+            {filteredJobs.length === 0 && <p className="text-sm text-slate-400">No jobs matched your selected filter.</p>}
+            {filteredJobs.map((job) => (
               (() => {
                 const safeTone = normalizeLogoTone(job.logoTone);
                 const hasViewedJob = Boolean(job.id && viewedJobIds.has(job.id));
                 return (
               <div
                 key={job.id ?? `${job.company}-${job.role}`}
-                className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[.03] p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-cyan-300/20 hover:bg-white/[.05] hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-cyan-300/20 hover:bg-white/[.06] hover:shadow-lg sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4"
               >
-                <div className="flex items-center gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl font-bold text-white shadow ${toneClasses[safeTone].logo}`}>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow sm:h-12 sm:w-12 ${toneClasses[safeTone].logo}`}>
                     {job.company[0]}
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white">{job.role}</h4>
-                    <p className="text-sm text-slate-300">{job.company}</p>
-                    <div className="mt-1 flex items-center gap-4">
+                    <h4 className="text-sm font-semibold text-white sm:text-base">{job.role}</h4>
+                    <p className="text-xs text-slate-300 sm:text-sm">{job.company}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="flex items-center gap-1 text-xs text-slate-400">
                         <MapPin className="h-3 w-3" /> {job.location}
                       </span>
@@ -370,7 +415,7 @@ function CandidateView({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="min-h-11 w-full rounded-xl border border-white/20 bg-white/5 text-slate-100 hover:bg-white/10 sm:w-auto"
+                      className="min-h-10 w-full rounded-xl border border-white/20 bg-white/5 text-slate-100 hover:bg-white/10 sm:min-h-11 sm:w-auto"
                       disabled={!job.id}
                       onClick={() => {
                         onViewJob(job);
@@ -382,7 +427,7 @@ function CandidateView({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="min-h-11 w-full rounded-xl border-cyan-300/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 sm:w-auto"
+                      className="min-h-10 w-full rounded-xl border-cyan-300/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 sm:min-h-11 sm:w-auto"
                       disabled={!job.id || !hasViewedJob || applyingJobId === job.id || (job.id ? appliedJobIds.has(job.id) : false)}
                       onClick={() => {
                         void onApplyToJob(job);
@@ -403,7 +448,7 @@ function CandidateView({
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border border-white/10 bg-[#0f172a]/90 shadow-xl ring-1 ring-white/10">
+      <Card className="premium-enter overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(2,6,23,0.9))] shadow-xl ring-1 ring-white/10 [animation-delay:120ms]">
         <CardHeader>
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-cyan-400" />
@@ -412,11 +457,14 @@ function CandidateView({
           <CardDescription className="text-slate-400">{dashboard.salaryInsights.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <img src={dashboard.salaryInsights.imageUrl} alt="Analytics Dashboard" className="h-64 w-full rounded-lg object-cover" />
+          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#050b19]">
+            <img src={dashboard.salaryInsights.imageUrl} alt="Analytics Dashboard" className="h-56 w-full object-cover object-left sm:h-64" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0f172a] to-transparent" />
+          </div>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border border-white/10 bg-[#0f172a]/90 shadow-xl ring-1 ring-white/10">
+      <Card className="premium-enter overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(2,6,23,0.9))] shadow-xl ring-1 ring-white/10 [animation-delay:150ms]">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Play className="h-5 w-5 text-cyan-400" />
@@ -425,18 +473,18 @@ function CandidateView({
           <CardDescription className="text-slate-400">{dashboard.videos.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             {dashboard.videos.items.map((video) => (
-              <div key={video.title} className="group relative overflow-hidden rounded-lg">
-                <img src={video.imageUrl} alt={video.alt} className="h-48 w-full object-cover" />
+              <div key={video.title} className="group relative overflow-hidden rounded-xl border border-white/10">
+                <img src={video.imageUrl} alt={video.alt} className="h-40 w-full object-cover" />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-colors group-hover:bg-black/50">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
-                    <Play className="ml-1 h-8 w-8 text-blue-600" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
+                    <Play className="ml-0.5 h-6 w-6 text-blue-600" />
                   </div>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <p className="font-semibold text-white">{video.title}</p>
-                  <p className="text-sm text-white/80">{video.duration}</p>
+                  <p className="text-sm font-semibold text-white">{video.title}</p>
+                  <p className="text-xs text-white/80">{video.duration}</p>
                 </div>
               </div>
             ))}
@@ -444,7 +492,7 @@ function CandidateView({
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border border-white/10 bg-[#0f172a]/90 shadow-xl ring-1 ring-white/10">
+      <Card className="premium-enter overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(2,6,23,0.9))] shadow-xl ring-1 ring-white/10 [animation-delay:180ms]">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-cyan-400" />
@@ -452,14 +500,14 @@ function CandidateView({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {dashboard.trends.items.map((item) => (
               <div key={item.title} className="flex items-start gap-3 rounded-xl border border-transparent bg-white/[.02] p-3 transition-colors hover:border-cyan-300/20 hover:bg-white/[.06]">
                 <TrendingUp className="mt-1 h-5 w-5 flex-shrink-0 text-emerald-400" />
                 <div>
-                  <p className="text-sm font-semibold text-slate-100">{item.title}</p>
-                  <p className="mt-1 text-xs text-slate-300">{item.description}</p>
-                  <p className="mt-1 text-xs text-slate-400">{item.age}</p>
+                  <p className="text-sm font-semibold text-slate-100 line-clamp-1">{item.title}</p>
+                  <p className="mt-1 text-xs text-slate-300 line-clamp-2">{item.description}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">{item.age}</p>
                 </div>
               </div>
             ))}
@@ -467,7 +515,7 @@ function CandidateView({
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border border-white/10 bg-[#0f172a]/90 shadow-xl ring-1 ring-white/10">
+      <Card className="premium-enter overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(2,6,23,0.9))] shadow-xl ring-1 ring-white/10 [animation-delay:210ms]">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-cyan-400" />
@@ -476,7 +524,7 @@ function CandidateView({
           <CardDescription className="text-slate-400">{dashboard.countries.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2">
             {dashboard.countries.items.map((item) => (
               <div key={item.country} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[.03] p-3 shadow-sm">
                 <div className="flex items-center gap-3">
@@ -493,7 +541,7 @@ function CandidateView({
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border border-orange-400/20 bg-gradient-to-br from-[#2f1f0b] via-[#2a1b08] to-[#3c1620] shadow-xl ring-1 ring-orange-300/20">
+      <Card className="premium-enter overflow-hidden border border-orange-400/20 bg-gradient-to-br from-[#2f1f0b] via-[#2a1b08] to-[#3c1620] shadow-xl ring-1 ring-orange-300/20 [animation-delay:240ms]">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-orange-500">
@@ -997,6 +1045,7 @@ export default function App() {
                 searchQuery={searchQuery}
                 onSearchQueryChange={setSearchQuery}
                 onSearch={handleSearch}
+                onViewAllJobs={() => navigate("/find-jobs")}
                 onViewJob={handleViewJob}
                 onApplyToJob={handleApplyToJob}
                 applyingJobId={applyingJobId}

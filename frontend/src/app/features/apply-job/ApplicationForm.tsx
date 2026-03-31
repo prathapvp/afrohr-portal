@@ -150,7 +150,12 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
             </div>
         </div>
 
-        {!preview && <div className="flex flex-col gap-6">
+        <div
+            className={`transition-all duration-300 ease-out ${preview ? "pointer-events-none max-h-0 -translate-y-2 overflow-hidden opacity-0" : "max-h-[6000px] translate-y-0 opacity-100"}`}
+            aria-hidden={preview}
+            inert={preview}
+        >
+            <div className="flex flex-col gap-6 pb-1">
             <div className="grid gap-5 md:grid-cols-2">
                 <TextInput {...form.getInputProps("name")} name="name" readOnly={true} variant="default" classNames={fieldStyles} label="Full Name" withAsterisk placeholder="Enter name" />
                 <TextInput {...form.getInputProps("email")} name="email" variant="default" readOnly={true} classNames={fieldStyles} label="Email" withAsterisk placeholder="Enter email" />
@@ -166,11 +171,17 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
             <Textarea {...form.getInputProps("coverLetter")} name="coverLetter" variant="default" readOnly={preview} classNames={fieldStyles} placeholder="Type something about yourself" label="Cover Letter" autosize minRows={5} />
 
             <Button onClick={handlePreview} color="brightSun.4" variant="light" className="!h-11 !font-semibold">Review & Submit</Button>
-        </div>}
+            </div>
+        </div>
 
-        {preview && <div className="space-y-6">
+        <div
+            className={`transition-all duration-300 ease-out ${preview ? "max-h-[6000px] translate-y-0 opacity-100" : "pointer-events-none max-h-0 translate-y-2 overflow-hidden opacity-0"}`}
+            aria-hidden={!preview}
+            inert={!preview}
+        >
+            <div className="space-y-6 pb-1">
             <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
+                <div className="premium-enter rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 [animation-delay:60ms]">
                     <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Applicant</div>
                     <div className="mt-3 space-y-3 text-sm">
                         <div>
@@ -184,7 +195,7 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
                     </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
+                <div className="premium-enter rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 [animation-delay:120ms]">
                     <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Contact</div>
                     <div className="mt-3 space-y-3 text-sm">
                         <div>
@@ -199,7 +210,7 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(9,18,38,0.8),rgba(16,24,43,0.56))] p-4 sm:p-5">
+            <div className="premium-enter rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(9,18,38,0.8),rgba(16,24,43,0.56))] p-4 [animation-delay:180ms] sm:p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Attached Resume</div>
@@ -214,16 +225,22 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 sm:p-5">
-                <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Cover Letter</div>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-100">{values.coverLetter}</p>
+            <div className="premium-enter relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 [animation-delay:240ms] sm:p-6">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_14%,rgba(251,191,36,0.14),transparent_48%),radial-gradient(circle_at_85%_78%,rgba(34,211,238,0.12),transparent_54%)]" />
+                <div className="relative">
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Cover Letter</div>
+                    <p className="mt-4 max-w-3xl whitespace-pre-wrap break-words text-[15px] leading-8 tracking-[0.008em] text-slate-100/95">
+                        {values.coverLetter}
+                    </p>
+                </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="premium-enter grid gap-4 [animation-delay:340ms] sm:grid-cols-2">
                 <Button fullWidth onClick={handlePreview} color="brightSun.4" variant="outline" className="!h-11 !font-semibold">Edit Details</Button>
                 <Button fullWidth onClick={handleSubmit} color="brightSun.4" variant="light" disabled={submit} className="!h-11 !font-semibold">Submit Application</Button>
             </div>
-        </div>}
+            </div>
+        </div>
     </>
 }
 export default ApplicationForm;
