@@ -8,6 +8,17 @@ import { errorNotification, successNotification } from "../../services/Notificat
 import { useInterval } from "@mantine/hooks";
 
 const SignUp = () => {
+    const authFieldStyles = {
+        label: { color: "rgba(241, 245, 249, 0.92)", fontWeight: 600, marginBottom: 6 },
+        input: {
+            borderRadius: 12,
+            backgroundColor: "rgba(255, 255, 255, 0.96)",
+            borderColor: "rgba(255, 255, 255, 0.16)",
+            color: "#0f172a"
+        },
+        section: { color: "#94a3b8" },
+        error: { color: "#fda4af", marginTop: 4 }
+    };
     const form = {
         name: "",
         email: "",
@@ -141,17 +152,17 @@ const SignUp = () => {
     overlayProps={{ radius: 'sm', blur: 2 }}
     loaderProps={{ color: 'orange', type: 'bars' }}
     /> <div className="auth-form-panel w-1/2 sm-mx:py-10 sm-mx:w-full px-16 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center py-10">
-        <div className="auth-form-title text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Create Account</div>
-        <p className="text-sm text-gray-400 -mt-1 mb-1">Start your career journey today</p>
+        <div className="auth-form-title text-2xl font-bold text-slate-50">Create Account</div>
+        <p className="-mt-1 mb-1 text-sm text-slate-300">Start your career journey today</p>
         {!otpStep ? <>
-        <TextInput value={data.name} error={formError.name} name="name" onChange={handleChange} leftSection={<IconUser size={16} stroke={1.5} />} label="Full Name" withAsterisk placeholder="Your name" size="sm" styles={{ input: { borderRadius: 12 } }} />
-        <TextInput error={formError.email} value={data.email} name="email" onChange={handleChange} leftSection={<IconAt size={16} stroke={1.5} />} label="Email" withAsterisk placeholder="Your email" size="sm" styles={{ input: { borderRadius: 12 } }} />
+        <TextInput value={data.name} error={formError.name} name="name" onChange={handleChange} leftSection={<IconUser size={16} stroke={1.5} />} label="Full Name" withAsterisk placeholder="Your name" size="sm" styles={authFieldStyles} />
+        <TextInput error={formError.email} value={data.email} name="email" onChange={handleChange} leftSection={<IconAt size={16} stroke={1.5} />} label="Email" withAsterisk placeholder="Your email" size="sm" styles={authFieldStyles} />
         <div className="flex gap-3">
-            <PasswordInput className="flex-1" value={data.password} error={formError.password} name="password" onChange={handleChange} leftSection={<IconLock size={16} stroke={1.5} />} label="Password" withAsterisk placeholder="Password" size="sm" styles={{ input: { borderRadius: 12 } }} />
-            <PasswordInput className="flex-1" value={data.confirmPassword} error={formError.confirmPassword} name="confirmPassword" onChange={handleChange} leftSection={<IconLock size={16} stroke={1.5} />} label="Confirm Password" withAsterisk placeholder="Confirm" size="sm" styles={{ input: { borderRadius: 12 } }} />
+            <PasswordInput className="flex-1" value={data.password} error={formError.password} name="password" onChange={handleChange} leftSection={<IconLock size={16} stroke={1.5} />} label="Password" withAsterisk placeholder="Password" size="sm" styles={authFieldStyles} />
+            <PasswordInput className="flex-1" value={data.confirmPassword} error={formError.confirmPassword} name="confirmPassword" onChange={handleChange} leftSection={<IconLock size={16} stroke={1.5} />} label="Confirm Password" withAsterisk placeholder="Confirm" size="sm" styles={authFieldStyles} />
         </div>
         <div className="mt-1">
-            <div className="text-sm font-medium mb-2">I am a <span className="text-red-500">*</span></div>
+            <div className="mb-2 text-sm font-medium text-slate-200">I am a <span className="text-rose-400">*</span></div>
             <div className="grid grid-cols-3 gap-2">
                 {accountTypes.map((type) => (
                     <button
@@ -181,23 +192,23 @@ const SignUp = () => {
                 <IconAt size={28} className="text-orange-500" stroke={1.5} />
             </div>
             <div className="text-center">
-                <div className="text-sm font-medium text-gray-700">Verify your email</div>
-                <div className="text-xs text-gray-400 mt-1">Enter the 6-digit code sent to</div>
-                <div className="text-sm font-semibold text-orange-500 mt-0.5">{data.email}</div>
+                <div className="text-sm font-medium text-slate-100">Verify your email</div>
+                <div className="mt-1 text-xs text-slate-300">Enter the 6-digit code sent to</div>
+                <div className="mt-0.5 text-sm font-semibold text-orange-400">{data.email}</div>
             </div>
             <div className="my-2">
                 <PinInput length={6} type="number" onComplete={handleVerifyOtp} size="md" gap="sm" />
             </div>
             <div className="flex gap-4 items-center">
-                <button className="text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2 transition-colors" onClick={handleBackToForm}>Change email</button>
-                <div className="h-3 w-px bg-gray-200" />
-                <button className={`text-xs underline underline-offset-2 transition-colors ${resendLoader ? "text-gray-300 cursor-not-allowed" : "text-orange-500 hover:text-orange-600"}`} disabled={resendLoader} onClick={handleResendOtp}>
+                <button className="text-xs text-slate-300 hover:text-white underline underline-offset-2 transition-colors" onClick={handleBackToForm}>Change email</button>
+                <div className="h-3 w-px bg-white/20" />
+                <button className={`text-xs underline underline-offset-2 transition-colors ${resendLoader ? "text-slate-500 cursor-not-allowed" : "text-orange-400 hover:text-orange-300"}`} disabled={resendLoader} onClick={handleResendOtp}>
                     {resendLoader ? `Resend in ${time}s` : "Resend code"}
                 </button>
             </div>
         </div>
         </>}
-        <div className="text-center text-xs text-gray-400 mt-1">Already have an account? <span className="text-orange-500 font-semibold hover:underline cursor-pointer transition-colors" onClick={()=>{navigate("/login");setFormError(form);setData(form)}}>Sign in</span></div>
+        <div className="mt-1 text-center text-xs text-slate-300">Already have an account? <span className="text-orange-400 font-semibold hover:text-orange-300 hover:underline cursor-pointer transition-colors" onClick={()=>{navigate("/login");setFormError(form);setData(form)}}>Sign in</span></div>
 
     </div></>
 }
