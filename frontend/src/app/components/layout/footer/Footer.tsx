@@ -1,6 +1,6 @@
 import { IconAnchor, IconBrandFacebook, IconBrandInstagram, IconBrandTelegram, IconBrandX, IconBrandYoutube } from "@tabler/icons-react";
 import { footerLinks } from "../../../data/Data";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import { Divider } from "@mantine/core";
 
 const Footer = () => {

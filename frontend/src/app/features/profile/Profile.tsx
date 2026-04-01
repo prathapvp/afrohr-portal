@@ -6,7 +6,7 @@ import {
     Overlay,
 } from "@mantine/core";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
 import Info from "./Info";
 import About from "./About";
@@ -53,12 +53,12 @@ import {
 import { getBase64 } from "../../services/utilities";
 import { secureError } from "../../services/secure-logging-service";
 import { extractErrorMessage, formatErrorForLogging } from "../../services/error-extractor-service";
-import { parseResume } from "../../services/ProfileService";
+import { parseResume } from "../../services/profile-service";
 
 const Profile = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
-    const user = useSelector((state: any) => state.user);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
+    const user = useAppSelector((state) => state.user as { accountType?: string } | null);
     const accountType = user?.accountType;
     const skillsCount = Array.isArray(profile?.skills) ? profile.skills.length : 0;
     const experienceCount = Array.isArray(profile?.experiences) ? profile.experiences.length : 0;
@@ -234,7 +234,7 @@ const Profile = () => {
         });
         
         const prevProfile = profile;
-        const base64: any = await getBase64(file);
+        const base64 = String(await getBase64(file));
         const pictureBase64 = base64.split(",")[1];
         
         // Backend requires: id, name, email, picture
@@ -269,13 +269,13 @@ const Profile = () => {
         dispatch(changeProfile(updated));
         // Persist in background - send only required fields
         // @ts-ignore unwrap available when using TS config with RTK
-        (dispatch as any)(persistProfile(updatePayload))
+        dispatch(persistProfile(updatePayload))
             .unwrap()
             .then(() => {
                 console.log('✅ Profile picture updated successfully');
                 successNotification("Success", "Profile Picture Updated Successfully");
             })
-            .catch((err: any) => {
+            .catch((err: unknown) => {
                 console.error('❌ Profile picture update failed - Full error details:', {
                     message: err?.message,
                     response: err?.response,
@@ -306,7 +306,7 @@ const Profile = () => {
         });
         
         const prevProfile = profile;
-        const base64: any = await getBase64(file);
+        const base64 = String(await getBase64(file));
         const bannerBase64 = base64.split(",")[1];
         
         // Backend requires: id, name, email, banner
@@ -329,13 +329,13 @@ const Profile = () => {
         const updated = { ...profile, banner: bannerBase64 };
         dispatch(changeProfile(updated));
         // Persist in background - send only required fields
-        (dispatch as any)(persistProfile(updatePayload))
+        dispatch(persistProfile(updatePayload))
             .unwrap()
             .then(() => {
                 console.log('Banner updated successfully');
                 successNotification("Success", "Banner Image Updated Successfully");
             })
-            .catch((err: any) => {
+            .catch((err: unknown) => {
                 console.error('Banner update failed:', formatErrorForLogging(err, 'BannerUpdate'));
                 
                 secureError("Failed to persist banner", err, "Profile");
@@ -398,10 +398,10 @@ const Profile = () => {
                 country: inferredCountry || profile?.country || "",
             };
 
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
+            await dispatch(persistProfile(updatedProfile)).unwrap();
             setParseFile(null);
             successNotification("Parsed Successfully", "Profile inputs were filled from the uploaded file.");
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error) || "Could not parse the selected file.";
             errorNotification("Parse Failed", errorMessage);
         } finally {
@@ -625,6 +625,10 @@ const Profile = () => {
                             <p className="text-[10px] uppercase tracking-wider text-emerald-100/75">Resume</p>
                             <p className="mt-1 text-lg font-semibold text-white">{hasCv ? "Ready" : "Needed"}</p>
                         </div>
+                            <div className="rounded-2xl border border-violet-300/20 bg-violet-400/10 px-3 py-3">
+                                <p className="text-[10px] uppercase tracking-wider text-violet-100/75">Resume Views</p>
+                                <p className="mt-1 text-lg font-semibold text-white">{profile?.resumeViewCount ?? 0}</p>
+                            </div>
                     </div>
                 </div>
             </div>
@@ -665,6 +669,10 @@ const Profile = () => {
                         <p className="text-[10px] uppercase tracking-[0.12em] text-amber-100/80">Portfolio</p>
                         <p className="text-sm font-semibold text-amber-50">{hasCv ? "Resume Ready" : "Upload Needed"}</p>
                     </div>
+                        <div className="rounded-2xl border border-violet-300/20 bg-violet-400/10 px-3 py-2">
+                            <p className="text-[10px] uppercase tracking-[0.12em] text-violet-100/80">Resume Views</p>
+                            <p className="text-sm font-semibold text-violet-50">{profile?.resumeViewCount ?? 0} views</p>
+                        </div>
                 </div>
             </div>
 

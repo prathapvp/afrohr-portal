@@ -1,21 +1,37 @@
 import { ActionIcon, Button, Modal } from "@mantine/core";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { formatDate } from "../../services/utilities";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { useState } from "react";
 import { useMediaQuery } from "@mantine/hooks";
 import CertiInput from "./CertiInput";
 
-const CertiCard = (props: any) => {
+interface CertificationItem {
+    name?: string;
+    issuer?: string;
+    issueDate?: string;
+    certificateId?: string;
+}
+
+interface CertiCardProps extends CertificationItem {
+    edit?: boolean;
+    index: number;
+}
+
+interface ProfileState {
+    certifications?: CertificationItem[];
+}
+
+const CertiCard = (props: CertiCardProps) => {
     const [manageOpen, setManageOpen]=useState(false);
     const [editing, setEditing]=useState(false);
-    const dispatch = useDispatch<any>();
-    const profile=useSelector((state:any)=>state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as ProfileState);
     const matches = useMediaQuery('(max-width: 475px)');
     const handleDelete=async ()=>{
-        const certifications = profile.certifications.filter((_:any, index:number)=>index!==props.index);
+        const certifications = (profile.certifications ?? []).filter((_, index: number) => index !== props.index);
         try {
             await dispatch(persistProfile({ certifications })).unwrap();
             successNotification("Success","Certificate Deleted Successfully");

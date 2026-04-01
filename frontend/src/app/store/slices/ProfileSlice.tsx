@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { patchProfile as patchProfileApi } from "../../services/ProfileService";
+import { patchMyProfile as patchProfileApi } from "../../services/profile-service";
 import { ensureRequiredProfileFields, logProfileUpdatePayload } from "../../services/profile-update-helper";
 
 const profileSlice = createSlice({
@@ -47,10 +47,6 @@ export const persistProfile = createAsyncThunk(
                 Object.entries(newProfile || {}).filter(([key]) => key !== 'id')
             );
 
-            if (!completeProfile.id) {
-                return rejectWithValue("Failed to persist profile: missing profile ID");
-            }
-            
             // Ensure UI already shows latest (optimistic)
             if (JSON.stringify(prev) !== JSON.stringify(completeProfile)) {
                 dispatch(changeProfile(completeProfile));
@@ -61,7 +57,7 @@ export const persistProfile = createAsyncThunk(
             }
 
             // Persist to backend
-            const saved = await patchProfileApi(completeProfile.id, patchPayload);
+            const saved = await patchProfileApi(patchPayload);
             // Sync store with server response if it differs
             if (saved && JSON.stringify(saved) !== JSON.stringify(completeProfile)) {
                 dispatch(changeProfile(saved));

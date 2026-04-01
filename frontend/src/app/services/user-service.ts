@@ -64,3 +64,16 @@ export async function verifyOtp(email: string, otp: string) {
   }
   return response.json();
 }
+
+export async function resetPassword(email: string, password: string) {
+  // Backend currently exposes changePass, not resetPass.
+  const response = await fetch("/api/ahrm/v3/users/changePass", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    throw new Error("Password reset failed");
+  }
+  return response.json();
+}

@@ -1,5 +1,5 @@
 import { IconPencil } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useState, useEffect } from "react";
 import { ActionIcon, TagsInput, Alert, Button, Modal } from "@mantine/core";
 import { changeProfile } from "../../store/slices/ProfileSlice";
@@ -34,8 +34,8 @@ const premiumInputStyles = {
 };
 
 const DesiredJob = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const matches = useMediaQuery("(max-width: 475px)");
     const [editOpen, setEditOpen] = useState(false);
     const [validationError, setValidationError] = useState<string>("");
@@ -82,10 +82,10 @@ const DesiredJob = () => {
         dispatch(changeProfile(updatedProfile));
 
         try {
-            await (dispatch as any)(persistProfile({ desiredJob: validation.data })).unwrap();
+            await dispatch(persistProfile({ desiredJob: validation.data })).unwrap();
             setEditOpen(false);
             successNotification("Success", "Desired Job Updated Successfully");
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }
@@ -180,7 +180,7 @@ const DesiredJob = () => {
     );
 };
 
-function DesiredJobPaginatedDisplay({ profile, matches }: { profile: any; matches: boolean }) {
+function DesiredJobPaginatedDisplay({ profile, matches }: { profile: Record<string, unknown>; matches: boolean }) {
     const [pageDes, setPageDes] = useState(1);
     const [pageLoc, setPageLoc] = useState(1);
     const [pageInd, setPageInd] = useState(1);

@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginDTO {
-    @NotBlank(message = "login.email.required")
-    @Email(message = "login.email.invalid")
+    @NotBlank(message = "{login.email.required}")
+    @Email(message = "{login.email.invalid}")
     private String email;
 
-    @NotBlank(message = "login.password.required")
-    @Size(min = 8, max = 64, message = "login.password.size")
+    @NotBlank(message = "{login.password.required}")
+    @Size(min = 8, max = 64, message = "{login.password.size}")
     private String password;
 }

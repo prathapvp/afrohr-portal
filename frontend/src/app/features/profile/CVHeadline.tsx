@@ -1,5 +1,5 @@
 import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useState } from "react";
 import { ActionIcon, Divider, Textarea, Alert } from "@mantine/core";
 import { persistProfile } from "../../store/slices/ProfileSlice";
@@ -11,8 +11,8 @@ import { CVHeadlineSchema } from "../../validators/ValidationSchemas";
 import { validateData } from "../../validators/ValidationUtils";
 
 const CVHeadline = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const matches = useMediaQuery("(max-width: 475px)");
     const [edit, setEdit] = useState(false);
     const [validationError, setValidationError] = useState<string>("");
@@ -50,10 +50,10 @@ const CVHeadline = () => {
         const updatedProfile = { ...profile, ...validation.data };
         
         try {
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
+            await dispatch(persistProfile(updatedProfile)).unwrap();
             successNotification("Success", "CV Headline Updated Successfully");
             setEdit(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IconBriefcase, IconClockHour3, IconHeart, IconMapPin, IconSparkles, IconX } from "@tabler/icons-react";
 import { Button, Text } from "@mantine/core";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useNavigate } from "react-router";
-import { getAllJobs } from "../../services/JobService";
+import { getAllJobs } from "../../services/job-service";
 import { changeProfile } from "../../store/slices/ProfileSlice";
 import { computeMatchScore } from "../../services/match-service";
 import { timeAgo } from "../../services/utilities";
@@ -11,8 +11,32 @@ import { timeAgo } from "../../services/utilities";
 const SWIPE_THRESHOLD = 100;
 const SEEN_KEY = "swipe-seen-ids";
 
+interface SwipeJob {
+    id: number;
+    company?: string;
+    jobTitle?: string;
+    experience?: string;
+    jobType?: string;
+    workMode?: string;
+    location?: string;
+    about?: string;
+    description?: string;
+    hideSalary?: boolean;
+    packageOffered?: number;
+    maxPackageOffered?: number;
+    postTime?: string;
+    jobStatus?: string;
+}
+
+interface SwipeProfile {
+    skills?: string[];
+    itSkills?: string[];
+    savedJobs?: number[];
+    [key: string]: unknown;
+}
+
 // ── Single job card rendered inside the stack ─────────────────────────────────
-const SwipeCard = ({ job, posX, profile }: { job: any; posX: number; profile: any }) => {
+const SwipeCard = ({ job, posX, profile }: { job: SwipeJob; posX: number; profile: SwipeProfile }) => {
     const match = computeMatchScore(job, profile);
     const showMatch = (profile?.skills?.length ?? 0) + (profile?.itSkills?.length ?? 0) > 0;
 
@@ -122,11 +146,11 @@ const SwipeCard = ({ job, posX, profile }: { job: any; posX: number; profile: an
 
 // ── Main SwipeJobs component ──────────────────────────────────────────────────
 const SwipeJobs = () => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const profile = useSelector((state: any) => state.profile);
+    const profile = useAppSelector((state) => state.profile as SwipeProfile);
 
-    const [jobs, setJobs] = useState<any[]>([]);
+    const [jobs, setJobs] = useState<SwipeJob[]>([]);
     const [loading, setLoading] = useState(true);
     const [seenIds, setSeenIds] = useState<number[]>(() =>
         JSON.parse(localStorage.getItem(SEEN_KEY) || "[]")
@@ -140,7 +164,10 @@ const SwipeJobs = () => {
 
     useEffect(() => {
         getAllJobs()
-            .then((all: any[]) => setJobs(all.filter((j: any) => j.jobStatus === "ACTIVE")))
+            .then((all) => {
+                const allJobs = Array.isArray(all) ? (all as SwipeJob[]) : [];
+                setJobs(allJobs.filter((j) => j.jobStatus === "ACTIVE"));
+            })
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);

@@ -3,42 +3,85 @@ import { DateInput, TimeInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCalendarMonth, IconHeart, IconMapPin } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { getProfile } from "../../services/ProfileService";
+import { Link, useParams } from "react-router";
+import { getProfile, recordResumeView } from "../../services/profile-service";
 import { formatInterviewTime, openPDF } from "../../services/utilities";
-import { changeAppStatus } from "../../services/JobService";
+import { changeAppStatus } from "../../services/job-service";
 import { errorNotification, successNotification } from "../../services/NotificationService";
 
-const TalentCard = (props: any) => {
+interface TalentCardProps {
+    applicantId?: number;
+    id?: number;
+    name?: string;
+    email?: string;
+    mobileNumber?: string;
+    website?: string;
+    resume?: string;
+    skills?: string[];
+    education?: string;
+    currentPosition?: string;
+    ctc?: string;
+    experience?: string;
+    currentLocation?: string;
+    coverLetter?: string;
+    invited?: boolean;
+    posted?: boolean;
+    offered?: boolean;
+    interviewTime?: string;
+}
+
+interface TalentProfile {
+    id?: number;
+    picture?: string;
+    jobTitle?: string;
+    company?: string;
+    skills?: string[];
+    about?: string;
+    totalExp?: number;
+    location?: string;
+}
+
+interface InterviewPayload {
+    id?: string;
+    applicantId?: number;
+    applicationStatus: string;
+    interviewTime?: Date;
+}
+
+const TalentCard = (props: TalentCardProps) => {
     const { id } = useParams();
     const ref = useRef<HTMLInputElement>(null);
     const [opened, { open, close }] = useDisclosure(false);
     const [app, { open: openApp, close: closeApp }] = useDisclosure(false);
     const [date, setDate] = useState<Date | null>(null);
-    const [time, setTime] = useState<any>(null);
-    const [profile, setProfile] = useState<any>(null);
+    const [time, setTime] = useState<string>("");
+    const [profile, setProfile] = useState<TalentProfile | null>(null);
     const handleOffer = (status: string) => {
-        let interview: any = { id, applicantId: profile?.id, applicationStatus: status };
-        if (status == "INTERVIEWING") {
+        const interview: InterviewPayload = { id, applicantId: profile?.id, applicationStatus: status };
+        if (status === "INTERVIEWING" && date && time) {
             const [hours, minutes] = time.split(':').map(Number);
-            date?.setHours(hours);
-            date?.setMinutes(minutes);
-            interview = { ...interview, interviewTime: date }
+            const interviewDate = new Date(date);
+            interviewDate.setHours(hours);
+            interviewDate.setMinutes(minutes);
+            interview.interviewTime = interviewDate;
         }
         changeAppStatus(interview).then((res) => {
-            if (status == "INTERVIEWING") successNotification('Interview Scheduled', 'Interview has been scheduled successfully');
-            else if (status == "OFFERED") successNotification('Offered', 'Offer has been sent successfully');
+            if (status === "INTERVIEWING") successNotification('Interview Scheduled', 'Interview has been scheduled successfully');
+            else if (status === "OFFERED") successNotification('Offered', 'Offer has been sent successfully');
             else successNotification('Rejected', 'Offer has been rejected');
             window.location.reload();
-        }).catch((err) => {
+        }).catch((err: unknown) => {
             console.log(err)
-            errorNotification('Error', err.response.data.errorMessage);
+            const message =
+                (err as { response?: { data?: { errorMessage?: string } } })?.response?.data?.errorMessage ??
+                "Failed to update application status";
+            errorNotification('Error', message);
         });
 
     }
     useEffect(() => {
         if (props.applicantId) getProfile(props.applicantId).then((res) => {
-            setProfile(res);
+            setProfile(res as TalentProfile);
         }).catch((err) => console.log(err))
         else setProfile(props);
     }, [props])
@@ -57,7 +100,7 @@ const TalentCard = (props: any) => {
             <IconHeart className="cursor-pointer text-mine-shaft-300" stroke={1.5} />
         </div>
         <div className="flex gap-2 flex-wrap ">
-            {profile?.skills?.map((skill: any, index: any) => index < 4 && <div key={index} className="rounded-full border border-bright-sun-400/25 bg-bright-sun-400/10 px-2.5 py-1 text-xs font-medium text-bright-sun-300">{skill}</div>)}
+            {profile?.skills?.map((skill, index) => index < 4 && <div key={`${skill}-${index}`} className="rounded-full border border-bright-sun-400/25 bg-bright-sun-400/10 px-2.5 py-1 text-xs font-medium text-bright-sun-300">{skill}</div>)}
         </div>
         <div>
             <Text className="!text-xs text-justify !text-mine-shaft-300" lineClamp={3}>{profile?.about}
@@ -168,7 +211,12 @@ const TalentCard = (props: any) => {
                     Resume: &emsp;
                     <span
                         className="text-bright-sun-400 hover:underline cursor-pointer"
-                        onClick={() => openPDF(props?.resume)}
+                            onClick={() => {
+                                if (props.applicantId) {
+                                    recordResumeView(props.applicantId).catch(() => {});
+                                }
+                                openPDF(props?.resume);
+                            }}
                     >
                         {props?.name}
                     </span>

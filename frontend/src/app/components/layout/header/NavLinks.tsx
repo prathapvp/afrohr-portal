@@ -1,6 +1,6 @@
 
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 
 type NavLinksProps = {
     links: { name: string; url: string }[];

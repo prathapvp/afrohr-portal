@@ -1,8 +1,20 @@
-import { useEffect, useState } from 'react';
-import { Combobox, InputBase, ScrollArea, TextInput, useCombobox } from '@mantine/core';
+import { ComponentType, useEffect, useState } from 'react';
+import { Combobox, InputBase, ScrollArea, useCombobox } from '@mantine/core';
 
+interface ProfileSelectInputProps {
+  label?: string;
+  placeholder?: string;
+  styles?: unknown;
+  options: string[];
+  name: string;
+  leftSection: ComponentType<{ className?: string; stroke?: number }>;
+  form: {
+    getInputProps: (name: string) => { value: string; [key: string]: unknown };
+    setFieldValue: (name: string, value: string) => void;
+  };
+}
 
-const SelectInput=(props:any)=> {
+const SelectInput=(props: ProfileSelectInputProps)=> {
     useEffect(()=>{
         setData(props.options);
         setValue(props.form.getInputProps(props.name).value);

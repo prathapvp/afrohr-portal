@@ -1,9 +1,10 @@
 import { companyData } from "../../data/Company";
+import { CompanyEmployee, CompanyJob } from "./types";
 
 interface AboutCompProps {
     companyName: string;
-    jobs: any[];
-    employees: any[];
+    jobs: CompanyJob[];
+    employees: CompanyEmployee[];
     loading?: boolean;
 }
 
@@ -11,26 +12,26 @@ const AboutComp = ({ companyName, jobs, employees, loading }: AboutCompProps) =>
     const dynamicSpecialties = Array.from(
         new Set(
             jobs
-                .flatMap((job: any) => (Array.isArray(job?.skillsRequired) ? job.skillsRequired : []))
-                .map((skill: any) => String(skill).trim())
+                .flatMap((job) => (Array.isArray(job?.skillsRequired) ? job.skillsRequired : []))
+                .map((skill) => String(skill).trim())
                 .filter(Boolean)
         )
     ).slice(0, 10);
 
-    const company:{ [key: string]: any } = {
+    const company: Record<string, string | string[]> = {
         Name: companyName,
         Overview:
-            jobs.find((job: any) => typeof job?.about === "string" && job.about.trim().length > 0)?.about ||
+            jobs.find((job) => typeof job?.about === "string" && job.about.trim().length > 0)?.about ||
             `${companyName} is actively hiring through AfroHR. Explore open roles, team profiles, and opportunities to connect with their talent network.`,
-        Industry: jobs.find((job: any) => job?.industry)?.industry || companyData.Industry,
+        Industry: jobs.find((job) => job?.industry)?.industry || companyData.Industry,
         Website:
             companyName.toLowerCase() === String(companyData.Name).toLowerCase()
                 ? companyData.Website
                 : "Not provided",
         Size: employees.length > 0 ? `${employees.length}+ Employees on AfroHR` : "Not specified",
         Headquarters:
-            jobs.find((job: any) => job?.location)?.location ||
-            employees.find((profile: any) => profile?.location)?.location ||
+            jobs.find((job) => job?.location)?.location ||
+            employees.find((profile) => profile?.location)?.location ||
             "Not specified",
         Specialties: dynamicSpecialties.length > 0 ? dynamicSpecialties : companyData.Specialties,
     };

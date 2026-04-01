@@ -4,14 +4,31 @@ import fields from "../../data/Profile";
 import { MonthPickerInput } from "@mantine/dates";
 import { Button, TextInput, Alert } from "@mantine/core";
 import { isNotEmpty, useForm } from "@mantine/form";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { persistProfile } from "../../store/slices/ProfileSlice";
 import { useMediaQuery } from "@mantine/hooks";
 import { CertificationSchema } from "../../validators/ValidationSchemas";
 import { validateData } from "../../validators/ValidationUtils";
 
-const CertiInput = (props: any) => {
+interface CertificationItem {
+    name?: string;
+    issuer?: string;
+    issueDate?: string;
+    certificateId?: string;
+}
+
+interface CertiInputProps extends CertificationItem {
+    add?: boolean;
+    index?: number;
+    setEdit: (value: boolean) => void;
+}
+
+interface ProfileState {
+    certifications?: CertificationItem[];
+}
+
+const CertiInput = (props: CertiInputProps) => {
     const select = fields;
     const matches = useMediaQuery('(max-width: 475px)');
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -33,8 +50,8 @@ const CertiInput = (props: any) => {
         },
     };
 
-    const dispatch = useDispatch<any>();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as ProfileState);
     const form = useForm({
         mode: 'controlled',
         validateInputOnChange: true,
@@ -79,12 +96,12 @@ const CertiInput = (props: any) => {
             return;
         }
 
-        let certis = [...profile.certifications];
+        const certis = [...(profile.certifications ?? [])];
         if (props.add) {
             certis.push(certiData);
         }
         else {
-            certis[props.index] = certiData;
+            certis[props.index ?? 0] = certiData;
         }
         
         setValidationErrors({});

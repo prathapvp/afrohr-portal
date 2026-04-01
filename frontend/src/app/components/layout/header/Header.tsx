@@ -2,13 +2,13 @@ import { Avatar, Burger, Button, Drawer, Indicator } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
 import NavLinks from "./NavLinks";
 import ProfileMenu from "./ProfileMenu";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
-import { getProfile } from "../../../services/ProfileService";
+import { getCurrentUser } from "../../../services/auth-service";
+import { getMyProfile } from "../../../services/profile-service";
 import { setProfile } from "../../../store/slices/ProfileSlice";
 import NotiMenu from "./NotiMenu";
-import { jwtDecode } from "jwt-decode";
 import { setUser } from "../../../store/slices/UserSlice";
 import { setupResponseInterceptor } from "../../../interceptor/AxiosInterceptor";
 import { useDisclosure } from "@mantine/hooks";
@@ -43,23 +43,28 @@ const Header = ({
 
   useEffect(() => {
     if (token && localStorage.getItem("token")) {
-      const decoded = jwtDecode(localStorage.getItem("token") || "");
-      dispatch(setUser({ ...decoded, email: decoded.sub }));
+      if (!user) {
+        getCurrentUser().then((currentUser) => {
+          dispatch(setUser(currentUser));
+        }).catch(() => {
+          // Response interceptor handles invalid sessions.
+        });
+      }
     }
-  }, [token, dispatch]);
+  }, [token, user, dispatch]);
 
   // Fetch profile only once when user is available and profile hasn't been loaded
   useEffect(() => {
-    if (user?.profileId && !profile?.id && !profileFetchedRef.current) {
+    if (user && !profile?.id && !profileFetchedRef.current) {
       profileFetchedRef.current = true;
-      getProfile(user.profileId)
+      getMyProfile()
         .then((res) => dispatch(setProfile(res)))
         .catch((err) => {
           console.log(err);
           profileFetchedRef.current = false; // Reset on error to allow retry
         });
     }
-  }, [user?.profileId, profile?.id, dispatch]);
+  }, [user, profile?.id, dispatch]);
 
   if (location.pathname === "/signup" || location.pathname === "/login")
     return <></>;

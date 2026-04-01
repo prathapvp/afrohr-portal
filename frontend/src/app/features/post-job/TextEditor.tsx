@@ -6,12 +6,19 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
-import { useEffect } from 'react';
-import { useEffect as useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 
 
 
-const TextEditor = (props: any) => {
+interface TextEditorProps {
+  data: string;
+  form: {
+    getValues: () => { description: string };
+    setFieldValue: (name: string, value: string) => void;
+  };
+}
+
+const TextEditor = (props: TextEditorProps) => {
   useEffect(() => {
     editor?.commands.setContent(props.data);
   }, [props.data])

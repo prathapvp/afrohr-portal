@@ -13,4 +13,5 @@ public interface ProfileService {
 	public ProfileDTO patchProfile(Long id, Map<String, Object> updates) throws JobPortalException;
 	public ProfileDTO updateProfile(ProfileDTO profileDTO) throws JobPortalException;
 	public List<ProfileDTO> getAllProfiles() throws JobPortalException;
+	public int incrementResumeViewCount(Long profileId) throws JobPortalException;
 }

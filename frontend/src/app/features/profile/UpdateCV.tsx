@@ -1,10 +1,10 @@
 import { IconUpload, IconFileText, IconCheck, IconX, IconRefresh, IconPencil } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useState } from "react";
 import { Button, FileInput, Loader, Badge, Text, Divider, Modal, ActionIcon } from "@mantine/core";
 import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
-import { parseResume, uploadResume } from "../../services/ProfileService";
+import { parseResume, uploadMyResume } from "../../services/profile-service";
 
 const premiumInputStyles = {
     label: {
@@ -43,8 +43,8 @@ interface ParsedData {
 }
 
 const UpdateCV = () => {
-    const dispatch = useDispatch<any>();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const [cvFile, setCvFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -52,7 +52,7 @@ const UpdateCV = () => {
     const [manageOpen, setManageOpen] = useState(false);
 
     const buildProfileUpdates = (parsedData: ParsedData) => {
-        const updates: any = {
+        const updates: Record<string, unknown> = {
             cvFileName: cvFile?.name,
             cvLastUpdated: new Date().toISOString(),
         };
@@ -112,17 +112,13 @@ const UpdateCV = () => {
 
     const handleUpload = async () => {
         if (!cvFile) return;
-        if (!profile?.id) {
-            errorNotification("Upload Failed", "Profile ID is missing.");
-            return;
-        }
 
         setUploading(true);
         try {
             const base64 = await fileToBase64(cvFile);
-            await uploadResume(Number(profile.id), base64, cvFile.name);
+            await uploadMyResume(base64, cvFile.name);
             successNotification("Uploaded", `${cvFile.name} uploaded successfully.`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             errorNotification("Upload Failed", err?.response?.data?.errorMessage || "Could not upload the resume file.");
         } finally {
             setUploading(false);
@@ -145,7 +141,7 @@ const UpdateCV = () => {
             setTimeout(() => {
                 window.location.reload();
             }, 500);
-        } catch (err: any) {
+        } catch (err: unknown) {
             errorNotification("Parse Failed", err?.response?.data?.error || "Could not parse the resume file.");
         } finally {
             setLoading(false);
@@ -299,7 +295,7 @@ const UpdateCV = () => {
                         {parsed.experiences && parsed.experiences.length > 0 && (
                             <div>
                                 <Text size="xs" fw={600} c="dimmed" className="mb-1">Experience ({parsed.experiences.length})</Text>
-                                {parsed.experiences.map((exp: any, i: number) => (
+                                {parsed.experiences.map((exp, i: number) => (
                                     <Text key={i} size="sm" className="text-mine-shaft-300">
                                         {exp.title || "Role"} - {exp.startDate} to {exp.endDate}
                                     </Text>
@@ -310,7 +306,7 @@ const UpdateCV = () => {
                         {parsed.certifications && parsed.certifications.length > 0 && (
                             <div>
                                 <Text size="xs" fw={600} c="dimmed" className="mb-1">Certifications ({parsed.certifications.length})</Text>
-                                {parsed.certifications.map((c: any, i: number) => (
+                                {parsed.certifications.map((c, i: number) => (
                                     <Text key={i} size="sm" className="text-mine-shaft-300">{c.name}</Text>
                                 ))}
                             </div>
@@ -319,7 +315,7 @@ const UpdateCV = () => {
                         {parsed.education && parsed.education.length > 0 && (
                             <div>
                                 <Text size="xs" fw={600} c="dimmed" className="mb-1">Education ({parsed.education.length})</Text>
-                                {parsed.education.map((ed: any, i: number) => (
+                                {parsed.education.map((ed, i: number) => (
                                     <Text key={i} size="sm" className="text-mine-shaft-300">
                                         {ed.degree}{ed.college ? ` — ${ed.college}` : ""}{ed.yearOfPassing ? ` (${ed.yearOfPassing})` : ""}
                                     </Text>

@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import Job from "../features/job-desc/Job";
 import RecommendedJob from "../features/job-desc/RecommendedJob";
 import { useEffect, useState } from "react";
-import { getJob } from "../services/JobService";
+import { getJob } from "../services/job-service";
 import { useDispatch } from "react-redux";
 import { hideOverlay, showOverlay } from "../store/slices/OverlaySlice";
 

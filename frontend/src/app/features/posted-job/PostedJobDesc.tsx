@@ -3,25 +3,56 @@ import { IconLayoutKanban, IconLayoutList } from "@tabler/icons-react";
 import Job from "../job-desc/Job";
 import TalentCard from "../find-talent/TalentCard";
 import KanbanBoard from "../employer/KanbanBoard";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const PostedJobDesc = (props:any) => {
-    const [tab, setTab]=useState("overview");
-    const [arr, setArr]=useState<any>([]);
+type ApplicantStatus = "APPLIED" | "SCREENING" | "INTERVIEWING" | "OFFERED" | "HIRED" | "REJECTED";
+type PostedJobTab = "overview" | "applicants" | "screening" | "invited" | "offered" | "hired" | "rejected";
+
+interface PostedApplicant {
+    applicantId?: number;
+    applicationStatus?: ApplicantStatus | string;
+    [key: string]: unknown;
+}
+
+interface PostedJobDescProps {
+    jobTitle?: string;
+    jobStatus?: string;
+    location?: string;
+    applicants?: PostedApplicant[];
+    [key: string]: unknown;
+}
+
+const TAB_TO_STATUS: Partial<Record<PostedJobTab, ApplicantStatus>> = {
+    applicants: "APPLIED",
+    screening: "SCREENING",
+    invited: "INTERVIEWING",
+    offered: "OFFERED",
+    hired: "HIRED",
+    rejected: "REJECTED",
+};
+
+const PostedJobDesc = (props: PostedJobDescProps) => {
+    const [tab, setTab]=useState<PostedJobTab>("overview");
     const [viewMode, setViewMode] = useState<"tabs" | "kanban">("tabs");
 
-    const handleTab=(value:any)=>{
-        setTab(value);
-        if(value=="applicants")setArr(props.applicants?.filter((x:any)=>x.applicationStatus=="APPLIED"));
-        else if(value=="screening")setArr(props.applicants?.filter((x:any)=>x.applicationStatus=="SCREENING"));
-        else if(value=="invited")setArr(props.applicants?.filter((x:any)=>x.applicationStatus=="INTERVIEWING"));
-        else if(value=="offered")setArr(props.applicants?.filter((x:any)=>x.applicationStatus=="OFFERED"));
-        else if(value=="hired")setArr(props.applicants?.filter((x:any)=>x.applicationStatus=="HIRED"));
-        else if(value=="rejected")setArr(props.applicants?.filter((x:any)=>x.applicationStatus=="REJECTED"));
-    }
+    const handleTab=(value: string | null)=>{
+        if (!value) return;
+        setTab(value as PostedJobTab);
+    };
+
+    const applicantsForTab = useMemo(() => {
+        const status = TAB_TO_STATUS[tab];
+        if (!status) {
+            return [];
+        }
+
+        return (props.applicants ?? []).filter((applicant) => String(applicant.applicationStatus ?? "").toUpperCase() === status);
+    }, [props.applicants, tab]);
+
     useEffect(()=>{
-        handleTab("overview");
+        setTab("overview");
     }, [props]);
+
     return <div data-aos="zoom-out" className=" w-3/4 md-mx:w-full px-5 md-mx:p-0">
         {props.jobTitle?<><div className="text-2xl xs-mx:text-xl font-semibold flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">{props?.jobTitle} <Badge variant="light" ml="sm" color="brightSun.4" size="sm">{props?.jobStatus}</Badge></div>
@@ -59,28 +90,28 @@ const PostedJobDesc = (props:any) => {
                 </Tabs.List>
                 <Tabs.Panel value="overview" className="[&>div]:w-full">{props.jobStatus=="CLOSED"?<Job {...props} edit={true} closed />:<Job {...props} edit={true}  />}</Tabs.Panel>
                 <Tabs.Panel value="applicants"><div className="flex mt-10 flex-wrap gap-5 justify-around">
-                    {arr?.length?arr.map((talent:any, index:any) =>  <TalentCard key={index} {...talent} posted={true}/>):"No Applicants Yet"
+                    {applicantsForTab.length?applicantsForTab.map((talent, index) =>  <TalentCard key={talent.applicantId ?? index} {...talent} posted={true}/>):"No Applicants Yet"
                     }
                 </div></Tabs.Panel>
                 <Tabs.Panel value="screening"><div className="flex mt-10 flex-wrap gap-5 justify-around">
-                    {arr?.length?arr.map((talent:any, index:any) =>  <TalentCard key={index} {...talent} posted={true}/>):"No Applicants in Screening"}
+                    {applicantsForTab.length?applicantsForTab.map((talent, index) =>  <TalentCard key={talent.applicantId ?? index} {...talent} posted={true}/>):"No Applicants in Screening"}
                 </div></Tabs.Panel>
                 <Tabs.Panel value="invited"><div className="flex mt-10 flex-wrap gap-5 justify-around">
                     {
-                        arr?.length?arr.map((talent:any, index:any) =>  <TalentCard key={index} {...talent} invited/>):"No Applicants Invited Yet"
+                        applicantsForTab.length?applicantsForTab.map((talent, index) =>  <TalentCard key={talent.applicantId ?? index} {...talent} invited/>):"No Applicants Invited Yet"
                     }
                 </div></Tabs.Panel>
                 <Tabs.Panel value="offered"><div className="flex mt-10 flex-wrap gap-5 justify-around">
                     {
-                         arr?.length?arr.map((talent:any, index:any) =>  <TalentCard key={index} {...talent} offered/>):"No Applicants Offered Yet"
+                         applicantsForTab.length?applicantsForTab.map((talent, index) =>  <TalentCard key={talent.applicantId ?? index} {...talent} offered/>):"No Applicants Offered Yet"
                     }
                 </div></Tabs.Panel>
                 <Tabs.Panel value="hired"><div className="flex mt-10 flex-wrap gap-5 justify-around">
-                    {arr?.length?arr.map((talent:any, index:any) =>  <TalentCard key={index} {...talent} offered/>):"No Applicants Hired Yet"}
+                    {applicantsForTab.length?applicantsForTab.map((talent, index) =>  <TalentCard key={talent.applicantId ?? index} {...talent} offered/>):"No Applicants Hired Yet"}
                 </div></Tabs.Panel>
                 <Tabs.Panel value="rejected"><div className="flex mt-10 flex-wrap gap-5 justify-around">
                     {
-                         arr?.length?arr?.map((talent:any, index:any) =>  <TalentCard key={index} {...talent} offered/>):"No Applicants Rejected Yet"
+                         applicantsForTab.length?applicantsForTab.map((talent, index) =>  <TalentCard key={talent.applicantId ?? index} {...talent} offered/>):"No Applicants Rejected Yet"
                     }
                 </div></Tabs.Panel>
                 

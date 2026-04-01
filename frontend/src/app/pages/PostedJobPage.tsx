@@ -2,9 +2,9 @@ import {Button, Divider, Drawer } from "@mantine/core";
 import PostedJob from "../features/posted-job/PostedJob";
 import PostedJobDesc from "../features/posted-job/PostedJobDesc";
 import { useEffect, useState } from "react";
-import { getJobsPostedBy } from "../services/JobService";
+import { getMyPostedJobs } from "../services/job-service";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { hideOverlay, showOverlay } from "../store/slices/OverlaySlice";
 
@@ -12,7 +12,6 @@ const PostedJobPage = () => {
     const navigate=useNavigate();
     const dispatch=useDispatch();
     const {id}=useParams();
-    const user=useSelector((state:any)=>state.user);
     const [opened, { open, close }] = useDisclosure(false);
     const [jobList, setJobList] = useState<any>([]);
     const [job, setJob] = useState<any>(null);
@@ -21,7 +20,7 @@ const PostedJobPage = () => {
     useEffect(()=>{
         window.scrollTo(0,0);
         dispatch(showOverlay());
-        getJobsPostedBy(user.id).then((res)=>{
+        getMyPostedJobs().then((res)=>{
             setJobList(res);
             if(res && res.length>0 && Number(id) == 0){
                 res.forEach((x:any)=>{

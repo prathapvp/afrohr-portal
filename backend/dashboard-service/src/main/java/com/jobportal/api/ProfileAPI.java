@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.jobportal.dto.ProfileDTO;
 import com.jobportal.exception.JobPortalException;
 import com.jobportal.service.AiAssistantService;
+import com.jobportal.service.CurrentUserService;
 import com.jobportal.service.ProfileService;
 import com.jobportal.service.ResumeProcessingService;
 
@@ -47,6 +49,9 @@ public class ProfileAPI {
 
 	@Autowired
 	private AiAssistantService aiAssistantService;
+
+	@Autowired
+	private CurrentUserService currentUserService;
 
 	public record UploadResumeRequest(
 			@NotNull Long profileId,
@@ -85,8 +90,18 @@ public class ProfileAPI {
 		}
 	}
 
+	@GetMapping("/me")
+	public ResponseEntity<ProfileDTO> getMyProfile() throws JobPortalException {
+		Long profileId = requireCurrentProfileId();
+		return new ResponseEntity<>(profileService.getProfile(profileId), HttpStatus.OK);
+	}
+
 	@GetMapping("/getAll")
 	public ResponseEntity<List<ProfileDTO>> getAllProfiles() throws JobPortalException {
+		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
+		if (!currentUser.isAdmin()) {
+			throw new JobPortalException("Admin access required to view all profiles");
+		}
 		logger.info("Fetching all profiles");
 		try {
 			List<ProfileDTO> profiles = profileService.getAllProfiles();
@@ -106,6 +121,7 @@ public class ProfileAPI {
 	public ResponseEntity<ProfileDTO> patchProfile(
 			@PathVariable Long id,
 			@RequestBody Map<String, Object> updates) throws JobPortalException {
+		enforceProfileAccess(id);
 		logger.info("Partial update request received for profile ID: {}", id);
 		if (id == null || id <= 0) {
 			throw new JobPortalException("Profile ID is required and must be positive");
@@ -116,9 +132,17 @@ public class ProfileAPI {
 		return new ResponseEntity<>(updatedProfile, HttpStatus.OK);
 	}
 
+	@PatchMapping("/me")
+	public ResponseEntity<ProfileDTO> patchMyProfile(@RequestBody Map<String, Object> updates) throws JobPortalException {
+		Long profileId = requireCurrentProfileId();
+		ProfileDTO updatedProfile = profileService.patchProfile(profileId, updates);
+		return new ResponseEntity<>(updatedProfile, HttpStatus.OK);
+	}
+
 	@PutMapping("/update")
 	public ResponseEntity<ProfileDTO> updateProfile(@RequestBody @Valid ProfileDTO profileDTO)
 			throws JobPortalException {
+		enforceProfileAccess(profileDTO.getId());
 		logger.info("Update request received for profile ID: {}", profileDTO.getId());
 		try {
 			if (profileDTO.getId() == null || profileDTO.getId() <= 0) {
@@ -137,10 +161,37 @@ public class ProfileAPI {
 		}
 	}
 
+	@PutMapping("/me")
+	public ResponseEntity<ProfileDTO> updateMyProfile(@RequestBody @Valid ProfileDTO profileDTO)
+			throws JobPortalException {
+		Long profileId = requireCurrentProfileId();
+		profileDTO.setId(profileId);
+		ProfileDTO updatedProfile = profileService.updateProfile(profileDTO);
+		return new ResponseEntity<>(updatedProfile, HttpStatus.OK);
+	}
+
 	@PostMapping("/uploadResume")
 	public ResponseEntity<Map<String, Object>> uploadResume(@RequestBody @Valid UploadResumeRequest request)
 			throws JobPortalException {
+		enforceProfileAccess(request.profileId());
 		ProfileDTO profile = profileService.getProfile(request.profileId());
+		profile.setCvFileName(request.fileName());
+		profile.setCvLastUpdated(Instant.now().toString());
+		ProfileDTO updated = profileService.updateProfile(profile);
+
+		return ResponseEntity.ok(Map.of(
+				"message", "Resume uploaded successfully",
+				"profileId", updated.getId(),
+				"cvFileName", updated.getCvFileName(),
+				"cvLastUpdated", updated.getCvLastUpdated()
+		));
+	}
+
+	@PostMapping("/me/uploadResume")
+	public ResponseEntity<Map<String, Object>> uploadMyResume(@RequestBody @Valid ParseResumeRequest request)
+			throws JobPortalException {
+		Long profileId = requireCurrentProfileId();
+		ProfileDTO profile = profileService.getProfile(profileId);
 		profile.setCvFileName(request.fileName());
 		profile.setCvLastUpdated(Instant.now().toString());
 		ProfileDTO updated = profileService.updateProfile(profile);
@@ -169,4 +220,30 @@ public class ProfileAPI {
 		);
 		return ResponseEntity.ok(Map.of("reply", reply));
 	}
+
+	private Long requireCurrentProfileId() {
+		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
+		Long profileId = currentUser.profileId();
+		if (profileId == null || profileId <= 0) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authenticated user does not have a profile");
+		}
+		return profileId;
+	}
+
+	@PostMapping("/{id}/resume/view")
+	public ResponseEntity<Map<String, Object>> recordResumeView(@PathVariable Long id) throws JobPortalException {
+		int count = profileService.incrementResumeViewCount(id);
+		return ResponseEntity.ok(Map.of("resumeViewCount", count));
+	}
+
+	private void enforceProfileAccess(Long profileId) {
+		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
+		if (profileId == null || profileId <= 0) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile ID is required and must be positive");
+		}
+		if (!currentUser.isAdmin() && !profileId.equals(currentUser.profileId())) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to access this profile");
+		}
+	}
 }
+

@@ -2,21 +2,28 @@ import { Button, Divider, Text } from "@mantine/core";
 import { IconBookmark, IconBookmarkFilled, IconClockHour3, IconSparkles } from "@tabler/icons-react";
 import { Link } from "react-router";
 import { timeAgo } from "../../services/utilities";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { changeProfile } from "../../store/slices/ProfileSlice";
 import { computeMatchScore } from "../../services/match-service";
+import type { JobListItem } from "./types";
 
-const JobCard = (props: any) => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+type ProfileState = {
+    savedJobs?: number[];
+    skills?: string[];
+    itSkills?: string[];
+};
+
+const JobCard = (props: JobListItem) => {
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as ProfileState);
     const accountType = localStorage.getItem("accountType")?.toUpperCase();
     const showMatch = accountType === "APPLICANT" && (profile?.skills?.length > 0 || profile?.itSkills?.length > 0);
     const match = showMatch ? computeMatchScore(props, profile) : null;
 
     const handleSaveJob = () => {
-        let savedJobs: any = profile.savedJobs ? [...profile.savedJobs] : [];
+        let savedJobs = profile.savedJobs ? [...profile.savedJobs] : [];
         if (savedJobs.includes(props.id)) {
-            savedJobs = savedJobs.filter((job: any) => job != props.id);
+            savedJobs = savedJobs.filter((jobId) => jobId !== props.id);
         } else {
             savedJobs.push(props.id);
         }

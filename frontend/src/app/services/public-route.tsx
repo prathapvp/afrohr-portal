@@ -1,22 +1,23 @@
-import { useSelector } from "react-redux";
 import { Navigate } from "react-router";
+import type { ReactElement } from "react";
+import { useAppSelector } from "../store";
+import { getLandingTabForAccountType, selectAccountType, selectIsAuthenticated } from "../store/selectors/authSelectors";
 
 interface PublicRouteProps{
-    children: JSX.Element;
+    children: ReactElement;
 }
 
 const PublicRoute :React.FC<PublicRouteProps>=({ children}) => {
-    const token=useSelector((state:any)=>state.jwt);
-    const accountType = (localStorage.getItem("accountType") || "").toUpperCase();
+    const isAuthenticated = useAppSelector(selectIsAuthenticated);
+    const accountType = useAppSelector(selectAccountType);
 
     const getLanding = () => {
-        if (accountType === "EMPLOYER") return "/dashboard?tab=employers";
-        if (accountType === "APPLICANT") return "/dashboard?tab=candidates";
-        if (accountType === "STUDENT") return "/dashboard?tab=students";
+        const tab = getLandingTabForAccountType(accountType);
+        if (tab) return `/dashboard?tab=${tab}`;
         return "/";
     };
 
-    if(token){
+    if(isAuthenticated){
         return <Navigate to={getLanding()} replace />
     }
     return children;

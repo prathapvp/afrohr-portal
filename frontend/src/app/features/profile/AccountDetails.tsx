@@ -1,16 +1,16 @@
 import { ActionIcon, Stack } from "@mantine/core";
 import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { extractErrorMessage } from "../../services/error-extractor-service";
 import { useMediaQuery } from "@mantine/hooks";
 
 const AccountDetails = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
-    const user = useSelector((state: any) => state.user);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
+    const user = useAppSelector((state) => state.user as { name?: string; email?: string; accountType?: string } | null);
 
     const matches = useMediaQuery("(max-width: 475px)");
 
@@ -35,10 +35,10 @@ const AccountDetails = () => {
             mobileNumber,
         };
         try {
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
+            await dispatch(persistProfile(updatedProfile)).unwrap();
             successNotification("Success", "Account Details Updated Successfully");
             setEdit(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

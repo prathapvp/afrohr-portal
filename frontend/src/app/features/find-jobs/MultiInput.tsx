@@ -1,20 +1,25 @@
-import { useEffect, useState } from 'react';
+import { ComponentType, useEffect, useState } from 'react';
 import { Checkbox, Combobox, Group, Input, Pill, PillsInput, ScrollArea, useCombobox } from '@mantine/core';
 import { IconSelector } from '@tabler/icons-react';
 import { updateFilter } from '../../store/slices/FilterSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import { current } from '@reduxjs/toolkit';
+import { useAppDispatch, useAppSelector } from '../../store';
 
-const MultiInput = (props:any) => {
-    const dispatch=useDispatch();
-    const filter=useSelector((state:any)=>state.filter);
+interface MultiInputProps {
+    title: string;
+    icon: ComponentType<{ size?: number }>;
+    options: string[];
+}
+
+const MultiInput = (props: MultiInputProps) => {
+    const dispatch = useAppDispatch();
+    const filter = useAppSelector((state) => state.filter as Record<string, string[]>);
     useEffect(()=>{
-        setData(props.options);
+        setData(Array.isArray(props.options) ? props.options : []);
         
-    },[])
+    }, [props.options]);
     useEffect(()=>{
-        setValue(filter[props.title]??[])
-    }, [filter])
+        setValue(Array.isArray(filter[props.title]) ? filter[props.title] : []);
+    }, [filter, props.title]);
     const combobox = useCombobox({
         onDropdownClose: () =>
             combobox.resetSelectedOption(),
@@ -66,8 +71,8 @@ const MultiInput = (props:any) => {
                         color='brightSun.4'
                         checked={value.includes(item)}
                         onChange={() => {
-                            if(value.includes(item))updateFilter({[props.title]:value.filter((v) => v !== item)});
-                            else updateFilter({[props.title]:[...value, item]});
+                            if (value.includes(item)) dispatch(updateFilter({ [props.title]: value.filter((v) => v !== item) }));
+                            else dispatch(updateFilter({ [props.title]: [...value, item] }));
                          }}
                         aria-hidden
                         tabIndex={-1}

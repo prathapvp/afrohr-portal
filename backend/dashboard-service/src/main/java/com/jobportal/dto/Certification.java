@@ -13,16 +13,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Certification {
-    @NotBlank(message = "certification.name.required")
-    @Size(max = 200, message = "certification.name.max")
+    @NotBlank(message = "{certification.name.required}")
+    @Size(max = 200, message = "{certification.name.max}")
     private String name;
 
-    @Size(max = 200, message = "certification.issuer.max")
+    @Size(max = 200, message = "{certification.issuer.max}")
     private String issuer;
 
-    @NotNull(message = "certification.issueDate.required")
+    @NotNull(message = "{certification.issueDate.required}")
     private LocalDateTime issueDate;
 
-    @Size(max = 120, message = "certification.certificateId.max")
+    @Size(max = 120, message = "{certification.certificateId.max}")
     private String certificateId;
 }

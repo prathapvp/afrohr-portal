@@ -3,19 +3,19 @@ import { Button, Collapse, Divider, RangeSlider } from "@mantine/core";
 import MultiInput from "./MultiInput";
 import React, { useEffect, useState } from "react";
 import { dropdownData } from "../../data/JobsData";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { updateFilter } from "../../store/slices/FilterSlice";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 
 const SearchBar = () => {
     const matches = useMediaQuery('(max-width: 475px)');
-    const filter=useSelector((state:any)=>state.filter);
+    const filter = useAppSelector((state) => state.filter as { salary?: [number, number] });
     const [opened, { toggle }] = useDisclosure(false);
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const [value, setValue] = useState<[number, number]>([0, 300]);
-    const handleChange = (event: any) => {
+    const handleChange = (event: [number, number]) => {
         dispatch(updateFilter({ salary: event }));
-    }
+    };
     useEffect(()=>{
         if(!filter.salary)setValue([0, 300]);
     }, [filter])

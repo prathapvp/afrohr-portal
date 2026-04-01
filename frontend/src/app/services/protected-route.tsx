@@ -1,18 +1,20 @@
-import { useSelector } from "react-redux";
 import { Navigate } from "react-router";
+import type { ReactElement } from "react";
+import { useAppSelector } from "../store";
+import { selectAccountType, selectIsAuthenticated } from "../store/selectors/authSelectors";
 
 interface ProtectedRouteProps {
-    children: JSX.Element;
+    children: ReactElement;
     allowedRoles?: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-    const token = useSelector((state: any) => state.jwt);
-    const type = localStorage.getItem("accountType")||""
-    if (!token) {
+    const isAuthenticated = useAppSelector(selectIsAuthenticated);
+    const accountType = useAppSelector(selectAccountType);
+    if (!isAuthenticated) {
         return <Navigate to="/login" />
     }
-    if (allowedRoles && !allowedRoles.includes(type)) return <Navigate to="/unauthorized" />;
+    if (allowedRoles && !allowedRoles.includes(accountType)) return <Navigate to="/unauthorized" />;
 
     return children;
 }

@@ -3,7 +3,7 @@ import ApplyJobComp from "../features/apply-job/ApplyJobComp";
 import { useNavigate, useParams } from "react-router";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { getJob } from "../services/JobService";
+import { getJob } from "../services/job-service";
 import { hideOverlay, showOverlay } from "../store/slices/OverlaySlice";
 import { useDispatch } from "react-redux";
 const ApplyJobPage = () => {

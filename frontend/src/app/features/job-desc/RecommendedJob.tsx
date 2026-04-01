@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllJobs } from "../../services/JobService";
+import { getAllJobs } from "../../services/job-service";
 import { Link } from "react-router";
 import { IconArrowRight, IconBuilding, IconMapPin } from "@tabler/icons-react";
 import { Button } from "@mantine/core";
@@ -9,12 +9,21 @@ interface RecommendedJobProps {
     currentJobId?: number;
 }
 
+interface RecommendedJobItem {
+    id?: number;
+    jobStatus?: string;
+    company?: string;
+    jobTitle?: string;
+    location?: string;
+    postTime?: string;
+}
+
 const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
-    const [jobList, setJobList] = useState<any[]>([]);
+    const [jobList, setJobList] = useState<RecommendedJobItem[]>([]);
 
     useEffect(() => {
         getAllJobs().then((res) => {
-            setJobList(res);
+            setJobList(Array.isArray(res) ? (res as RecommendedJobItem[]) : []);
         }).catch((err) => console.log(err));
     }, []);
 
@@ -37,7 +46,7 @@ const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
                 </p>
             )}
 
-            {recommended.map((job:any) => (
+            {recommended.map((job) => (
                 <Link
                     key={job.id}
                     to={`/jobs/${job.id}`}

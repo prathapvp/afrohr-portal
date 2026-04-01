@@ -1,8 +1,8 @@
 import { Button, Loader, Textarea } from "@mantine/core";
 import { IconSparkles, IconSend } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { chatWithProfileAssistant } from "../../services/ProfileService";
+import { useAppSelector } from "../../store";
+import { chatWithProfileAssistant } from "../../services/profile-service";
 import { extractErrorMessage } from "../../services/error-extractor-service";
 
 type ChatMessage = {
@@ -10,7 +10,7 @@ type ChatMessage = {
     content: string;
 };
 
-const buildProfileContext = (profile: any, accountType: string) => {
+const buildProfileContext = (profile: Record<string, unknown>, accountType: string) => {
     const sections = [
         ["Name", profile?.name],
         ["Account Type", accountType],
@@ -41,8 +41,8 @@ const getWelcomeMessage = (accountType: string) => {
 };
 
 const ProfileAssistant = () => {
-    const profile = useSelector((state: any) => state.profile);
-    const user = useSelector((state: any) => state.user);
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
+    const user = useAppSelector((state) => state.user as { accountType?: string } | null);
     const accountType = user?.accountType || "";
     const [message, setMessage] = useState("");
     const [sending, setSending] = useState(false);
@@ -80,7 +80,7 @@ const ProfileAssistant = () => {
                 ...current,
                 { role: "assistant", content: reply },
             ]);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error) || "The assistant is unavailable right now.";
             setMessages((current) => [
                 ...current,

@@ -2,12 +2,12 @@ import { Button, FileInput, LoadingOverlay, Textarea, TextInput } from "@mantine
 import { isEmail, isNotEmpty, matches, useForm } from "@mantine/form";
 import { IconPaperclip } from "@tabler/icons-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 import { getBase64 } from "../../services/utilities";
-import { applyToJob } from "../../services/job-service";
+import { applyToMyJob } from "../../services/job-service";
 import { errorNotification, successNotification } from "../../services/NotificationService";
 import { extractErrorMessage } from "../../services/error-extractor-service";
+import { useAppSelector } from "../../store";
 
 type ApplicationFormProps = {
     jobId?: number;
@@ -17,8 +17,8 @@ type ApplicationFormProps = {
 const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const user = useSelector((state: any) => state.user);
-    const profile = useSelector((state: any) => state.profile);
+    const user = useAppSelector((state) => state.user as { id?: number; name?: string; email?: string } | null);
+    const profile = useAppSelector((state) => state.profile as { phone?: string; website?: string });
     const [preview, setPreview] = useState(false);
     const [submit, setSubmit] = useState(false);
 
@@ -67,13 +67,10 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
 
         try {
             setSubmit(true);
-            const resumeBase64: any = await getBase64(form.getValues().resume);
+            const resumeBase64 = await getBase64(form.getValues().resume);
             const resumePayload = typeof resumeBase64 === "string" ? resumeBase64.split(",")[1] : undefined;
 
-            await applyToJob(effectiveJobId, {
-                applicantUserId: user?.id,
-                applicantName: form.getValues().name,
-                applicantEmail: form.getValues().email,
+            await applyToMyJob(effectiveJobId, {
                 applicantPhone: form.getValues().phone,
                 website: form.getValues().website,
                 resumeUrl: resumePayload,
@@ -87,7 +84,7 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
             } else {
                 navigate("/job-history");
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             setSubmit(false);
             const message = extractErrorMessage(err) || "Failed to submit job application";
             errorNotification("Error", message);

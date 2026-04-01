@@ -4,24 +4,25 @@ import MultiInput from "../find-jobs/MultiInput";
 import { searchFields } from "../../data/TalentData";
 import { IconUserCircle } from "@tabler/icons-react";
 import { updateFilter } from "../../store/slices/FilterSlice";
-import { useDispatch } from "react-redux";
-import { useDebouncedState, useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { useAppDispatch } from "../../store";
 
 const SearchBar = () => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const matches = useMediaQuery('(max-width: 475px)');
     const [opened, { toggle }] = useDisclosure(false);
     const [value, setValue] = useState<[number, number]>([0, 50]);
-    const [name, setName] =  useState('');;
-    const handleChange = (name:any, event:any) => {
-        if(name=="exp"){
-            dispatch(updateFilter({exp:event}));
-        }
-        else{
-            dispatch(updateFilter({name:event.target.value}));
-            setName(event.target.value);
-        }
-    }
+    const [name, setName] =  useState('');
+
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const nextName = event.currentTarget.value;
+        dispatch(updateFilter({ name: nextName }));
+        setName(nextName);
+    };
+
+    const handleExpChange = (range: [number, number]) => {
+        dispatch(updateFilter({ exp: range }));
+    };
 
     return (<div>
         <div className="flex justify-end">
@@ -32,7 +33,7 @@ const SearchBar = () => {
         <div className="px-5 py-8 lg-mx:!flex-wrap items-center !text-mine-shaft-100 flex ">
             <div className="w-1/5 lg-mx:w-1/4 bs-mx:w-[30%] sm-mx:w-[48%] xs-mx:w-full xs-mx:mb-1 flex items-center ">
                 <div className="bg-mine-shaft-900 rounded-full mr-2 text-bright-sun-400 p-1"><IconUserCircle size={20} /> </div>
-                <Input defaultValue={name} onChange={(e)=>handleChange("name",e)} className="[&_input]:!placeholder-mine-shaft-300" variant="unstyled" placeholder="Talent Name" />
+                <Input value={name} onChange={handleNameChange} className="[&_input]:!placeholder-mine-shaft-300" variant="unstyled" placeholder="Talent Name" />
             </div>
             <Divider className="sm-mx:hidden"  mr="xs" size="xs" orientation="vertical" />
             
@@ -49,7 +50,7 @@ const SearchBar = () => {
                     <div>Experience (Year)</div>
                     <div>{value[0]}  - {value[1]} </div>
                 </div>
-                <RangeSlider color="brightSun.4" size="xs" value={value} onChange={setValue} onChangeEnd={(e)=>handleChange("exp", e)} />
+                <RangeSlider color="brightSun.4" size="xs" value={value} onChange={setValue} onChangeEnd={handleExpChange} />
             </div>
         </div>
         </Collapse>

@@ -1,6 +1,13 @@
 import { formatDate } from "../../services/utilities";
 
-const CertiCard = (props:any) => {
+interface CertiCardProps {
+    issuer?: string;
+    name?: string;
+    issueDate?: string;
+    certificateId?: string;
+}
+
+const CertiCard = (props: CertiCardProps) => {
     return <div data-aos="fade-up" className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 sm:p-5">
         <div className="flex justify-between sm-mx:flex-wrap gap-2">
             <div className="flex gap-2 items-center">

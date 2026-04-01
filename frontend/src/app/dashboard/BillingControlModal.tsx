@@ -1,0 +1,428 @@
+import { Modal, Tooltip } from "@mantine/core";
+import { useEffect, useState } from "react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  CreditCard,
+  Layers,
+  Save,
+  Trash2,
+} from "lucide-react";
+import {
+  deleteEmployerSubscription,
+  getEmployerSubscription,
+  upsertEmployerSubscription,
+  type AdminEmployerSummary,
+  type EmployerSubscription,
+  type PaymentStatus,
+  type SubscriptionStatus,
+  type UpsertEmployerSubscriptionPayload,
+} from "../services/admin-service";
+
+const PLAN_OPTIONS = ["STARTER", "GROWTH", "PRO", "ENTERPRISE"];
+const DURATION_OPTIONS = [30, 60, 90, 180, 365];
+const MAX_ACTIVE_JOB_OPTIONS = [5, 10, 20, 50, 100];
+
+function getPlanOptions(current: string): string[] {
+  if (PLAN_OPTIONS.includes(current)) return PLAN_OPTIONS;
+  return [current, ...PLAN_OPTIONS];
+}
+
+function FieldLabel({ label, hint }: { label: string; hint: string }) {
+  return (
+    <div className="mb-1 flex items-center gap-1">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">{label}</span>
+      <Tooltip
+        label={<span className="text-xs leading-relaxed">{hint}</span>}
+        withArrow
+        multiline
+        w={220}
+        color="#0b1220"
+        c="#dbeafe"
+        openDelay={120}
+        transitionProps={{ transition: "fade", duration: 150 }}
+      >
+        <button
+          type="button"
+          aria-label={`${label} info`}
+          className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-slate-400/70 text-[9px] font-bold text-slate-200 transition-colors hover:border-cyan-300 hover:text-cyan-200"
+        >
+          i
+        </button>
+      </Tooltip>
+    </div>
+  );
+}
+
+function statusColor(status: string) {
+  if (status === "ACTIVE" || status === "PAID") return "text-emerald-300";
+  if (status === "PENDING") return "text-amber-300";
+  return "text-rose-300";
+}
+
+function DetailRow({ label, value, valueClass = "text-white" }: { label: string; value: React.ReactNode; valueClass?: string }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+      <p className="text-[10px] uppercase tracking-wider text-slate-400">{label}</p>
+      <p className={`mt-1 text-sm font-semibold ${valueClass}`}>{value}</p>
+    </div>
+  );
+}
+
+type Props = {
+  opened: boolean;
+  employer: AdminEmployerSummary | null;
+  onClose: () => void;
+  onSaved: (updated: EmployerSubscription) => void;
+  onDeleted: (employerId: number) => void;
+};
+
+export default function BillingControlModal({ opened, employer, onClose, onSaved, onDeleted }: Props) {
+  const [subscription, setSubscription] = useState<EmployerSubscription | null>(null);
+  const [loadingRead, setLoadingRead] = useState(false);
+  const [readError, setReadError] = useState<string | null>(null);
+
+  const [form, setForm] = useState<UpsertEmployerSubscriptionPayload>({
+    planName: "STARTER",
+    subscriptionStatus: "PENDING",
+    paymentStatus: "PENDING",
+    durationDays: 30,
+    maxActiveJobs: 5,
+  });
+
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Reset state whenever the modal opens for a new employer
+  useEffect(() => {
+    if (!opened || !employer) return;
+
+    setSubscription(null);
+    setReadError(null);
+    setSaveMessage(null);
+    setConfirmDelete(false);
+    setDeleteError(null);
+
+    const currentPlan =
+      employer.subscriptionPlan && employer.subscriptionPlan !== "Not Configured"
+        ? employer.subscriptionPlan
+        : "STARTER";
+    const isActive = employer.subscriptionStatus.toUpperCase() === "ACTIVE";
+
+    setForm({
+      planName: currentPlan,
+      subscriptionStatus: isActive ? "ACTIVE" : "PENDING",
+      paymentStatus: isActive ? "PAID" : "PENDING",
+      durationDays: 30,
+      maxActiveJobs: 5,
+    });
+
+    // Load live details from backend
+    let cancelled = false;
+    setLoadingRead(true);
+    getEmployerSubscription(employer.employerId)
+      .then((data) => {
+        if (cancelled) return;
+        setSubscription(data);
+        setForm({
+          planName: data.planName,
+          subscriptionStatus: data.subscriptionStatus,
+          paymentStatus: data.paymentStatus,
+          durationDays: 30,
+          maxActiveJobs: data.maxActiveJobs ?? 5,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setReadError(null); // no subscription yet — that's fine
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRead(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [opened, employer]);
+
+  function patch(partial: Partial<UpsertEmployerSubscriptionPayload>) {
+    setForm((prev) => ({ ...prev, ...partial }));
+    setSaveMessage(null);
+  }
+
+  async function handleSave() {
+    if (!employer) return;
+    try {
+      setSaving(true);
+      setSaveMessage(null);
+      const updated = await upsertEmployerSubscription(employer.employerId, form);
+      setSubscription(updated);
+      setSaveMessage({ type: "ok", text: "Subscription saved successfully." });
+      onSaved(updated);
+    } catch (err) {
+      setSaveMessage({
+        type: "err",
+        text: err instanceof Error ? err.message : "Failed to save subscription.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!employer) return;
+    try {
+      setDeleting(true);
+      setDeleteError(null);
+      await deleteEmployerSubscription(employer.employerId);
+      onDeleted(employer.employerId);
+      onClose();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete subscription.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const selectClass =
+    "w-full rounded-lg border border-white/20 bg-slate-900/80 px-2.5 py-1.5 text-xs text-white outline-none focus:border-cyan-400/60 transition-colors";
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={
+        <span className="text-base font-bold text-white">
+          Billing Control —{" "}
+          <span className="text-cyan-300">{employer?.companyName ?? ""}</span>
+        </span>
+      }
+      size="lg"
+      centered
+      styles={{
+        content: { background: "#0d1b2e", border: "1px solid rgba(255,255,255,0.1)" },
+        header: { background: "#0d1b2e", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+        close: { color: "#94a3b8" },
+      }}
+    >
+      <div className="space-y-5 pb-2 pt-1">
+        {/* ── READ: Current subscription details ── */}
+        <div>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">
+            Current Subscription
+          </p>
+
+          {loadingRead && (
+            <p className="text-xs text-slate-400">Loading subscription details…</p>
+          )}
+
+          {!loadingRead && !subscription && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              No subscription configured yet. Use the form below to create one.
+            </div>
+          )}
+
+          {!loadingRead && subscription && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <DetailRow
+                label="Plan"
+                value={
+                  <span className="flex items-center gap-1.5">
+                    <Layers className="h-3.5 w-3.5 text-cyan-300" />
+                    {subscription.planName}
+                  </span>
+                }
+              />
+              <DetailRow
+                label="Sub Status"
+                value={
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {subscription.subscriptionStatus}
+                  </span>
+                }
+                valueClass={statusColor(subscription.subscriptionStatus)}
+              />
+              <DetailRow
+                label="Payment"
+                value={
+                  <span className="flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5" />
+                    {subscription.paymentStatus}
+                  </span>
+                }
+                valueClass={statusColor(subscription.paymentStatus)}
+              />
+              <DetailRow
+                label="Remaining"
+                value={
+                  <span className="flex items-center gap-1.5">
+                    <CalendarClock className="h-3.5 w-3.5 text-cyan-300" />
+                    {Math.max(subscription.remainingDays, 0)}d
+                  </span>
+                }
+              />
+              <DetailRow
+                label="Active Jobs"
+                value={`${subscription.activeJobs} / ${subscription.maxActiveJobs > 0 ? subscription.maxActiveJobs : "∞"}`}
+              />
+              <DetailRow
+                label="Posting"
+                value={subscription.postingAllowed ? "Allowed" : "Blocked"}
+                valueClass={subscription.postingAllowed ? "text-emerald-300" : "text-rose-300"}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="h-px bg-white/10" />
+
+        {/* ── CREATE / UPDATE form ── */}
+        <div>
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">
+            {subscription ? "Update Subscription" : "Create Subscription"}
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div>
+              <FieldLabel label="Plan" hint="Subscription plan tier determines posting limits" />
+              <select
+                value={form.planName}
+                onChange={(e) => patch({ planName: e.target.value })}
+                className={selectClass}
+              >
+                {getPlanOptions(form.planName).map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <FieldLabel label="Subscription" hint="Lifecycle status of the subscription" />
+              <select
+                value={form.subscriptionStatus}
+                onChange={(e) => patch({ subscriptionStatus: e.target.value as SubscriptionStatus })}
+                className={selectClass}
+              >
+                {(["ACTIVE", "PENDING", "EXPIRED", "CANCELED", "PAST_DUE"] as SubscriptionStatus[]).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <FieldLabel label="Payment" hint="Whether payment has been collected" />
+              <select
+                value={form.paymentStatus}
+                onChange={(e) => patch({ paymentStatus: e.target.value as PaymentStatus })}
+                className={selectClass}
+              >
+                {(["PAID", "PENDING", "FAILED", "REFUNDED"] as PaymentStatus[]).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <FieldLabel label="Duration (days)" hint="Subscription period starting from today" />
+              <select
+                value={form.durationDays}
+                onChange={(e) => patch({ durationDays: Number(e.target.value) })}
+                className={selectClass}
+              >
+                {DURATION_OPTIONS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <FieldLabel label="Max Active Jobs" hint="Maximum simultaneous active job postings" />
+              <select
+                value={form.maxActiveJobs}
+                onChange={(e) => patch({ maxActiveJobs: Number(e.target.value) })}
+                className={selectClass}
+              >
+                {MAX_ACTIVE_JOB_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void handleSave()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black transition-colors hover:bg-amber-400 disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {saving ? "Saving…" : subscription ? "Update Plan" : "Create Plan"}
+            </button>
+
+            {saveMessage && (
+              <span
+                className={`text-xs font-medium ${saveMessage.type === "ok" ? "text-emerald-300" : "text-rose-300"}`}
+              >
+                {saveMessage.text}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ── DELETE / danger zone (only if a subscription exists) ── */}
+        {subscription && (
+          <>
+            <div className="h-px bg-white/10" />
+            <div className="rounded-xl border border-rose-500/25 bg-rose-500/5 p-3">
+              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-300/80">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Danger Zone
+              </p>
+
+              {!confirmDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-700/20 px-3 py-1.5 text-xs font-semibold text-rose-300 transition-colors hover:bg-rose-700/40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete Subscription
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-rose-200">
+                    This will permanently remove the subscription for{" "}
+                    <strong>{employer?.companyName}</strong>. The employer will
+                    lose posting access immediately. Are you sure?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={deleting}
+                      onClick={() => void handleDelete()}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {deleting ? "Deleting…" : "Yes, Delete"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setConfirmDelete(false); setDeleteError(null); }}
+                      className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-slate-300 hover:border-white/40"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {deleteError && <p className="text-xs text-rose-300">{deleteError}</p>}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}

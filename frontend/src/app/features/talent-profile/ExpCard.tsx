@@ -1,6 +1,15 @@
 import { formatDate } from "../../services/utilities";
 
-const ExpCard = (props:any) => {
+interface ExpCardProps {
+    title?: string;
+    company?: string;
+    location?: string;
+    startDate?: string;
+    endDate?: string;
+    description?: string;
+}
+
+const ExpCard = (props: ExpCardProps) => {
     return <div data-aos="fade-up" className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 sm:p-5">
         <div className="flex justify-between gap-2 flex-wrap">
             <div className="flex gap-2 items-center">

@@ -6,13 +6,13 @@ import {
 } from "@mantine/core";
 import { isNotEmpty, useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
+import { useAppDispatch, useAppSelector } from "../../store";
 
 import { content, fields } from "../../data/PostJob";
 import SelectInput from "./SelectInput";
 import TextEditor from "./TextEditor";
-import { getJob, postJob } from "../../services/JobService";
+import { getJob, postMyJob } from "../../services/job-service";
 import {
   errorNotification,
   successNotification,
@@ -24,9 +24,9 @@ import {
 
 const PostJob = () => {
   const { id } = useParams();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state: any) => state.user);
+  const user = useAppSelector((state) => state.user as { id?: number } | null);
 
   const select = fields;
   const [editorData, setEditorData] = useState(content);
@@ -55,6 +55,7 @@ const PostJob = () => {
       jobTitle: isNotEmpty("Title cannot be empty"),
       department: isNotEmpty("Department cannot be empty"),
       role: isNotEmpty("Role cannot be empty"),
+      company: isNotEmpty("Company cannot be empty"),
       experience: isNotEmpty("Experience cannot be empty"),
       jobType: isNotEmpty("Job Type cannot be empty"),
       workMode: isNotEmpty("Work Mode cannot be empty"),
@@ -93,7 +94,7 @@ const PostJob = () => {
     }
 
     dispatch(showOverlay());
-    postJob({
+    postMyJob({
       ...form.getValues(),
       id,
       postedBy: user.id,
@@ -110,8 +111,8 @@ const PostJob = () => {
       })
       .catch((err) => {
         const message =
-          err.response?.data?.errorMessage ||
-          err.message ||
+          (err as { response?: { data?: { errorMessage?: string } }; message?: string })?.response?.data?.errorMessage ||
+          (err as { message?: string })?.message ||
           "Something went wrong";
         errorNotification("Error", message);
       })

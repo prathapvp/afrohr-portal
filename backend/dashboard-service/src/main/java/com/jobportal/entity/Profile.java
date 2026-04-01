@@ -123,6 +123,8 @@ public class Profile {
     private String city;
     private String pincode;
 
+    private Integer resumeViewCount;
+
     public ProfileDTO toDTO() {
         String pictureBase64 = null;
         if (this.picture != null && this.picture.length > 0) {
@@ -155,6 +157,7 @@ public class Profile {
                 this.alias, this.contactDesignation, this.websiteUrl,
                 this.profileHotVacancies, this.profileClassifieds,
                 this.phone1, this.phone2, this.fax,
-                this.addressLabel, this.address, this.country, this.city, this.pincode);
+                this.addressLabel, this.address, this.country, this.city, this.pincode,
+                this.resumeViewCount);
     }
 }

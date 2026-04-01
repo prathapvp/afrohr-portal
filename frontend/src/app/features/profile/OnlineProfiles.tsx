@@ -1,5 +1,5 @@
 import { IconPencil, IconPlus } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useEffect, useState } from "react";
 import { ActionIcon, Button, Select, TextInput, Alert, Modal } from "@mantine/core";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
@@ -16,8 +16,8 @@ interface OnlineProfile {
 
 
 const OnlineProfiles = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const matches = useMediaQuery("(max-width: 475px)");
     const [editOpen, setEditOpen] = useState(false);
     const [onlineProfiles, setOnlineProfiles] = useState<OnlineProfile[]>(profile.onlineProfiles || []);
@@ -78,10 +78,10 @@ const OnlineProfiles = () => {
         dispatch(changeProfile(updatedProfile));
 
         try {
-            await (dispatch as any)(persistProfile({ onlineProfiles })).unwrap();
+            await dispatch(persistProfile({ onlineProfiles })).unwrap();
             successNotification("Success", "Online Profiles Updated Successfully");
             setEditOpen(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

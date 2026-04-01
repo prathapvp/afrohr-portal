@@ -5,20 +5,21 @@ import CompanyJobs from "./CompanyJobs";
 import CompanyEmployees from "./CompanyEmployees";
 import { useParams } from "react-router";
 import { useEffect, useState } from "react";
-import { getAllJobs } from "../../services/JobService";
-import { getAllProfiles } from "../../services/ProfileService";
+import { getAllJobs } from "../../services/job-service";
+import { getAllProfiles } from "../../services/profile-service";
+import { CompanyEmployee, CompanyJob } from "./types";
 
 const COMPANY_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type SourceCache = {
-    jobs: any[];
-    profiles: any[];
+    jobs: CompanyJob[];
+    profiles: CompanyEmployee[];
     ts: number;
 };
 
 type CompanyViewCache = {
-    jobs: any[];
-    employees: any[];
+    jobs: CompanyJob[];
+    employees: CompanyEmployee[];
     location: string;
     ts: number;
 };
@@ -28,15 +29,15 @@ const companyViewCache = new Map<string, CompanyViewCache>();
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
 
-const deriveCompanyView = (companyName: string, jobs: any[], profiles: any[]) => {
+const deriveCompanyView = (companyName: string, jobs: CompanyJob[], profiles: CompanyEmployee[]) => {
     const key = normalize(companyName);
 
-    const companyJobs = jobs.filter((job: any) => normalize(String(job?.company || "")).includes(key));
-    const companyEmployees = profiles.filter((profile: any) => normalize(String(profile?.company || "")).includes(key));
+    const companyJobs = jobs.filter((job) => normalize(String(job?.company || "")).includes(key));
+    const companyEmployees = profiles.filter((profile) => normalize(String(profile?.company || "")).includes(key));
 
     const location =
-        companyJobs.find((job: any) => job?.location)?.location ||
-        companyEmployees.find((profile: any) => profile?.location)?.location ||
+        companyJobs.find((job) => job?.location)?.location ||
+        companyEmployees.find((profile) => profile?.location)?.location ||
         "Location not specified";
 
     return {
@@ -51,8 +52,8 @@ const Company = () => {
     const { name } = useParams();
     const companyName = decodeURIComponent(name || "Google");
     const companyLogo = `/Icons/${companyName}.png`;
-    const [companyJobs, setCompanyJobs] = useState<any[]>([]);
-    const [companyEmployees, setCompanyEmployees] = useState<any[]>([]);
+    const [companyJobs, setCompanyJobs] = useState<CompanyJob[]>([]);
+    const [companyEmployees, setCompanyEmployees] = useState<CompanyEmployee[]>([]);
     const [location, setLocation] = useState("Location not specified");
     const [loading, setLoading] = useState(true);
 
@@ -61,7 +62,7 @@ const Company = () => {
         const key = normalize(companyName);
         const now = Date.now();
 
-        const applyView = (view: { jobs: any[]; employees: any[]; location: string }) => {
+        const applyView = (view: { jobs: CompanyJob[]; employees: CompanyEmployee[]; location: string }) => {
             if (!mounted) return;
             setCompanyJobs(view.jobs);
             setCompanyEmployees(view.employees);
@@ -87,8 +88,8 @@ const Company = () => {
         Promise.all([getAllJobs(), getAllProfiles()])
             .then(([jobsRes, profilesRes]) => {
                 if (!mounted) return;
-                const allJobs = Array.isArray(jobsRes) ? jobsRes : [];
-                const allProfiles = Array.isArray(profilesRes) ? profilesRes : [];
+                const allJobs = Array.isArray(jobsRes) ? (jobsRes as CompanyJob[]) : [];
+                const allProfiles = Array.isArray(profilesRes) ? (profilesRes as CompanyEmployee[]) : [];
 
                 sourceCache = {
                     jobs: allJobs,

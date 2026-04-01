@@ -4,7 +4,7 @@ import RecommendTalent from "../features/talent-profile/RecommendTalent";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { getAllProfiles } from "../services/ProfileService";
+import { getAllProfiles } from "../services/profile-service";
 import { useDispatch } from "react-redux";
 import { hideOverlay, showOverlay } from "../store/slices/OverlaySlice";
 

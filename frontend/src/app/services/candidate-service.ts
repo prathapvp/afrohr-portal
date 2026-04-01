@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./http-auth";
+
 export interface CandidateApplyRequest {
   applicantName: string;
   applicantEmail: string;
@@ -22,6 +24,7 @@ export async function applyToCandidateJob(jobId: number, payload: CandidateApply
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+	  ...getAuthHeaders(),
     },
     body: JSON.stringify(payload),
   });

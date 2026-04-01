@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -176,6 +177,18 @@ public class ProfileServiceImpl implements ProfileService {
 			logger.error("Error fetching all profiles", e);
 			throw new JobPortalException("Failed to fetch profiles: " + e.getMessage());
 		}
+	}
+
+	@Override
+	@Transactional
+	public int incrementResumeViewCount(Long profileId) throws JobPortalException {
+		if (!profileRepository.existsById(profileId)) {
+			throw new JobPortalException("Profile not found with ID: " + profileId);
+		}
+		profileRepository.incrementResumeViewCount(profileId);
+		return profileRepository.findById(profileId)
+				.map(p -> p.getResumeViewCount() != null ? p.getResumeViewCount() : 0)
+				.orElse(0);
 	}
 
 	private Profile encryptProfile(ProfileDTO dto) {

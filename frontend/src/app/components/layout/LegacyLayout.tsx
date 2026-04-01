@@ -6,7 +6,7 @@
  * Legacy routes are nested inside this layout via <Outlet />.
  */
 import { createContext, useContext, useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 
 /** Context so nested legacy pages can read colorScheme */
 export const LegacyThemeCtx = createContext<"light" | "dark">("light");

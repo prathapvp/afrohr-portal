@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Menu, X, Users, Briefcase, BookOpen, Building2, Briefcase as BriefcaseIcon, Network, GraduationCap, Sparkles, PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-react";
+import { Menu, X, Users, Briefcase, BookOpen, Building2, Briefcase as BriefcaseIcon, Network, GraduationCap, Sparkles, PanelLeftClose, PanelLeftOpen, ChevronDown, ShieldCheck, CreditCard } from "lucide-react";
+import { useAppSelector } from "../../store";
+import { selectAccountType } from "../../store/selectors/authSelectors";
 
 const navItems = [
   { label: "Candidate", icon: Users, gradient: "from-pink-400 via-fuchsia-500 to-indigo-500" },
@@ -8,6 +10,7 @@ const navItems = [
     icon: Briefcase, 
     gradient: "from-yellow-400 via-orange-500 to-pink-500",
     submenu: [
+      { label: "Subscription", icon: CreditCard, gradient: "from-cyan-400 via-blue-500 to-indigo-500" },
       { label: "Department", icon: BookOpen, gradient: "from-green-400 via-blue-500 to-purple-500" },
       { label: "Industry", icon: Building2, gradient: "from-orange-400 via-red-500 to-pink-500" },
       { label: "Employment Type", icon: BriefcaseIcon, gradient: "from-blue-400 via-cyan-500 to-teal-500" },
@@ -15,18 +18,20 @@ const navItems = [
     ]
   },
   { label: "Student", icon: GraduationCap, gradient: "from-cyan-400 via-sky-500 to-blue-500" },
+  { label: "Admin", icon: ShieldCheck, gradient: "from-amber-400 via-orange-500 to-red-500" },
 ];
 
 export default function PremiumSidebar({ active, onNav }: { active: string; onNav: (label: string) => void }) {
   const [open, setOpen] = useState(true);
   const [collapsedDesktop, setCollapsedDesktop] = useState(false);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
-  const accountType = (localStorage.getItem("accountType") ?? "").toUpperCase();
+  const accountType = useAppSelector(selectAccountType);
   const roleToNavLabel: Record<string, string> = {
     APPLICANT: "Candidate",
     CANDIDATE: "Candidate",
     EMPLOYER: "Employer",
     STUDENT: "Student",
+    ADMIN: "Admin",
   };
   const allowedLabel = roleToNavLabel[accountType];
   const visibleNavItems = allowedLabel ? navItems.filter((item) => item.label === allowedLabel) : navItems;

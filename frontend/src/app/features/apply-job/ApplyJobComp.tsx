@@ -3,7 +3,18 @@ import { useMemo, useState } from "react";
 import { timeAgo } from "../../services/utilities";
 import ApplicationForm from "./ApplicationForm";
 
-const ApplyJobComp = (props: any) => {
+interface ApplyJobProps {
+    id?: number;
+    postTime?: string;
+    applicants?: unknown[];
+    location?: string;
+    experience?: string;
+    packageOffered?: string | number;
+    company?: string;
+    jobTitle?: string;
+}
+
+const ApplyJobComp = (props: ApplyJobProps) => {
     const [showFallback, setShowFallback] = useState(false);
     const postedTime = props.postTime ? timeAgo(props.postTime) : "Recently posted";
     const safePostedTime = postedTime && !postedTime.toLowerCase().includes("nan") ? postedTime : "Recently posted";

@@ -5,9 +5,10 @@ import java.util.List;
 import com.jobportal.dto.NotificationDTO;
 import com.jobportal.entity.Notification;
 import com.jobportal.exception.JobPortalException;
+import com.jobportal.service.CurrentUserService.CurrentUser;
 
 public interface NotificationService {
 	public void sendNotification(NotificationDTO notificationDTO) throws JobPortalException;
 	public List<Notification> getUnreadNotifications(Long userId);
-	public void readNotification(Long id) throws JobPortalException;
+	public void readNotification(Long id, CurrentUser currentUser) throws JobPortalException;
 }

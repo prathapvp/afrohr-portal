@@ -1,18 +1,25 @@
 import { Button, Divider, Text } from "@mantine/core";
 import { IconBookmark, IconBookmarkFilled, IconCalendarMonth, IconClockHour3 } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../store";
+import { Link } from "react-router";
 import { timeAgo } from "../../services/utilities";
-import { useEffect } from "react";
 import { changeProfile } from "../../store/slices/ProfileSlice";
+import type { HistoryJobItem } from "./types";
 
-const Card = (props: any) => {
-    const dispatch=useDispatch();
-    const profile=useSelector((state:any)=>state.profile);
+type HistoryCardProps = HistoryJobItem & {
+    applied?: boolean;
+    interviewing?: boolean;
+    offered?: boolean;
+};
+
+const Card = (props: HistoryCardProps) => {
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as { savedJobs?: number[] });
+
     const handleSaveJob = () => {
-        let savedJobs:any=[...profile.savedJobs];
+        let savedJobs = [...(profile.savedJobs || [])];
         if(savedJobs.includes(props.id)){
-            savedJobs=savedJobs.filter((job:any)=>job!=props.id);
+            savedJobs=savedJobs.filter((jobId)=>jobId !== props.id);
         }else{ 
             savedJobs.push(props.id);
         }

@@ -4,20 +4,54 @@ import ExpCard from "./ExpCard";
 import CertiCard from "./CertiCard";
 import { useParams } from "react-router";
 import { useEffect, useState } from "react";
-import { getProfile } from "../../services/ProfileService";
+import { getProfile } from "../../services/profile-service";
 import { useMediaQuery } from "@mantine/hooks";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "../../store";
 import { hideOverlay, showOverlay } from "../../store/slices/OverlaySlice";
 import { errorNotification } from "../../services/NotificationService";
 
+interface ExperienceItem {
+    title?: string;
+    company?: string;
+    location?: string;
+    startDate?: string;
+    endDate?: string;
+    description?: string;
+}
+
+interface CertificationItem {
+    issuer?: string;
+    name?: string;
+    issueDate?: string;
+    certificateId?: string;
+}
+
+interface TalentProfile {
+    id?: number;
+    name?: string;
+    banner?: string;
+    picture?: string;
+    jobTitle?: string;
+    company?: string;
+    location?: string;
+    totalExp?: number;
+    about?: string;
+    mobileNumber?: string;
+    phone?: string;
+    email?: string;
+    skills?: string[];
+    experiences?: ExperienceItem[];
+    certifications?: CertificationItem[];
+}
+
 const Profile = () => {
     const { id } = useParams();
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<TalentProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const matches = useMediaQuery("(max-width: 475px)");
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         setLoading(true);
@@ -25,9 +59,9 @@ const Profile = () => {
         dispatch(showOverlay());
         window.scrollTo(0, 0);
 
-        getProfile(id)
+        getProfile(Number(id))
             .then((res) => {
-                setProfile(res);
+                setProfile(res as TalentProfile);
             })
             .catch(() => {
                 setError("Failed to load profile. Please try again later.");
@@ -152,7 +186,7 @@ const Profile = () => {
                     <h3 className="mb-4 text-2xl font-semibold text-white">Core Skills</h3>
                     {skillList.length > 0 ? (
                         <div className="flex flex-wrap gap-2.5">
-                            {visibleSkills.map((skill: any, index: number) => (
+                            {visibleSkills.map((skill: string, index: number) => (
                                 <div key={index} className="rounded-full border border-bright-sun-300/25 bg-bright-sun-300/12 px-3 py-1.5 text-sm font-medium text-bright-sun-200">
                                     {skill}
                                 </div>
@@ -173,7 +207,7 @@ const Profile = () => {
                     <h3 className="mb-5 text-2xl font-semibold text-white">Experience</h3>
                     {experiences.length > 0 ? (
                         <div className="flex flex-col gap-4 sm:gap-5">
-                            {experiences.map((exp: any, index: number) => (
+                            {experiences.map((exp: ExperienceItem, index: number) => (
                                 <ExpCard key={index} {...exp} />
                             ))}
                         </div>
@@ -190,7 +224,7 @@ const Profile = () => {
                     </h3>
                     {certifications.length > 0 ? (
                         <div className="flex flex-col gap-4 sm:gap-5">
-                            {certifications.map((certi: any, index: number) => (
+                            {certifications.map((certi: CertificationItem, index: number) => (
                                 <CertiCard key={index} {...certi} />
                             ))}
                         </div>

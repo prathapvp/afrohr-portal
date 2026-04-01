@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { Avatar, Tooltip } from "@mantine/core";
 import { IconGripVertical } from "@tabler/icons-react";
-import { changeAppStatus } from "../../services/JobService";
+import { changeAppStatus } from "../../services/job-service";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { timeAgo } from "../../services/utilities";
 
@@ -16,13 +16,23 @@ const COLUMNS = [
     { id: "REJECTED",     label: "Rejected",     dot: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.25)"   },
 ] as const;
 
+type ApplicationStatus = (typeof COLUMNS)[number]["id"];
+
+interface Applicant {
+    applicantId: number;
+    name?: string;
+    email?: string;
+    timestamp?: string;
+    applicationStatus: ApplicationStatus;
+}
+
 // ── Applicant card ────────────────────────────────────────────────────────────
 const ApplicantCard = ({
     applicant,
     onDragStart,
 }: {
-    applicant: any;
-    onDragStart: (a: any) => void;
+    applicant: Applicant;
+    onDragStart: (a: Applicant) => void;
 }) => {
     const initials = (applicant.name || "?")
         .split(" ")
@@ -62,13 +72,13 @@ const ApplicantCard = ({
 
 // ── Kanban board ──────────────────────────────────────────────────────────────
 interface KanbanBoardProps {
-    applicants: any[];
+    applicants: Applicant[];
 }
 
 const KanbanBoard = ({ applicants: initialApplicants }: KanbanBoardProps) => {
     const { id: jobId } = useParams<{ id: string }>();
-    const [applicants, setApplicants] = useState<any[]>(initialApplicants || []);
-    const [draggedApplicant, setDraggedApplicant] = useState<any>(null);
+    const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants || []);
+    const [draggedApplicant, setDraggedApplicant] = useState<Applicant | null>(null);
     const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
     // Sync when parent re-fetches
@@ -76,7 +86,7 @@ const KanbanBoard = ({ applicants: initialApplicants }: KanbanBoardProps) => {
         setApplicants(initialApplicants || []);
     }, [initialApplicants]);
 
-    const handleDragStart = (applicant: any) => {
+    const handleDragStart = (applicant: Applicant) => {
         setDraggedApplicant(applicant);
     };
 
@@ -89,7 +99,7 @@ const KanbanBoard = ({ applicants: initialApplicants }: KanbanBoardProps) => {
         setDragOverCol((prev) => (prev === colId ? null : prev));
     };
 
-    const handleDrop = async (newStatus: string) => {
+    const handleDrop = async (newStatus: ApplicationStatus) => {
         setDragOverCol(null);
         if (!draggedApplicant) return;
         if (draggedApplicant.applicationStatus === newStatus) {
@@ -116,7 +126,7 @@ const KanbanBoard = ({ applicants: initialApplicants }: KanbanBoardProps) => {
                 "Status Updated",
                 `${draggedApplicant.name} moved to ${newStatus.charAt(0) + newStatus.slice(1).toLowerCase()}`
             );
-        } catch (err: any) {
+        } catch (err: unknown) {
             // Roll back
             setApplicants((prev) =>
                 prev.map((a) =>
@@ -127,7 +137,7 @@ const KanbanBoard = ({ applicants: initialApplicants }: KanbanBoardProps) => {
             );
             errorNotification(
                 "Error",
-                err?.response?.data?.errorMessage || "Failed to update status"
+                (err as { response?: { data?: { errorMessage?: string } } })?.response?.data?.errorMessage || "Failed to update status"
             );
         } finally {
             setDraggedApplicant(null);

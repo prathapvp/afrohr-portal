@@ -1,4 +1,4 @@
-export const AHRM_TOKEN_KEY = "ahrmToken";
+export const AHRM_TOKEN_KEY = "token";
 
 export function getAhrmToken(): string | null {
   if (typeof window === "undefined") {

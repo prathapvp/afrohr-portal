@@ -2,15 +2,36 @@ import { useEffect, useState } from "react";
 import { MonthPickerInput } from "@mantine/dates";
 import { Button, Checkbox, Textarea, Alert, TextInput } from "@mantine/core";
 import { isNotEmpty, useForm } from "@mantine/form";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { ExperienceSchema } from "../../validators/ValidationSchemas";
 import { validateData } from "../../validators/ValidationUtils";
 
-const ExpInput = (props: any) => {
-    const dispatch = useDispatch<any>();
-    const profile = useSelector((state: any) => state.profile);
+interface ExperienceItem {
+    jobTitle?: string;
+    title?: string;
+    company?: string;
+    location?: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    working?: boolean;
+}
+
+interface ExpInputProps extends ExperienceItem {
+    add?: boolean;
+    index?: number;
+    setEdit: (value: boolean) => void;
+}
+
+interface ProfileState {
+    experiences?: ExperienceItem[];
+}
+
+const ExpInput = (props: ExpInputProps) => {
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as ProfileState);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const premiumInputStyles = {
         label: {
@@ -91,12 +112,12 @@ const ExpInput = (props: any) => {
             return;
         }
 
-        let exp = [...(profile.experiences || [])];
+        const exp = [...(profile.experiences || [])];
         if (props.add) {
             exp.push(expData);
         }
         else {
-            exp[props.index] = expData;
+            exp[props.index ?? 0] = expData;
         }
         setValidationErrors({});
         props.setEdit(false);

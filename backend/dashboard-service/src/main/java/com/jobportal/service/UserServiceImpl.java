@@ -45,6 +45,9 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private NotificationService notificationService;
 
+	@Autowired
+	private CurrentUserService currentUserService;
+
 	@Override
 	public UserDTO registerUser(UserDTO userDTO) throws JobPortalException {
 		Optional<User> optional = userRepository.findByEmail(userDTO.getEmail());
@@ -122,5 +125,13 @@ public class UserServiceImpl implements UserService {
 	public UserDTO getUserByEmail(String email) throws JobPortalException {
 		return userRepository.findByEmail(email)
 				.orElseThrow(() -> new JobPortalException("User not found with email: " + email)).toDTO();
+	}
+
+	@Override
+	public UserDTO getCurrentUser() throws JobPortalException {
+		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
+		UserDTO user = getUserByEmail(currentUser.email());
+		user.setPassword(null);
+		return user;
 	}
 }

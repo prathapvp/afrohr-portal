@@ -3,7 +3,7 @@ import Profile from "../features/profile/Profile";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setProfile } from "../store/slices/ProfileSlice";
-import { getProfile } from "../services/ProfileService";
+import { getMyProfile } from "../services/profile-service";
 
 const ProfilePage = () => {
     const dispatch = useDispatch();
@@ -13,10 +13,10 @@ const ProfilePage = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (user?.profileId && (!profile || !profile.id)) {
+        if (user && (!profile || !profile.id)) {
             setLoading(true);
             setError(null);
-            getProfile(user.profileId)
+            getMyProfile()
                 .then((data) => {
                     dispatch(setProfile(data));
                 })
@@ -25,7 +25,7 @@ const ProfilePage = () => {
                 })
                 .finally(() => setLoading(false));
         }
-    }, [user?.profileId, dispatch, profile]);
+    }, [user, dispatch, profile]);
 
     if (loading) {
         return <div className="min-h-screen bg-gradient-to-br from-[#070a12] via-[#0b1020] to-[#130f24] font-['poppins'] p-6 text-white">

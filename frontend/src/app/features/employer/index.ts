@@ -1,4 +1,5 @@
 export { default as EmployerView } from "./EmployerView";
+export { default as EmployerSubscriptionPage } from "./EmployerSubscriptionPage";
 export type {
   EmployerDashboard,
   EmployerMetric,

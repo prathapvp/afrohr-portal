@@ -1,5 +1,5 @@
 import { IconPencil } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useEffect, useState } from "react";
 import { ActionIcon, Select, TagsInput, TextInput, Alert, Button, Modal } from "@mantine/core";
 import { persistProfile } from "../../store/slices/ProfileSlice";
@@ -40,8 +40,8 @@ const premiumInputStyles = {
 };
 
 const PersonalDetails = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const matches = useMediaQuery("(max-width: 475px)");
     const [editOpen, setEditOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -104,11 +104,11 @@ const PersonalDetails = () => {
         const formattedValues = { ...formValues };
         if (formattedValues.dateOfBirth) {
             const date = new Date(formattedValues.dateOfBirth);
-            (formattedValues as any).dateOfBirth = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD only
+            formattedValues.dateOfBirth = date.toISOString().split('T')[0];
         }
         
         // Convert empty strings to undefined for optional fields (Zod expects undefined, not "")
-        const cleaned: Record<string, any> = {};
+        const cleaned: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(formattedValues)) {
             cleaned[key] = value === "" ? undefined : value;
         }
@@ -129,10 +129,10 @@ const PersonalDetails = () => {
         setValidationErrors({});
         
         try {
-            await (dispatch as any)(persistProfile({ personalDetails: validation.data })).unwrap();
+            await dispatch(persistProfile({ personalDetails: validation.data })).unwrap();
             successNotification("Success", "Personal Details Updated Successfully");
             setEditOpen(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

@@ -2,18 +2,38 @@
 import { useState } from "react";
 import ExpInput from "./ExpInput";
 import { formatDate } from "../../services/utilities";
-import { useDispatch, useSelector } from "react-redux";
 import { persistProfile } from "../../store/slices/ProfileSlice";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 
-const ExpCard = (props:any) => {
-    const dispatch = useDispatch<any>();
+interface ExperienceItem {
+    jobTitle?: string;
+    title?: string;
+    company?: string;
+    location?: string;
+    startDate?: string;
+    endDate?: string;
+    working?: boolean;
+    description?: string;
+}
+
+interface ExpCardProps extends ExperienceItem {
+    edit?: boolean;
+    index: number;
+}
+
+interface ProfileState {
+    experiences?: ExperienceItem[];
+}
+
+const ExpCard = (props: ExpCardProps) => {
+    const dispatch = useAppDispatch();
     const [manageOpen, setManageOpen]=useState(false);
     const [editing, setEditing]=useState(false);
-    const profile=useSelector((state:any)=>state.profile);
+    const profile = useAppSelector((state) => state.profile as ProfileState);
     const roleTitle = props.jobTitle || props.title;
     const handleDelete=async ()=>{
-        const experiences = profile.experiences.filter((_:any, index:number)=>index!==props.index);
+        const experiences = (profile.experiences ?? []).filter((_, index: number) => index !== props.index);
         try {
             await dispatch(persistProfile({ experiences })).unwrap();
             successNotification("Success","Experience Deleted Successfully");

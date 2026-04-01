@@ -1,5 +1,5 @@
 import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useState } from "react";
 import { ActionIcon, Divider, Textarea } from "@mantine/core";
 import { persistProfile } from "../../store/slices/ProfileSlice";
@@ -9,8 +9,8 @@ import { useForm } from "@mantine/form";
 import { useMediaQuery } from "@mantine/hooks";
 
 const ProfileSummary = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const matches = useMediaQuery("(max-width: 475px)");
     const [edit, setEdit] = useState(false);
 
@@ -35,10 +35,10 @@ const ProfileSummary = () => {
         const updatedProfile = { ...profile, ...form.getValues() };
         
         try {
-            await (dispatch as any)(persistProfile(updatedProfile)).unwrap();
+            await dispatch(persistProfile(updatedProfile)).unwrap();
             successNotification("Success", "Profile Summary Updated Successfully");
             setEdit(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

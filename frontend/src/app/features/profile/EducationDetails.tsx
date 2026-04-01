@@ -1,5 +1,5 @@
 import { IconPencil, IconPlus } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useEffect, useState } from "react";
 import { ActionIcon, Button, TextInput, Alert, Select, Modal } from "@mantine/core";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
@@ -17,8 +17,8 @@ interface Education {
 }
 
 const EducationDetails = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const matches = useMediaQuery("(max-width: 475px)");
     const [editOpen, setEditOpen] = useState(false);
     const [education, setEducation] = useState<Education[]>(profile.education || []);
@@ -107,10 +107,10 @@ const EducationDetails = () => {
         dispatch(changeProfile(updatedProfile));
 
         try {
-            await (dispatch as any)(persistProfile({ education })).unwrap();
+            await dispatch(persistProfile({ education })).unwrap();
             setEditOpen(false);
             successNotification("Success", "Education Details Updated Successfully");
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

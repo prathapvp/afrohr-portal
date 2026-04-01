@@ -1,12 +1,17 @@
 import { Button, Modal, PasswordInput, PinInput, TextInput } from "@mantine/core"
 import { IconAt, IconLock } from "@tabler/icons-react";
 import { useState } from "react";
-import { resetPassword, sendOtp, verifyOtp } from "../../services/UserService";
+import { resetPassword, sendOtp, verifyOtp } from "../../services/user-service";
 import { errorNotification, successNotification } from "../../services/NotificationService";
 import { useInterval } from "@mantine/hooks";
 import { signupValidation } from "../../services/form-validation";
 
-const ResetPassword = (props: any) => {
+interface ResetPasswordProps {
+    opened: boolean;
+    close: () => void;
+}
+
+const ResetPassword = (props: ResetPasswordProps) => {
     const [email, setEmail] = useState("");
     const [otpSent, setOtpSent] = useState(false);
     const [otpSending, setOtpSending] = useState(false);

@@ -1,5 +1,5 @@
 package com.jobportal.dto;
 
 public enum AccountType {
-    APPLICANT, EMPLOYER, ADMIN
+    APPLICANT, EMPLOYER, STUDENT, ADMIN
 }

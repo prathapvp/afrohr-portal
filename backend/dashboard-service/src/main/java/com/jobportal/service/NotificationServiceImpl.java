@@ -11,6 +11,7 @@ import com.jobportal.dto.NotificationStatus;
 import com.jobportal.entity.Notification;
 import com.jobportal.exception.JobPortalException;
 import com.jobportal.repository.NotificationRepository;
+import com.jobportal.service.CurrentUserService.CurrentUser;
 
 @Service("notificationService")
 public class NotificationServiceImpl implements NotificationService {
@@ -30,9 +31,12 @@ public class NotificationServiceImpl implements NotificationService {
 	}
 
 	@Override
-	public void readNotification(Long id) throws JobPortalException {
+	public void readNotification(Long id, CurrentUser currentUser) throws JobPortalException {
 		Notification noti = notificationRepository.findById(id)
 				.orElseThrow(() -> new JobPortalException("No Notification found"));
+		if (!currentUser.isAdmin() && !noti.getUserId().equals(currentUser.id())) {
+			throw new JobPortalException("You are not authorized to update this notification");
+		}
 		noti.setStatus(NotificationStatus.READ);
 		notificationRepository.save(noti);
 	}

@@ -3,9 +3,22 @@ import { IconArrowUpRight, IconMapPin } from "@tabler/icons-react";
 import { Link } from "react-router";
 import { useParams } from "react-router";
 
-const RecommendTalent = (props:any) => {
+interface TalentItem {
+    id?: number;
+    picture?: string;
+    name?: string;
+    jobTitle?: string;
+    totalExp?: number;
+    location?: string;
+}
+
+interface RecommendTalentProps {
+    talents?: TalentItem[];
+}
+
+const RecommendTalent = (props: RecommendTalentProps) => {
     const {id}=useParams();
-    const recommended = (props.talents || []).filter((talent:any) => Number(talent?.id) !== Number(id)).slice(0, 4);
+    const recommended = (props.talents || []).filter((talent) => Number(talent?.id) !== Number(id)).slice(0, 4);
 
     const getInitials = (name: string) => {
         const parts = String(name || "Talent").trim().split(/\s+/).filter(Boolean).slice(0, 2);
@@ -21,7 +34,7 @@ const RecommendTalent = (props:any) => {
         </div>
 
         <div className="flex flex-col gap-4">
-        {recommended.map((talent:any) => (
+        {recommended.map((talent) => (
             <div key={talent?.id} className="premium-card-hover rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(16,22,40,0.9),rgba(10,15,28,0.92))] p-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2.5">

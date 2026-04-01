@@ -209,7 +209,27 @@ export async function applyToJob(
 ) {
   const response = await fetch(`/api/ahrm/v3/jobs/apply/${id}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to apply to job");
+  }
+  return response.json();
+}
+
+export async function applyToMyJob(
+  id: number,
+  payload: {
+    applicantPhone?: string;
+    website?: string;
+    resumeUrl?: string;
+    coverLetter?: string;
+  },
+) {
+  const response = await fetch(`/api/ahrm/v3/jobs/me/applications/${id}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
@@ -230,6 +250,18 @@ export async function getJobsPostedBy(id: number) {
   return response.json();
 }
 
+export async function getMyPostedJobs() {
+  const response = await fetch(`/api/ahrm/v3/jobs/me/posted`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch posted jobs");
+  }
+  return response.json();
+}
+
 export async function getJobHistory(id: number, applicationStatus: string) {
   const response = await fetch(`/api/ahrm/v3/jobs/history/${id}/${encodeURIComponent(applicationStatus)}`, {
     headers: {
@@ -238,6 +270,50 @@ export async function getJobHistory(id: number, applicationStatus: string) {
   });
   if (!response.ok) {
     throw new Error("Failed to fetch job history");
+  }
+  return response.json();
+}
+
+export async function getMyJobHistory(applicationStatus: string) {
+  const response = await fetch(`/api/ahrm/v3/jobs/me/history/${encodeURIComponent(applicationStatus)}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch job history");
+  }
+  return response.json();
+}
+
+export async function postMyJob(payload: JobPayload) {
+  const response = await fetch("/api/ahrm/v3/jobs/me", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify(toJobDto(payload)),
+  });
+  if (!response.ok) {
+    let message = "Failed to post job";
+    try {
+      const errorBody = await response.json();
+      message = errorBody?.errorMessage || message;
+    } catch {
+      // Keep default message.
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+export async function deleteMyJob(jobId: number) {
+  const response = await fetch(`/api/ahrm/v3/jobs/me/${jobId}`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to delete job");
   }
   return response.json();
 }
@@ -272,3 +348,5 @@ export async function postJobImage(file: File): Promise<PostImageResponse> {
 
   return (await response.json()) as PostImageResponse;
 }
+
+export const changeAppStatus = changeApplicationStatus;

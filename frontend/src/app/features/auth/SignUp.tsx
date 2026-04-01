@@ -2,7 +2,7 @@ import { Button, LoadingOverlay, PasswordInput, PinInput, TextInput } from "@man
 import { IconAt, IconBriefcase, IconLock, IconSchool, IconUser, IconUserSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { registerUser, sendOtp, verifyOtp } from "../../services/UserService";
+import { registerUser, sendOtp, verifyOtp } from "../../services/user-service";
 import { signupValidation } from "../../services/form-validation";
 import { errorNotification, successNotification } from "../../services/NotificationService";
 import { useInterval } from "@mantine/hooks";
@@ -44,7 +44,7 @@ const SignUp = () => {
         else setTime((s) => s - 1);
     }, 1000);
 
-    const handleChange = (event: any) => {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement> | string) => {
         if (typeof (event) == "string") {
             setData({ ...data, accountType: event });
             return;

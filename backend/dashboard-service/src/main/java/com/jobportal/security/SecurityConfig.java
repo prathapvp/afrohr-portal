@@ -3,6 +3,7 @@ package com.jobportal.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -43,11 +44,6 @@ public class SecurityConfig {
                             "/api/ahrm/v3/users/verifyOtp/**",
                             "/api/ahrm/v3/users/sendOtp/**",
                             "/api/ahrm/v3/users/changePass",
-                            "/api/ahrm/v3/jobs/**",
-                            "/api/ahrm/v3/departments/**",
-                            "/api/ahrm/v3/industries/**",
-                            "/api/ahrm/v3/employment-types/**",
-                            "/api/ahrm/v3/work-modes/**",
                             "/api/dashboard",
                             "/api/dashboard/**",
                             "/api/audiences",
@@ -58,6 +54,19 @@ public class SecurityConfig {
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
                             "/actuator/**"
+                            ).permitAll()
+                            .requestMatchers(HttpMethod.GET,
+                                "/api/ahrm/v3/jobs/getAll",
+                                "/api/ahrm/v3/jobs/get/*",
+                                "/api/ahrm/v3/jobs/image/*",
+                                "/api/ahrm/v3/departments",
+                                "/api/ahrm/v3/departments/*",
+                                "/api/ahrm/v3/industries",
+                                "/api/ahrm/v3/industries/*",
+                                "/api/ahrm/v3/employment-types",
+                                "/api/ahrm/v3/employment-types/*",
+                                "/api/ahrm/v3/work-modes",
+                                "/api/ahrm/v3/work-modes/*"
                     ).permitAll()
                     .anyRequest().authenticated()
             )

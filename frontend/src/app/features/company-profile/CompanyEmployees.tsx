@@ -1,7 +1,8 @@
 import TalentCard from "../find-talent/TalentCard";
+import { CompanyEmployee } from "./types";
 
 interface CompanyEmployeesProps {
-    employees: any[];
+    employees: CompanyEmployee[];
     loading?: boolean;
 }
 

@@ -1,12 +1,13 @@
 import JobCard from "../find-jobs/JobCard";
+import { CompanyJob } from "./types";
 
 interface CompanyJobsProps {
-    jobs: any[];
+    jobs: CompanyJob[];
     loading?: boolean;
 }
 
 const CompanyJobs=({ jobs, loading }: CompanyJobsProps)=>{
-    const activeJobs = jobs.filter((job: any) => String(job?.jobStatus || "").toUpperCase() !== "CLOSED");
+    const activeJobs = jobs.filter((job) => String(job?.jobStatus || "").toUpperCase() !== "CLOSED");
 
     return <div className="mt-3">
     <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">

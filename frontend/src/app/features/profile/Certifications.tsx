@@ -1,13 +1,24 @@
 import { ActionIcon, Button, Modal } from "@mantine/core"
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "../../store";
 import CertiInput from "./CertiInput";
 import CertiCard from "./CertiCard";
 import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useMediaQuery } from "@mantine/hooks";
 
+interface CertificationItem {
+    name?: string;
+    issuer?: string;
+    issueDate?: string;
+    certificateId?: string;
+}
+
+interface ProfileState {
+    certifications?: CertificationItem[];
+}
+
 const Certification = () => {
-    const profile = useSelector((state: any) => state.profile);
+    const profile = useAppSelector((state) => state.profile as ProfileState);
     const matches = useMediaQuery('(max-width: 475px)');
     const [edit, setEdit] = useState(false);
     const [addCerti, setAddCerti] = useState(false);
@@ -38,7 +49,7 @@ const Certification = () => {
             <div className="flex flex-col gap-8">
                 {certifications.length > 0 ? (
                     <>
-                        {paginatedCerts.map((certi: any, index: number) => (
+                        {paginatedCerts.map((certi: CertificationItem, index: number) => (
                             <CertiCard edit={edit} index={(page - 1) * itemsPerPage + index} key={(page - 1) * itemsPerPage + index} {...certi} />
                         ))}
                         <div className="flex justify-center gap-4 mt-2">

@@ -3,7 +3,12 @@ import { IconExternalLink } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
-const CompanyCard=(props:any)=>{
+interface CompanyCardProps {
+    name: string;
+    employees: number;
+}
+
+const CompanyCard=(props: CompanyCardProps)=>{
     const [showFallback, setShowFallback] = useState(false);
 
     const initials = useMemo(() => {

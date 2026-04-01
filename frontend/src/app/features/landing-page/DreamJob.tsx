@@ -3,7 +3,7 @@ import { IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { updateFilter } from "../../store/slices/FilterSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 const DreamJob = () => {
     const dispatch=useDispatch();

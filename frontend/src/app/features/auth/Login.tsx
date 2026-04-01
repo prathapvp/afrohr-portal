@@ -6,11 +6,10 @@ import { loginValidation } from "../../services/form-validation";
 import { useDisclosure } from "@mantine/hooks";
 import ResetPassword from "./ResetPassword";
 import { errorNotification, successNotification } from "../../services/NotificationService";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "../../store";
 import { setUser } from "../../store/slices/UserSlice";
 import { setJwt } from "../../store/slices/JwtSlice";
-import { loginUser } from "../../services/AuthService";
-import { jwtDecode } from "jwt-decode";
+import { getCurrentUser, loginUser } from "../../services/auth-service";
 
 const getLandingPage = (accountType: string): string => {
     switch (accountType) {
@@ -22,7 +21,7 @@ const getLandingPage = (accountType: string): string => {
 };
 
 const Login = () => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const authFieldStyles = {
         label: { color: "rgba(241, 245, 249, 0.92)", fontWeight: 600, marginBottom: 6 },
         input: {
@@ -43,7 +42,7 @@ const Login = () => {
     const [formError, setFormError] = useState<{ [key: string]: string }>(form);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const handleChange = (event: any) => {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setFormError({...formError, [event.target.name]:""});
         setData({ ...data, [event.target.name]: event.target.value });
     }
@@ -63,12 +62,13 @@ const Login = () => {
                 
                 successNotification("Login Successful", "Redirecting to your dashboard...");
                 dispatch(setJwt(res.jwt));
-                const decoded: any = jwtDecode(res.jwt);
-                dispatch(setUser({...decoded, email:decoded.sub}));
-                const landing = getLandingPage(decoded.accountType);
-                setTimeout(() => {
-                    navigate(landing);
-                }, 4000)
+                return getCurrentUser().then((currentUser) => {
+					dispatch(setUser(currentUser));
+					const landing = getLandingPage(String(currentUser?.accountType ?? ""));
+					setTimeout(() => {
+						navigate(landing);
+					}, 4000);
+				});
             }).catch((err) => {
                 let message = "Login failed. Please try again.";
                 

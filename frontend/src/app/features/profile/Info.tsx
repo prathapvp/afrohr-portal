@@ -4,7 +4,7 @@ import {
     IconPencil,
     IconMail,
 } from "@tabler/icons-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { useState, useEffect } from "react";
 import { ActionIcon, NumberInput, TextInput, Alert, Button, Modal } from "@mantine/core";
 import { persistProfile } from "../../store/slices/ProfileSlice";
@@ -16,9 +16,9 @@ import { InfoSchema } from "../../validators/ValidationSchemas";
 import { validateData } from "../../validators/ValidationUtils";
 
 const Info = () => {
-    const dispatch = useDispatch();
-    const user = useSelector((state: any) => state.user);
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const user = useAppSelector((state) => state.user as { email?: string } | null);
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const matches = useMediaQuery("(max-width: 475px)");
     const [editOpen, setEditOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -103,10 +103,10 @@ const Info = () => {
         setValidationErrors({});
         
         try {
-            await (dispatch as any)(persistProfile(validation.data)).unwrap();
+            await dispatch(persistProfile(validation.data)).unwrap();
             successNotification("Success", "Profile Updated Successfully");
             setEditOpen(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

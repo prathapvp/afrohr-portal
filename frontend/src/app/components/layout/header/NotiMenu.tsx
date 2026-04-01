@@ -1,24 +1,37 @@
-import { Indicator, Menu, Notification, rem, Stack } from "@mantine/core";
+import { Indicator, Menu, Notification, rem } from "@mantine/core";
 import { IconBell, IconCheck } from "@tabler/icons-react";
-import { get } from "http";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
-import { getNotifications, readNotification } from "../../../services/noti-service";
-import { read } from "fs";
+import { useNavigate } from "react-router";
+import { getMyNotifications, readNotification } from "../../../services/notification-service";
+import { useAppSelector } from "../../../store";
+
+type NotificationUser = {
+    id?: number;
+} | null;
+
+type NotificationItem = {
+    id: number;
+    action: string;
+    message: string;
+    route: string;
+};
 
 const NotiMenu = () => {
     const navigate=useNavigate();
-    const user = useSelector((state: any) => state.user);
-    const [notifications, setNotifications] = useState<any>([]);
+    const user = useAppSelector((state) => state.user as NotificationUser);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     useEffect(() => {
-        getNotifications(user.id).then((res) => {
-            setNotifications(res);
+        if (!user) {
+            setNotifications([]);
+            return;
+        }
+        getMyNotifications().then((res) => {
+            setNotifications(Array.isArray(res) ? res : []);
         }).catch((err) => console.log(err));
     }, [user]);
     const unread=(index:number)=>{
         let notis=[...notifications];
-        notis=notis.filter((noti:any, i:number)=>i!=index);
+        notis=notis.filter((_noti, i:number)=>i!=index);
         setNotifications(notis);
         readNotification(notifications[index].id).then((_res)=>{}).catch((err)=>console.log(err));
     }
@@ -35,7 +48,7 @@ const NotiMenu = () => {
         <Menu.Dropdown onChange={() => setOpened(true)}>
             <div className="flex flex-col gap-1">
                 {
-                    notifications.map((noti: any, index:number) => <Notification onClick={()=>{
+                    notifications.map((noti, index:number) => <Notification onClick={()=>{
                         navigate(noti.route);
                         setOpened(false);
                         unread(index);

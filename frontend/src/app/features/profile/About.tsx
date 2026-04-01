@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { ActionIcon, Button, Modal, Textarea, TextInput, Alert } from '@mantine/core';
 import { IconPencil } from '@tabler/icons-react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { persistProfile } from '../../store/slices/ProfileSlice';
 import { successNotification, errorNotification } from '../../services/NotificationService';
 import { extractErrorMessage } from '../../services/error-extractor-service';
 import { useMediaQuery } from '@mantine/hooks';
 
 const About: React.FC = () => {
-  const dispatch = useDispatch();
-  const profile = useSelector((state: any) => state.profile) as {
+  const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.profile) as {
     about?: string;
     cvHeadline?: string;
     profileSummary?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 
   const [about, setAbout] = useState<string>(profile.about || '');
@@ -62,10 +62,10 @@ const About: React.FC = () => {
     setValidationError('');
 
     try {
-      await (dispatch as any)(persistProfile({ about, cvHeadline, profileSummary })).unwrap();
+      await dispatch(persistProfile({ about, cvHeadline, profileSummary })).unwrap();
       successNotification('Success', 'About section updated');
       setEditOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = extractErrorMessage(error);
       errorNotification('Update Failed', errorMessage);
     }

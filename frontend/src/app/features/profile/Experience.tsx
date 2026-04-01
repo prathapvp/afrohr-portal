@@ -1,14 +1,29 @@
 import { ActionIcon, Button, Modal } from "@mantine/core";
 import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "../../store";
 import ExpInput from "./ExpInput";
 import ExpCard from "./ExpCard";
 import { useMediaQuery } from "@mantine/hooks";
 
+interface ExperienceItem {
+    jobTitle?: string;
+    title?: string;
+    company?: string;
+    location?: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    working?: boolean;
+}
+
+interface ProfileState {
+    experiences?: ExperienceItem[];
+}
+
 const Experience=()=>{
     const matches = useMediaQuery('(max-width: 475px)');
-    const profile=useSelector((state:any)=>state.profile);
+    const profile = useAppSelector((state) => state.profile as ProfileState);
     const [edit, setEdit] = useState(false);
     const [addExp, setAddExp] = useState(false);
     const handleClick = () => {
@@ -16,7 +31,7 @@ const Experience=()=>{
     }
     // Sort experiences by start date (most recent first)
     const sortedExperiences = profile?.experiences ? 
-        [...profile.experiences].sort((a: any, b: any) => {
+        [...profile.experiences].sort((a: ExperienceItem, b: ExperienceItem) => {
             const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
             const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
             return dateB - dateA; // Descending order (most recent first)
@@ -28,7 +43,7 @@ const Experience=()=>{
     <div className="flex flex-col gap-8">
         {
             sortedExperiences.length > 0
-                ? sortedExperiences.map((exp:any, index:number) => <ExpCard edit={edit} index={index} key={index} {...exp} />)
+                ? sortedExperiences.map((exp: ExperienceItem, index:number) => <ExpCard edit={edit} index={index} key={index} {...exp} />)
                 : !addExp && (
                     <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 py-8 text-center text-mine-shaft-200">
                         <p className="mb-3 text-base text-amber-100">No experience added yet. Employers value detailed work history.</p>

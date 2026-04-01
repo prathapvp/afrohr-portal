@@ -1,30 +1,17 @@
 import { useLocation, useNavigate } from "react-router";
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
 import { removeUser } from "../../store/slices/UserSlice";
 import { removeJwt } from "../../store/slices/JwtSlice";
 import { clearProfile } from "../../store/slices/ProfileSlice";
+import { useAppDispatch, useAppSelector } from "../../store";
+import { selectIsAuthenticated } from "../../store/selectors/authSelectors";
 
 function PremiumNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const showHomeButton = location.pathname !== "/";
   const showProfileButton = location.pathname !== "/profile";
-
-  useEffect(() => {
-    setIsAuthenticated(Boolean(localStorage.getItem("token")));
-
-    const syncAuthState = () => {
-      setIsAuthenticated(Boolean(localStorage.getItem("token")));
-    };
-
-    window.addEventListener("storage", syncAuthState);
-    return () => {
-      window.removeEventListener("storage", syncAuthState);
-    };
-  }, [location.pathname]);
 
   const handleLogout = () => {
     // Ensure Redux and persisted auth/profile state are fully cleared.
@@ -35,7 +22,6 @@ function PremiumNavbar() {
     localStorage.removeItem("afrohr:viewed-job-ids");
     sessionStorage.removeItem("afrohr:unauthorized-employer-redirect");
 
-    setIsAuthenticated(false);
     void navigate("/login", { replace: true });
   };
 

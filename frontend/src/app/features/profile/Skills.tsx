@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { persistProfile } from "../../store/slices/ProfileSlice";
 import { ActionIcon, TagsInput, Alert, Button, Modal } from "@mantine/core";
 import { IconPencil } from "@tabler/icons-react";
@@ -18,8 +18,8 @@ const skillToneClasses = [
 ];
 
 const Skills = () => {
-    const dispatch = useDispatch();
-    const profile = useSelector((state: any) => state.profile);
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const [skills, setSkills] = useState<string[]>(profile.skills || []);
     const [editOpen, setEditOpen] = useState(false);
     const matches = useMediaQuery('(max-width: 475px)');
@@ -74,10 +74,10 @@ const Skills = () => {
         setValidationError("");
         
         try {
-            await (dispatch as any)(persistProfile({ skills })).unwrap();
+            await dispatch(persistProfile({ skills })).unwrap();
             successNotification("Success", "Skills Updated Successfully");
             setEditOpen(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
         }

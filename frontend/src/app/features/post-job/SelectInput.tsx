@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Combobox, InputBase, ScrollArea, useCombobox } from '@mantine/core';
 
-const SelectInput = (props: any) => {
-  const [data, setData] = useState<any[]>([]);
+type SelectOption = string | { value: string; label: string };
+
+interface SelectInputProps {
+  options?: SelectOption[];
+  form: {
+    getInputProps: (name: string) => { value: string; [key: string]: unknown };
+    setFieldValue: (name: string, value: string) => void;
+  };
+  name: string;
+  label?: string;
+  placeholder?: string;
+}
+
+const SelectInput = (props: SelectInputProps) => {
+  const [data, setData] = useState<SelectOption[]>([]);
   const [value, setValue] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 

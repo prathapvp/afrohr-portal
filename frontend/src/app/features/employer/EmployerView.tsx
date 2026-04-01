@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import {
   BarChart as RechartBarChart,
@@ -57,14 +57,17 @@ import type {
   EmployerPostedJob,
   EmployerPostForm,
 } from "./employer-types";
+import { useEmployerJobs } from "./useEmployerJobs";
 import {
   DEFAULT_EMPLOYER_POST_FORM,
   LEGACY_JOB_OPTIONS,
   LEGACY_FIELD_LABELS,
   REQUIRED_LEGACY_FIELDS,
-  parseLegacyDetailsFromDescription,
 } from "./employer-types";
-import { useNavigate } from "react-router-dom";
+import { normalizeEmployerJob } from "./employer-view.utils";
+import { useNavigate } from "react-router";
+import { getMySubscription } from "../../services/subscription-service";
+import type { EmployerSubscription } from "../../services/admin-service";
 
 type SalarySuggestion = {
   min: number;
@@ -90,6 +93,72 @@ function formatMoney(value: number, currency: string): string {
     currency,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function normalizeOptionKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function withSelectedOption(options: string[], selected: string): string[] {
+  const selectedTrimmed = selected.trim();
+  if (!selectedTrimmed) {
+    return options;
+  }
+
+  const selectedKey = normalizeOptionKey(selectedTrimmed);
+  const exists = options.some((option) => normalizeOptionKey(option) === selectedKey);
+  return exists ? options : [selectedTrimmed, ...options];
+}
+
+function stripLegacyDescription(description: string): string {
+  const marker = "Legacy Post Details";
+  const index = description.indexOf(marker);
+  const raw = index >= 0 ? description.slice(0, index) : description;
+  return raw.replace(/\r\n/g, "\n").trim();
+}
+
+function normalizeDescriptionForEdit(description: string): string {
+  return stripLegacyDescription(description)
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function renderDescriptionContent(description: string): ReactNode {
+  const lines = stripLegacyDescription(description)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  let inSectionList = false;
+
+  return (
+    <div className="space-y-2 text-sm leading-relaxed text-slate-300">
+      {lines.map((line, index) => {
+        const isHeading = line.endsWith(":");
+        const isBullet = /^[-*•]\s+/.test(line);
+
+        if (isHeading) {
+          inSectionList = true;
+          return (
+            <p key={`h-${index}`} className="mt-3 font-semibold text-slate-100 first:mt-0">
+              {line}
+            </p>
+          );
+        }
+
+        if (isBullet || inSectionList) {
+          const text = isBullet ? line.replace(/^[-*•]\s+/, "") : line;
+          return (
+            <p key={`b-${index}`} className="pl-4 before:mr-2 before:text-sky-300 before:content-['•']">
+              {text}
+            </p>
+          );
+        }
+
+        return <p key={`p-${index}`}>{line}</p>;
+      })}
+    </div>
+  );
 }
 
 function estimateSalarySuggestion(input: {
@@ -180,9 +249,6 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   const [legacyTab, setLegacyTab] = useState<"ACTIVE" | "DRAFT" | "CLOSED">("ACTIVE");
   const [isPostJobDialogOpen, setIsPostJobDialogOpen] = useState(false);
   const [isViewJobDialogOpen, setIsViewJobDialogOpen] = useState(false);
-  const [legacyJobs, setLegacyJobs] = useState<EmployerPostedJob[]>([]);
-  const [legacyJobsLoading, setLegacyJobsLoading] = useState(false);
-  const [legacyJobsError, setLegacyJobsError] = useState<string | null>(null);
   const [postForm, setPostForm] = useState<EmployerPostForm>(DEFAULT_EMPLOYER_POST_FORM);
   const [postJobMode, setPostJobMode] = useState<"create" | "edit">("create");
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
@@ -201,10 +267,14 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   const [industryList, setIndustryList] = useState<Industry[]>([]);
   const [employmentTypeList, setEmploymentTypeList] = useState<EmploymentType[]>([]);
   const [workModeList, setWorkModeList] = useState<WorkMode[]>([]);
+  const [subscription, setSubscription] = useState<EmployerSubscription | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const accountType = (localStorage.getItem("accountType") ?? "").toUpperCase();
   const token = localStorage.getItem("token");
   const isEmployerAuthorized = Boolean(token) && accountType === "EMPLOYER";
   const authRequiredMessage = "Please sign up or log in as an employer to perform employer operations.";
+  const { legacyJobs, legacyJobsLoading, legacyJobsError, setLegacyJobs, setLegacyJobsError } = useEmployerJobs(isEmployerAuthorized);
 
   function requireEmployerAccess(): boolean {
     if (isEmployerAuthorized) {
@@ -218,14 +288,86 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
     return false;
   }
 
+  const canPostBySubscription = isEmployerAuthorized && Boolean(subscription?.postingAllowed);
+
+  function getSubscriptionBlockReason(): string {
+    if (subscriptionLoading) {
+      return "Checking subscription permissions...";
+    }
+    if (subscriptionError) {
+      return subscriptionError;
+    }
+    if (!subscription) {
+      return "No subscription configured. Contact admin to activate your plan.";
+    }
+    if (subscription.paymentStatus !== "PAID") {
+      return "Payment is pending. Complete payment to enable job posting.";
+    }
+    if (subscription.subscriptionStatus !== "ACTIVE") {
+      return `Subscription status is ${subscription.subscriptionStatus}. Please renew or contact admin.`;
+    }
+    if (subscription.remainingDays <= 0) {
+      return "Your subscription has expired. Renew to continue posting jobs.";
+    }
+    if (subscription.maxActiveJobs > 0 && subscription.activeJobs >= subscription.maxActiveJobs) {
+      return `Plan limit reached (${subscription.activeJobs}/${subscription.maxActiveJobs} active jobs). Upgrade or close a job.`;
+    }
+    return "Posting is currently unavailable for this subscription.";
+  }
+
   function openPostJobDialog() {
     if (!requireEmployerAccess()) {
+      return;
+    }
+
+    if (!canPostBySubscription) {
+      const reason = getSubscriptionBlockReason();
+      setPostJobSuccess(null);
+      setPostJobError(reason);
       return;
     }
 
     resetPostForm();
     setIsPostJobDialogOpen(true);
   }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSubscription() {
+      if (!isEmployerAuthorized) {
+        setSubscription(null);
+        setSubscriptionError(null);
+        setSubscriptionLoading(false);
+        return;
+      }
+
+      try {
+        setSubscriptionLoading(true);
+        setSubscriptionError(null);
+        const data = await getMySubscription();
+        if (!cancelled) {
+          setSubscription(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          const message = error instanceof Error ? error.message : "Unable to load subscription details.";
+          setSubscription(null);
+          setSubscriptionError(message);
+        }
+      } finally {
+        if (!cancelled) {
+          setSubscriptionLoading(false);
+        }
+      }
+    }
+
+    void loadSubscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEmployerAuthorized]);
 
   useEffect(() => {
     const rail = jobsRailRef.current;
@@ -280,37 +422,6 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
     };
   }, [isEmployerAuthorized]);
 
-  function normalizeEmployerJob(item: Record<string, unknown>): EmployerPostedJob {
-    const rawStatus = String(item.jobStatus ?? "ACTIVE").toUpperCase();
-    const status: "ACTIVE" | "DRAFT" | "CLOSED" = rawStatus === "DRAFT" || rawStatus === "CLOSED" ? rawStatus : "ACTIVE";
-    const description = typeof item.description === "string" ? item.description : "";
-    const parsedLegacy = parseLegacyDetailsFromDescription(description);
-    const vacanciesValue = Number.parseInt(String(item.vacancies ?? ""), 10);
-    const postedByValue = Number.parseInt(String(item.postedBy ?? ""), 10);
-    const logoTone = String(item.logoTone ?? "blue");
-    return {
-      id: Number(item.id ?? 0),
-      jobTitle: String(item.jobTitle ?? item.title ?? item.role ?? "Untitled role"),
-      company: String(item.company ?? ""),
-      role: String(item.role ?? ""),
-      location: String(item.location ?? "Remote"),
-      salary: String(item.salary ?? ""),
-      logoTone: logoTone === "green" || logoTone === "purple" || logoTone === "orange" ? logoTone : "blue",
-      department: String(item.department ?? parsedLegacy.department ?? ""),
-      experience: String(item.experience ?? parsedLegacy.experience ?? ""),
-      employmentType: String(item.employmentType ?? parsedLegacy.employmentType ?? ""),
-      industry: String(item.industry ?? parsedLegacy.industry ?? ""),
-      workMode: String(item.workMode ?? parsedLegacy.workMode ?? ""),
-      currency: String(item.currency ?? parsedLegacy.currency ?? ""),
-      vacancies: Number.isFinite(vacanciesValue) && vacanciesValue > 0 ? vacanciesValue : parsedLegacy.vacancies,
-      skills: String(item.skills ?? parsedLegacy.skills ?? ""),
-      description,
-      postedBy: Number.isFinite(postedByValue) ? postedByValue : undefined,
-      jobStatus: status,
-      postTime: typeof item.postTime === "string" ? item.postTime : undefined,
-    };
-  }
-
   function resetPostForm(clearMessages = true) {
     setPostForm(DEFAULT_EMPLOYER_POST_FORM);
     if (clearMessages) {
@@ -340,51 +451,6 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
 
     return null;
   }
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadEmployerJobs() {
-      if (!isEmployerAuthorized) {
-        setLegacyJobs([]);
-        setLegacyJobsLoading(false);
-        setLegacyJobsError(authRequiredMessage);
-        return;
-      }
-
-      try {
-        setLegacyJobsLoading(true);
-        setLegacyJobsError(null);
-        const response = await fetch("/api/ahrm/v3/jobs/getAll");
-        if (!response.ok) {
-          throw new Error("Failed to load employer jobs");
-        }
-
-        const data = (await response.json()) as Array<Record<string, unknown>>;
-        if (cancelled) {
-          return;
-        }
-
-        const normalized = data.map((item) => normalizeEmployerJob(item));
-
-        setLegacyJobs(normalized.filter((job) => Number.isFinite(job.id) && job.id > 0));
-      } catch (error) {
-        if (!cancelled) {
-          setLegacyJobsError(error instanceof Error ? error.message : "Unable to load jobs");
-        }
-      } finally {
-        if (!cancelled) {
-          setLegacyJobsLoading(false);
-        }
-      }
-    }
-
-    void loadEmployerJobs();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isEmployerAuthorized]);
 
   const statusCounts = {
     ACTIVE: legacyJobs.filter((job) => job.jobStatus === "ACTIVE").length,
@@ -588,6 +654,36 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
     });
   }, [selectedJob]);
 
+  const departmentOptions = useMemo(
+    () => withSelectedOption(departmentList.map((dept) => dept.name), postForm.department),
+    [departmentList, postForm.department],
+  );
+
+  const industryOptions = useMemo(
+    () => withSelectedOption(industryList.map((industry) => industry.name), postForm.industry),
+    [industryList, postForm.industry],
+  );
+
+  const employmentTypeOptions = useMemo(
+    () => withSelectedOption(employmentTypeList.map((employmentType) => employmentType.name), postForm.employmentType),
+    [employmentTypeList, postForm.employmentType],
+  );
+
+  const workModeOptions = useMemo(
+    () => withSelectedOption(workModeList.map((workMode) => workMode.name), postForm.workMode),
+    [workModeList, postForm.workMode],
+  );
+
+  const currencyOptions = useMemo(
+    () => withSelectedOption([...LEGACY_JOB_OPTIONS.currencies], postForm.currency),
+    [postForm.currency],
+  );
+
+  const experienceOptions = useMemo(
+    () => withSelectedOption([...LEGACY_JOB_OPTIONS.experiences], postForm.experience),
+    [postForm.experience],
+  );
+
   async function handleSubmitPostJob() {
     if (!requireEmployerAccess()) {
       return;
@@ -693,7 +789,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
         skills: normalized.skills ?? "",
         location: normalized.location,
         salary: normalized.salary ?? "",
-        description: normalized.description ?? "",
+        description: normalizeDescriptionForEdit(normalized.description ?? ""),
         logoTone: normalized.logoTone ?? "blue",
         jobStatus: (normalized.jobStatus as "ACTIVE" | "DRAFT" | "CLOSED") ?? "ACTIVE",
       });
@@ -792,6 +888,16 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                 >
                   <Plus className="h-4 w-4" />
                   {dashboard.hero.actionLabel}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="min-h-12 gap-2 border-cyan-300/50 bg-cyan-500/10 px-6 font-semibold text-cyan-100 transition-all hover:bg-cyan-500/20 sm:w-auto"
+                  disabled={!isEmployerAuthorized}
+                  onClick={() => void navigate("/dashboard?tab=employers&section=subscription")}
+                >
+                  <Crown className="h-4 w-4" />
+                  Manage Subscription
                 </Button>
               </div>
             </div>
@@ -939,8 +1045,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                       className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
                     >
                       <option value="" className="bg-slate-900">Select department</option>
-                      {departmentList.map((dept) => (
-                        <option key={dept.id} value={dept.name} className="bg-slate-900">{dept.name}</option>
+                      {departmentOptions.map((department) => (
+                        <option key={department} value={department} className="bg-slate-900">{department}</option>
                       ))}
                     </select>
                   </div>
@@ -952,8 +1058,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                       className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
                     >
                       <option value="" className="bg-slate-900">Select industry</option>
-                      {industryList.map((ind) => (
-                        <option key={ind.id} value={ind.name} className="bg-slate-900">{ind.name}</option>
+                      {industryOptions.map((industry) => (
+                        <option key={industry} value={industry} className="bg-slate-900">{industry}</option>
                       ))}
                     </select>
                   </div>
@@ -965,8 +1071,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                       className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
                     >
                       <option value="" className="bg-slate-900">Select employment type</option>
-                      {employmentTypeList.map((et) => (
-                        <option key={et.id} value={et.name} className="bg-slate-900">{et.name}</option>
+                      {employmentTypeOptions.map((employmentType) => (
+                        <option key={employmentType} value={employmentType} className="bg-slate-900">{employmentType}</option>
                       ))}
                     </select>
                   </div>
@@ -978,8 +1084,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                       className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
                     >
                       <option value="" className="bg-slate-900">Select work mode</option>
-                      {workModeList.map((wm) => (
-                        <option key={wm.id} value={wm.name} className="bg-slate-900">{wm.name}</option>
+                      {workModeOptions.map((workMode) => (
+                        <option key={workMode} value={workMode} className="bg-slate-900">{workMode}</option>
                       ))}
                     </select>
                   </div>
@@ -1008,7 +1114,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                       onChange={(event) => setPostForm((prev) => ({ ...prev, currency: event.target.value }))}
                       className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
                     >
-                      {LEGACY_JOB_OPTIONS.currencies.map((currency) => (
+                      {currencyOptions.map((currency) => (
                         <option key={currency} value={currency} className="bg-slate-900">{currency}</option>
                       ))}
                     </select>
@@ -1021,7 +1127,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                       className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
                     >
                       <option value="" className="bg-slate-900">Select experience</option>
-                      {LEGACY_JOB_OPTIONS.experiences.map((experience) => (
+                      {experienceOptions.map((experience) => (
                         <option key={experience} value={experience} className="bg-slate-900">{experience}</option>
                       ))}
                     </select>
@@ -1239,7 +1345,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                       <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-sky-400">
                         <FileText className="h-3 w-3" /> Description
                       </p>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">{selectedJob.description}</p>
+                      {renderDescriptionContent(selectedJob.description)}
                     </div>
                   )}
 
@@ -1295,7 +1401,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
               <Button
                 size="sm"
                 className="gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-xs font-semibold text-white shadow-md shadow-emerald-900/50 transition-all hover:from-emerald-400 hover:to-teal-400 hover:shadow-emerald-700/50"
-                disabled={!isEmployerAuthorized}
+                disabled={!isEmployerAuthorized || !canPostBySubscription}
                 onClick={openPostJobDialog}
               >
                 <Plus className="h-3.5 w-3.5" /> New Job

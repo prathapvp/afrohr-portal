@@ -15,7 +15,6 @@ import "./styles/index.css";
 
 // Layout + pages (now all under app/)
 import LegacyLayout from "./app/components/layout/LegacyLayout.tsx";
-import HomePage from "./app/pages/HomePage.tsx";
 import FindJobsPage from "./app/pages/FindJobsPage.tsx";
 import JobPage from "./app/pages/JobPage.tsx";
 import ApplyJobPage from "./app/pages/ApplyJobPage.tsx";
@@ -40,6 +39,7 @@ createRoot(document.getElementById("root")!).render(
         <Routes>
           {/* Modern routes */}
           <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/dashboard" element={<App />} />
 
           {/* Auth routes – lightweight shell, no Header/Footer duplication */}
@@ -50,7 +50,6 @@ createRoot(document.getElementById("root")!).render(
 
           {/* Legacy portal routes */}
           <Route element={<LegacyLayout />}>
-            <Route path="/home" element={<HomePage />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/find-jobs" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><FindJobsPage /></ProtectedRoute>} />
             <Route path="/swipe" element={<ProtectedRoute allowedRoles={["APPLICANT"]}><SwipeJobsPage /></ProtectedRoute>} />
