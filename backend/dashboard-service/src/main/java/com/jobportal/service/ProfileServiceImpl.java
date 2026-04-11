@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -16,12 +17,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.jobportal.dto.AccountType;
 import com.jobportal.dto.ProfileDTO;
 import com.jobportal.dto.ProfileDTO.PersonalDetails;
 import com.jobportal.dto.UserDTO;
 import com.jobportal.entity.Profile;
+import com.jobportal.entity.User;
 import com.jobportal.exception.JobPortalException;
 import com.jobportal.repository.ProfileRepository;
+import com.jobportal.repository.UserRepository;
 import com.jobportal.security.PiiCryptoService;
 
 import jakarta.validation.ConstraintViolation;
@@ -35,6 +39,9 @@ public class ProfileServiceImpl implements ProfileService {
 
 	@Autowired
 	private ProfileRepository profileRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	@Autowired
 	private PiiCryptoService piiCryptoService;
@@ -53,15 +60,27 @@ public class ProfileServiceImpl implements ProfileService {
 		profile.setSkills(new ArrayList<>());
 		profile.setExperiences(new ArrayList<>());
 		profile.setCertifications(new ArrayList<>());
-		profile = profileRepository.save(profile);
+		profile = Objects.requireNonNull(profileRepository.save(profile));
 		return profile.getId();
 	}
 
 	@Override
 	public ProfileDTO getProfile(Long id) throws JobPortalException {
-		Profile profile = profileRepository.findById(id)
+		Long safeId = Objects.requireNonNull(id, "Profile ID is required");
+		Profile profile = profileRepository.findById(safeId)
 				.orElseThrow(() -> new JobPortalException("Profile not found with ID: " + id));
 		return decryptProfile(profile);
+	}
+
+	@Override
+	public ProfileDTO getProfileByUserId(Long userId) throws JobPortalException {
+		Long safeUserId = Objects.requireNonNull(userId, "User ID is required");
+		var user = userRepository.findById(safeUserId)
+				.orElseThrow(() -> new JobPortalException("User not found with ID: " + safeUserId));
+		if (user.getProfileId() == null) {
+			throw new JobPortalException("No profile linked to user: " + safeUserId);
+		}
+		return getProfile(user.getProfileId());
 	}
 
 	@Override
@@ -87,10 +106,15 @@ public class ProfileServiceImpl implements ProfileService {
 	}
 
 	@Override
+	@SuppressWarnings("null")
 	public ProfileDTO updateProfile(ProfileDTO profileDTO) throws JobPortalException {
 		logger.info("Updating profile with ID: {}", profileDTO.getId());
+		Long profileId = profileDTO.getId();
+		if (profileId == null) {
+			throw new JobPortalException("Profile ID is required");
+		}
 
-		profileRepository.findById(profileDTO.getId())
+		profileRepository.findById(profileId)
 				.orElseThrow(() -> new JobPortalException("Profile not found with ID: " + profileDTO.getId()));
 
 		try {
@@ -180,13 +204,44 @@ public class ProfileServiceImpl implements ProfileService {
 	}
 
 	@Override
+	public List<ProfileDTO> getProfilesByAccountType(String accountType) throws JobPortalException {
+		try {
+			logger.info("Fetching profiles with accountType: {}", accountType);
+
+			List<User> users = userRepository.findByAccountType(AccountType.valueOf(accountType));
+			logger.info("Found {} users with accountType: {}", users.size(), accountType);
+
+			List<Long> profileIds = users.stream()
+					.filter(user -> user.getProfileId() != null)
+					.map(User::getProfileId)
+					.toList();
+
+			List<Profile> profiles = profileRepository.findAllById(profileIds);
+			logger.info("Found {} profiles for accountType: {}", profiles.size(), accountType);
+
+			return profiles.stream().map(profile -> {
+				try {
+					return decryptProfile(profile);
+				} catch (Exception e) {
+					logger.error("Failed to decrypt profile with ID: {}. Skipping this profile.", profile.getId(), e);
+					return null;
+				}
+			}).filter(dto -> dto != null).toList();
+		} catch (Exception e) {
+			logger.error("Error fetching profiles by accountType: {}", accountType, e);
+			throw new JobPortalException("Failed to fetch profiles: " + e.getMessage());
+		}
+	}
+
+	@Override
 	@Transactional
 	public int incrementResumeViewCount(Long profileId) throws JobPortalException {
-		if (!profileRepository.existsById(profileId)) {
+		Long safeProfileId = Objects.requireNonNull(profileId, "Profile ID is required");
+		if (!profileRepository.existsById(safeProfileId)) {
 			throw new JobPortalException("Profile not found with ID: " + profileId);
 		}
-		profileRepository.incrementResumeViewCount(profileId);
-		return profileRepository.findById(profileId)
+		profileRepository.incrementResumeViewCount(safeProfileId);
+		return profileRepository.findById(safeProfileId)
 				.map(p -> p.getResumeViewCount() != null ? p.getResumeViewCount() : 0)
 				.orElse(0);
 	}

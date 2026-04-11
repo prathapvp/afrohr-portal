@@ -1,4 +1,4 @@
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, TextInput } from "@mantine/core";
 import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store";
@@ -6,13 +6,16 @@ import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { extractErrorMessage } from "../../services/error-extractor-service";
 import { useMediaQuery } from "@mantine/hooks";
+import ProfileEditorModal, { premiumProfileInputStyles } from "./ProfileEditorModal";
+
+const inputClassName = "[&_input]:bg-slate-950/70 [&_input]:text-slate-100 [&_input]:border-white/20 [&_input]:focus:border-cyan-400 [&_input]:placeholder:text-slate-500";
 
 const AddressDetails = () => {
     const dispatch = useAppDispatch();
     const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
 
     const matches = useMediaQuery("(max-width: 475px)");
-    const [edit, setEdit] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
 
     const [addressData, setAddressData] = useState({
         addressLabel: "",
@@ -33,8 +36,19 @@ const AddressDetails = () => {
         });
     }, [profile]);
 
-    const handleClick = () => {
-        setEdit(!edit);
+    const handleOpenEdit = () => {
+        setAddressData({
+            addressLabel: String(profile?.addressLabel || "Primary Address"),
+            address: String(profile?.address || ""),
+            country: String(profile?.country || ""),
+            city: String(profile?.city || ""),
+            pincode: String(profile?.pincode || ""),
+        });
+        setEditOpen(true);
+    };
+
+    const handleCloseEdit = () => {
+        setEditOpen(false);
     };
 
     const handleSave = async () => {
@@ -42,7 +56,7 @@ const AddressDetails = () => {
         try {
             await dispatch(persistProfile(updatedProfile)).unwrap();
             successNotification("Success", "Address Details Updated Successfully");
-            setEdit(false);
+            setEditOpen(false);
         } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
@@ -55,123 +69,70 @@ const AddressDetails = () => {
 
     return (
         <div data-aos="fade-up" className="mb-6">
-            {/* Header with edit/save icons */}
-            <div className="text-2xl font-semibold mb-3 flex justify-between">
-                Address Details
+            <div className="mb-3 flex items-center justify-between">
                 <div>
-                    {edit && (
-                        <ActionIcon
-                            onClick={handleSave}
-                            variant="subtle"
-                            color="green.8"
-                            size={matches ? "md" : "lg"}
-                        >
-                            <IconCheck className="w-4/5 h-4/5" stroke={1.5} />
-                        </ActionIcon>
-                    )}
+                    <h3 className="text-xl font-semibold text-white">Address Details</h3>
+                    <p className="text-xs text-slate-400">Maintain accurate office location information for candidates and business communication.</p>
+                </div>
+                <div className="flex items-center gap-2">
                     <ActionIcon
-                        onClick={handleClick}
-                        variant="subtle"
-                        color={edit ? "red.8" : "brightSun.4"}
+                        onClick={handleOpenEdit}
+                        variant="light"
+                        color="yellow"
                         size={matches ? "md" : "lg"}
+                        className="!bg-bright-sun-400/20 !text-bright-sun-300 hover:!bg-bright-sun-400/30"
                     >
-                        {edit ? (
-                            <IconX className="w-4/5 h-4/5" stroke={1.5} />
-                        ) : (
-                            <IconPencil className="w-4/5 h-4/5" stroke={1.5} />
-                        )}
+                        <IconPencil className="h-4 w-4" stroke={1.8} />
                     </ActionIcon>
                 </div>
             </div>
 
-            {/* Address details rows */}
-            <div className="border rounded shadow-sm">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Address Label</div>
-                    <div className="w-2/3">
-                        {edit ? (
-                            <input
-                                type="text"
-                                value={addressData.addressLabel}
-                                onChange={(e) => handleChange("addressLabel", e.target.value)}
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                autoComplete="off"
-                                placeholder="Enter address label"
-                            />
-                        ) : (
-                            <div>{addressData.addressLabel || "-"}</div>
-                        )}
-                    </div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Address</div>
-                    <div className="w-2/3">
-                        {edit ? (
-                            <input
-                                type="text"
-                                value={addressData.address}
-                                onChange={(e) => handleChange("address", e.target.value)}
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                autoComplete="off"
-                                placeholder="Enter address"
-                            />
-                        ) : (
-                            <div>{addressData.address || "-"}</div>
-                        )}
-                    </div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Country</div>
-                    <div className="w-2/3">
-                        {edit ? (
-                            <input
-                                type="text"
-                                value={addressData.country}
-                                onChange={(e) => handleChange("country", e.target.value)}
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                autoComplete="off"
-                                placeholder="Enter country"
-                            />
-                        ) : (
-                            <div>{addressData.country || "-"}</div>
-                        )}
-                    </div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">City</div>
-                    <div className="w-2/3">
-                        {edit ? (
-                            <input
-                                type="text"
-                                value={addressData.city}
-                                onChange={(e) => handleChange("city", e.target.value)}
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                autoComplete="off"
-                                placeholder="Enter city"
-                            />
-                        ) : (
-                            <div>{addressData.city || "-"}</div>
-                        )}
-                    </div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Pincode</div>
-                    <div className="w-2/3">
-                        {edit ? (
-                            <input
-                                type="text"
-                                value={addressData.pincode}
-                                onChange={(e) => handleChange("pincode", e.target.value)}
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                autoComplete="off"
-                                placeholder="Enter pincode"
-                            />
-                        ) : (
-                            <div>{addressData.pincode || "-"}</div>
-                        )}
-                    </div>
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.85),rgba(2,6,23,0.9))]">
+                <div className="grid grid-cols-1 divide-y divide-white/10">
+                    {[
+                        ["Address Label", "addressLabel", "Enter address label"],
+                        ["Address", "address", "Enter address"],
+                        ["Country", "country", "Enter country"],
+                        ["City", "city", "Enter city"],
+                        ["Pincode", "pincode", "Enter pincode"],
+                    ].map(([label, key, placeholder]) => (
+                        <div key={String(key)} className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
+                            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+                            <p className="text-sm font-medium text-slate-100">{String(profile?.[key as keyof typeof profile] || "-")}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
+
+            <ProfileEditorModal
+                opened={editOpen}
+                onClose={handleCloseEdit}
+                onSave={handleSave}
+                title="Edit Address Details"
+                size="lg"
+                description="Keep your office location accurate so candidates and admins always see the correct business address."
+            >
+                <div className="grid gap-4">
+                    {[
+                        ["Address Label", "addressLabel", "Enter address label"],
+                        ["Address", "address", "Enter address"],
+                        ["Country", "country", "Enter country"],
+                        ["City", "city", "Enter city"],
+                        ["Pincode", "pincode", "Enter pincode"],
+                    ].map(([label, key, placeholder]) => (
+                        <TextInput
+                            key={String(key)}
+                            label={String(label)}
+                            value={String(addressData[key as keyof typeof addressData] || "")}
+                            onChange={(e) => handleChange(String(key), e.currentTarget.value)}
+                            className={inputClassName}
+                            autoComplete="off"
+                            placeholder={String(placeholder)}
+                            styles={premiumProfileInputStyles}
+                        />
+                    ))}
+                </div>
+            </ProfileEditorModal>
         </div>
     );
 };

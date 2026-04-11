@@ -16,11 +16,14 @@ import com.jobportal.dto.AccountType;
 import com.jobportal.dto.AdminEmployerSummaryDTO;
 import com.jobportal.dto.AdminOverviewDTO;
 import com.jobportal.dto.JobStatus;
+import com.jobportal.entity.EmployerSubscription;
 import com.jobportal.entity.Profile;
 import com.jobportal.entity.User;
+import com.jobportal.repository.EmployerSubscriptionRepository;
 import com.jobportal.repository.JobRepository;
 import com.jobportal.repository.ProfileRepository;
 import com.jobportal.repository.UserRepository;
+import com.jobportal.security.PiiCryptoService;
 
 @Service("adminService")
 public class AdminServiceImpl implements AdminService {
@@ -28,17 +31,23 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
     private final JobRepository jobRepository;
+    private final EmployerSubscriptionRepository employerSubscriptionRepository;
     private final CurrentUserService currentUserService;
+    private final PiiCryptoService piiCryptoService;
 
     public AdminServiceImpl(
             UserRepository userRepository,
             ProfileRepository profileRepository,
             JobRepository jobRepository,
-            CurrentUserService currentUserService) {
+            EmployerSubscriptionRepository employerSubscriptionRepository,
+            CurrentUserService currentUserService,
+            PiiCryptoService piiCryptoService) {
         this.userRepository = userRepository;
         this.profileRepository = profileRepository;
         this.jobRepository = jobRepository;
+        this.employerSubscriptionRepository = employerSubscriptionRepository;
         this.currentUserService = currentUserService;
+        this.piiCryptoService = piiCryptoService;
     }
 
     @Override
@@ -59,11 +68,20 @@ public class AdminServiceImpl implements AdminService {
         long activeJobs = jobRepository.countByJobStatus(JobStatus.ACTIVE);
 
         List<User> employerUsers = userRepository.findByAccountType(AccountType.EMPLOYER);
+        List<Long> employerIds = employerUsers.stream()
+            .map(User::getId)
+            .filter(id -> id != null && id > 0)
+            .toList();
         List<Long> employerProfileIds = employerUsers.stream()
                 .map(User::getProfileId)
                 .filter(profileId -> profileId != null && profileId > 0)
                 .distinct()
                 .toList();
+
+        Map<Long, EmployerSubscription> subscriptionsByEmployerId = employerIds.isEmpty()
+            ? Collections.emptyMap()
+            : employerSubscriptionRepository.findByEmployerIdIn(employerIds).stream()
+                .collect(Collectors.toMap(EmployerSubscription::getEmployerId, Function.identity()));
 
         Map<Long, Profile> profilesById = employerProfileIds.isEmpty()
             ? Collections.emptyMap()
@@ -72,7 +90,7 @@ public class AdminServiceImpl implements AdminService {
 
         List<AdminEmployerSummaryDTO> employers = employerUsers.stream()
                 .sorted(Comparator.comparing(User::getId, Comparator.nullsLast(Long::compareTo)).reversed())
-                .map(user -> toEmployerSummary(user, profilesById.get(user.getProfileId())))
+            .map(user -> toEmployerSummary(user, profilesById.get(user.getProfileId()), subscriptionsByEmployerId.get(user.getId())))
                 .toList();
 
         long employerSubscriptionsConfigured = employers.stream()
@@ -95,23 +113,45 @@ public class AdminServiceImpl implements AdminService {
                 employers);
     }
 
-    private AdminEmployerSummaryDTO toEmployerSummary(User user, Profile profile) {
-        String companyName = fallback(profile != null ? profile.getCompany() : null, user.getName(), "Employer");
-        String contactName = fallback(user.getName(), profile != null ? profile.getContactPerson() : null, "N/A");
-        String location = fallback(profile != null ? profile.getLocation() : null, profile != null ? profile.getCity() : null, "N/A");
+    private AdminEmployerSummaryDTO toEmployerSummary(User user, Profile profile, EmployerSubscription subscription) {
+        String companyName = fallback(
+            profile != null ? profile.getCompany() : null,
+            decryptIfNeeded(profile != null ? profile.getName() : null),
+            user.getName(),
+            "Employer");
+        String contactName = fallback(
+            profile != null ? profile.getContactPerson() : null,
+            decryptIfNeeded(profile != null ? profile.getName() : null),
+            user.getName(),
+            "N/A");
+        String location = joinLocation(
+            decryptIfNeeded(profile != null ? profile.getLocation() : null),
+            profile != null ? profile.getCity() : null,
+            profile != null ? profile.getCountry() : null);
 
         String subscriptionPlan = "Not Configured";
-        if (profile != null) {
-            String classifiedPlan = sanitize(profile.getProfileClassifieds());
-            if (!classifiedPlan.isBlank()) {
-                subscriptionPlan = classifiedPlan;
-            }
+        if (subscription != null && sanitize(subscription.getPlanName()).length() > 0) {
+            subscriptionPlan = sanitize(subscription.getPlanName());
         }
 
         String subscriptionStatus = "Pending";
-        if (!"Not Configured".equalsIgnoreCase(subscriptionPlan)) {
-            subscriptionStatus = "Active";
+        if (subscription != null && subscription.getSubscriptionStatus() != null) {
+            subscriptionStatus = sanitize(subscription.getSubscriptionStatus().name());
         }
+
+        int viewsUsed = subscription != null && subscription.getMonthlyResumeViewsUsed() != null
+                ? subscription.getMonthlyResumeViewsUsed()
+                : 0;
+        int viewsLimit = subscription != null && subscription.getMaxResumeViewsPerMonth() != null
+                ? subscription.getMaxResumeViewsPerMonth()
+                : 0;
+        int downloadsUsed = subscription != null && subscription.getMonthlyResumeDownloadsUsed() != null
+                ? subscription.getMonthlyResumeDownloadsUsed()
+                : 0;
+        int downloadsLimit = subscription != null && subscription.getMaxResumeDownloadsPerMonth() != null
+                ? subscription.getMaxResumeDownloadsPerMonth()
+                : 0;
+        LocalDateTime usageWindowStartAt = subscription != null ? subscription.getUsageWindowStartAt() : null;
 
         return new AdminEmployerSummaryDTO(
                 user.getId(),
@@ -120,21 +160,53 @@ public class AdminServiceImpl implements AdminService {
                 user.getEmail(),
                 location,
                 subscriptionPlan,
-                subscriptionStatus);
+                subscriptionStatus,
+                viewsUsed,
+                viewsLimit,
+                downloadsUsed,
+                downloadsLimit,
+                usageWindowStartAt);
     }
 
-    private String fallback(String primary, String secondary, String defaultValue) {
-        String normalizedPrimary = sanitize(primary);
-        if (!normalizedPrimary.isBlank()) {
-            return normalizedPrimary;
+    private String fallback(String... values) {
+        if (values == null || values.length == 0) {
+            return "";
         }
 
-        String normalizedSecondary = sanitize(secondary);
-        if (!normalizedSecondary.isBlank()) {
-            return normalizedSecondary;
+        for (String value : values) {
+            String normalizedValue = sanitize(value);
+            if (!normalizedValue.isBlank()) {
+                return normalizedValue;
+            }
         }
 
-        return defaultValue;
+        return "";
+    }
+
+    private String joinLocation(String... parts) {
+        String combined = java.util.Arrays.stream(parts)
+                .map(this::sanitize)
+                .filter(part -> !part.isBlank())
+                .distinct()
+                .collect(Collectors.joining(", "));
+        if (!combined.isBlank()) {
+            return combined;
+        }
+
+        return "N/A";
+    }
+
+    private String decryptIfNeeded(String value) {
+        String normalizedValue = sanitize(value);
+        if (normalizedValue.isBlank()) {
+            return "";
+        }
+
+        try {
+            return sanitize(piiCryptoService.decryptString(normalizedValue));
+        } catch (Exception ignored) {
+            return normalizedValue;
+        }
     }
 
     private String sanitize(String value) {

@@ -10,8 +10,10 @@ import com.jobportal.exception.JobPortalException;
 public interface ProfileService {
 	public Long createProfile(UserDTO userDTO) throws JobPortalException;
 	public ProfileDTO getProfile(Long id) throws JobPortalException;
+	public ProfileDTO getProfileByUserId(Long userId) throws JobPortalException;
 	public ProfileDTO patchProfile(Long id, Map<String, Object> updates) throws JobPortalException;
 	public ProfileDTO updateProfile(ProfileDTO profileDTO) throws JobPortalException;
 	public List<ProfileDTO> getAllProfiles() throws JobPortalException;
+	public List<ProfileDTO> getProfilesByAccountType(String accountType) throws JobPortalException;
 	public int incrementResumeViewCount(Long profileId) throws JobPortalException;
 }

@@ -46,6 +46,18 @@ public class SubscriptionRequest {
     @Column(length = 500)
     private String adminNote;
 
+    @Column(length = 80)
+    private String requestedPlan;
+
+    @Column(columnDefinition = "bytea")
+    private byte[] paymentStatement;
+
+    @Column(length = 255)
+    private String paymentStatementName;
+
+    @Column(length = 100)
+    private String paymentStatementType;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

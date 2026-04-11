@@ -33,12 +33,13 @@ public class CurrentUserServiceImpl implements CurrentUserService {
 					currentUser.getUsername(),
 					currentUser.getName(),
 					currentUser.getAccountType(),
+					currentUser.getEmployerRole(),
 					currentUser.getProfileId());
 		}
 
 		User user = userRepository.findByEmail(authentication.getName())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-		return new CurrentUser(user.getId(), user.getEmail(), user.getName(), user.getAccountType(), user.getProfileId());
+		return new CurrentUser(user.getId(), user.getEmail(), user.getName(), user.getAccountType(), user.getEmployerRole(), user.getProfileId());
 	}
 }

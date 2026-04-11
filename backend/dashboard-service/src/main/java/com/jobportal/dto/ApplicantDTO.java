@@ -38,13 +38,21 @@ public class ApplicantDTO {
     @NotNull(message = "{applicant.applicationStatus.required}")
     private ApplicationStatus applicationStatus;
     private LocalDateTime interviewTime;
+    private String screeningOwner;
+    private String interviewStatus;
+    private Boolean offerSalaryBandConfirmed;
+    private Boolean offerApprovalsDone;
+    private Boolean offerStartDateConfirmed;
+    private String rejectionReason;
 
     public Applicant toEntity() {
         return new Applicant(
             this.getApplicantId(), this.getName(), this.getEmail(), this.getPhone(),
             this.getWebsite(),
             this.getResume() != null ? Base64.getDecoder().decode(this.getResume()) : null,
-            this.getCoverLetter(), this.getTimestamp(), this.getApplicationStatus(), this.interviewTime
+            this.getCoverLetter(), this.getTimestamp(), this.getApplicationStatus(), this.interviewTime,
+            this.getScreeningOwner(), this.getInterviewStatus(), this.getOfferSalaryBandConfirmed(),
+            this.getOfferApprovalsDone(), this.getOfferStartDateConfirmed(), this.getRejectionReason()
         );
     }
 }

@@ -36,7 +36,8 @@ const ComboInput=()=> {
     variant='unstyled'
     
       store={combobox}
-      withinPortal={false}
+      withinPortal
+      zIndex={900}
       onOptionSubmit={(val) => {
         if (val === '$create') {
           setData((current) => [...current, search]);

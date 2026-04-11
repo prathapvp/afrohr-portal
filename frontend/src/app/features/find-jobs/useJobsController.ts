@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store";
-import { resetFilter } from "../../store/slices/FilterSlice";
 import { hideOverlay, showOverlay } from "../../store/slices/OverlaySlice";
 import { resetSort } from "../../store/slices/SortSlice";
 import { getAllJobs } from "../../services/job-service";
@@ -32,12 +31,16 @@ export function useJobsController() {
   const filter = useAppSelector((state) => (state.filter ?? {}) as FindJobsFilters);
   const sort = useAppSelector((state) => state.sort as SortOption | undefined);
   const [jobList, setJobList] = useState<JobListItem[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isFetchingJobs, setIsFetchingJobs] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
 
     dispatch(resetSort());
     dispatch(showOverlay());
+    setIsFetchingJobs(true);
 
     getAllJobs()
       .then((res) => {
@@ -45,26 +48,30 @@ export function useJobsController() {
           return;
         }
         const jobs = Array.isArray(res) ? (res as JobListItem[]) : [];
-        setJobList(jobs.filter((job) => String(job.jobStatus ?? "").toUpperCase() === "ACTIVE"));
+        setJobList(jobs);
+        setFetchError(null);
       })
       .catch(() => {
         if (active) {
           setJobList([]);
+          setFetchError("We couldn't load recommended jobs right now. Please check backend/API connectivity and try again.");
         }
       })
       .finally(() => {
         if (active) {
+          setIsFetchingJobs(false);
           dispatch(hideOverlay());
         }
       });
 
     return () => {
       active = false;
-      if (!filter.page) {
-        dispatch(resetFilter());
-      }
     };
-  }, [dispatch]);
+  }, [dispatch, reloadKey]);
+
+  const retryJobsFetch = () => {
+    setReloadKey((current) => current + 1);
+  };
 
   const sortedJobs = useMemo(() => {
     const comparator = bySort(sort);
@@ -95,5 +102,8 @@ export function useJobsController() {
     dispatch,
     filter,
     filteredJobs,
+    fetchError,
+    isFetchingJobs,
+    retryJobsFetch,
   };
 }

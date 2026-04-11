@@ -1,6 +1,7 @@
 package com.jobportal.entity;
 
 import com.jobportal.dto.AccountType;
+import com.jobportal.dto.EmployerRole;
 import com.jobportal.dto.UserDTO;
 
 import jakarta.persistence.*;
@@ -28,9 +29,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
 
+    @Enumerated(EnumType.STRING)
+    private EmployerRole employerRole;
+
     private Long profileId;
 
     public UserDTO toDTO() {
-        return new UserDTO(this.id, this.name, this.email, this.password, this.accountType, this.profileId);
+        return new UserDTO(this.id, this.name, this.email, this.password, this.accountType, this.employerRole, this.profileId);
     }
 }

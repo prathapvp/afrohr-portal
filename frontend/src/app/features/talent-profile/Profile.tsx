@@ -113,9 +113,18 @@ const Profile = () => {
         const email = String(profile?.email || "").trim();
 
         if (mobile) {
-            const normalizedMobile = mobile.replace(/\s+/g, "");
-            window.open(`https://wa.me/${normalizedMobile}`, "_blank", "noopener,noreferrer");
-            return;
+            let decodedMobile = mobile;
+            try {
+                decodedMobile = decodeURIComponent(mobile);
+            } catch {
+                decodedMobile = mobile;
+            }
+
+            const whatsappDigits = decodedMobile.replace(/\D+/g, "");
+            if (whatsappDigits) {
+                window.open(`https://wa.me/${whatsappDigits}`, "_blank", "noopener,noreferrer");
+                return;
+            }
         }
 
         if (email) {
@@ -130,7 +139,7 @@ const Profile = () => {
         <div data-aos="zoom-out" className="w-full">
             <section className="overflow-hidden rounded-3xl border border-white/12 bg-[linear-gradient(170deg,rgba(10,19,39,0.9),rgba(5,10,20,0.88))]">
                 <div className="relative">
-                    <img className="h-44 w-full object-cover sm:h-56" src={profile?.banner || "/Profile/banner.svg"} alt={`${profile?.name ?? "User"} banner`} />
+                    <img className="h-44 w-full object-cover sm:h-56" src={profile?.banner ? `data:image/jpeg;base64,${profile.banner}` : "/Profile/banner.svg"} alt={`${profile?.name ?? "User"} banner`} />
                     <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(4,7,14,0.05),rgba(4,7,14,0.65)_85%)]" />
                     <div className="absolute -bottom-14 left-5 sm:-bottom-16 sm:left-7">
                         <Avatar

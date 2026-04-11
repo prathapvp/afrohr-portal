@@ -17,4 +17,10 @@ public class Application {
     private LocalDateTime interviewTime;
     @NotNull(message = "application.status.required")
     private ApplicationStatus applicationStatus;
+    private String screeningOwner;
+    private String interviewStatus;
+    private Boolean offerSalaryBandConfirmed;
+    private Boolean offerApprovalsDone;
+    private Boolean offerStartDateConfirmed;
+    private String rejectionReason;
 }

@@ -1,4 +1,4 @@
-package com.jobportal.api;
+	package com.jobportal.api;
 
 import java.util.List;
 import java.util.Locale;
@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jobportal.dto.AccountType;
+import com.jobportal.dto.EmployerRole;
 import com.jobportal.entity.MetadataEntry;
 import com.jobportal.entity.MetadataType;
 import com.jobportal.exception.JobPortalException;
@@ -64,11 +66,15 @@ public class MetadataAPI {
         return null;
     }
 
-    private void enforceAdminAccess() throws JobPortalException {
+    private void enforceMetadataAccess() throws JobPortalException {
         CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
-        if (!currentUser.isAdmin()) {
-            throw new JobPortalException("Admin access required for metadata operations");
+        if (currentUser.isAdmin()) {
+            return;
         }
+        if (currentUser.accountType() == AccountType.EMPLOYER && currentUser.employerRole() != EmployerRole.VIEWER) {
+            return;
+        }
+        throw new JobPortalException("Admin or employer write access required for metadata operations");
     }
 
     private String titleCasePath(String path) {
@@ -93,7 +99,7 @@ public class MetadataAPI {
 
     @PostMapping("/departments")
     public ResponseEntity<?> createDepartment(@RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         ResponseEntity<?> validation = validatePayload(request);
         if (validation != null) {
             return validation;
@@ -114,7 +120,7 @@ public class MetadataAPI {
 
     @PutMapping("/departments/{id}")
     public ResponseEntity<?> updateDepartment(@PathVariable Long id, @RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         ResponseEntity<?> validation = validatePayload(request);
         if (validation != null) {
             return validation;
@@ -132,10 +138,10 @@ public class MetadataAPI {
 
     @DeleteMapping("/departments/{id}")
     public ResponseEntity<?> deleteDepartment(@PathVariable Long id) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return metadataEntryRepository.findByIdAndType(id, MetadataType.DEPARTMENT)
                 .<ResponseEntity<?>>map(entry -> {
-                    metadataEntryRepository.delete(entry);
+                    metadataEntryRepository.delete(Objects.requireNonNull(entry));
                     return ResponseEntity.ok(new MessageResponse("Department deleted successfully."));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Department not found.")));
@@ -155,19 +161,19 @@ public class MetadataAPI {
 
     @PostMapping("/industries")
     public ResponseEntity<?> createIndustry(@RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return createByType("industries", request);
     }
 
     @PutMapping("/industries/{id}")
     public ResponseEntity<?> updateIndustry(@PathVariable Long id, @RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return updateByType("industries", id, request);
     }
 
     @DeleteMapping("/industries/{id}")
     public ResponseEntity<?> deleteIndustry(@PathVariable Long id) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return deleteByType("industries", id);
     }
 
@@ -185,19 +191,19 @@ public class MetadataAPI {
 
     @PostMapping("/employment-types")
     public ResponseEntity<?> createEmploymentType(@RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return createByType("employment-types", request);
     }
 
     @PutMapping("/employment-types/{id}")
     public ResponseEntity<?> updateEmploymentType(@PathVariable Long id, @RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return updateByType("employment-types", id, request);
     }
 
     @DeleteMapping("/employment-types/{id}")
     public ResponseEntity<?> deleteEmploymentType(@PathVariable Long id) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return deleteByType("employment-types", id);
     }
 
@@ -215,19 +221,19 @@ public class MetadataAPI {
 
     @PostMapping("/work-modes")
     public ResponseEntity<?> createWorkMode(@RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return createByType("work-modes", request);
     }
 
     @PutMapping("/work-modes/{id}")
     public ResponseEntity<?> updateWorkMode(@PathVariable Long id, @RequestBody MetadataRequest request) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return updateByType("work-modes", id, request);
     }
 
     @DeleteMapping("/work-modes/{id}")
     public ResponseEntity<?> deleteWorkMode(@PathVariable Long id) throws JobPortalException {
-        enforceAdminAccess();
+        enforceMetadataAccess();
         return deleteByType("work-modes", id);
     }
 
@@ -272,7 +278,7 @@ public class MetadataAPI {
         MetadataType type = resolveType(path);
         return metadataEntryRepository.findByIdAndType(id, type)
                 .<ResponseEntity<?>>map(entry -> {
-                    metadataEntryRepository.delete(entry);
+                    metadataEntryRepository.delete(Objects.requireNonNull(entry));
                     return ResponseEntity.ok(new MessageResponse(titleCasePath(path) + " deleted successfully."));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse(titleCasePath(path) + " not found.")));

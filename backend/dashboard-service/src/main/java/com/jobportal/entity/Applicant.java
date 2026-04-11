@@ -24,13 +24,21 @@ public class Applicant {
     private LocalDateTime timestamp;
     private ApplicationStatus applicationStatus;
     private LocalDateTime interviewTime;
+    private String screeningOwner;
+    private String interviewStatus;
+    private Boolean offerSalaryBandConfirmed;
+    private Boolean offerApprovalsDone;
+    private Boolean offerStartDateConfirmed;
+    private String rejectionReason;
 
     public ApplicantDTO toDTO() {
         return new ApplicantDTO(
             this.getApplicantId(), this.getName(), this.getEmail(), this.getPhone(),
             this.getWebsite(),
             this.getResume() != null ? Base64.getEncoder().encodeToString(this.getResume()) : null,
-            this.getCoverLetter(), this.getTimestamp(), this.getApplicationStatus(), this.interviewTime
+            this.getCoverLetter(), this.getTimestamp(), this.getApplicationStatus(), this.interviewTime,
+            this.getScreeningOwner(), this.getInterviewStatus(), this.getOfferSalaryBandConfirmed(),
+            this.getOfferApprovalsDone(), this.getOfferStartDateConfirmed(), this.getRejectionReason()
         );
     }
 }

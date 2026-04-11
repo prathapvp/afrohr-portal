@@ -7,6 +7,24 @@ import { signupValidation } from "../../services/form-validation";
 import { errorNotification, successNotification } from "../../services/NotificationService";
 import { useInterval } from "@mantine/hooks";
 
+const getPasswordChecks = (password: string) => ({
+    minLength: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    digit: /\d/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+});
+
+const getPasswordStrength = (password: string) => {
+    const checks = getPasswordChecks(password);
+    const score = Object.values(checks).filter(Boolean).length;
+
+    if (!password) return { score: 0, label: "Add a password", barClass: "bg-slate-500/40" };
+    if (score <= 2) return { score, label: "Weak", barClass: "bg-rose-500" };
+    if (score <= 4) return { score, label: "Medium", barClass: "bg-amber-500" };
+    return { score, label: "Strong", barClass: "bg-emerald-500" };
+};
+
 const SignUp = () => {
     const authFieldStyles = {
         label: { color: "rgba(241, 245, 249, 0.92)", fontWeight: 600, marginBottom: 6 },
@@ -35,6 +53,8 @@ const SignUp = () => {
     const [resendLoader, setResendLoader] = useState(false);
     const [time, setTime] = useState(60);
     const navigate=useNavigate();
+    const passwordStrength = getPasswordStrength(data.password);
+    const passwordChecks = getPasswordChecks(data.password);
     const interval = useInterval(() => {
         if (time === 0) {
             setResendLoader(false);
@@ -152,14 +172,55 @@ const SignUp = () => {
     overlayProps={{ radius: 'sm', blur: 2 }}
     loaderProps={{ color: 'orange', type: 'bars' }}
     /> <div className="auth-form-panel w-1/2 sm-mx:py-10 sm-mx:w-full px-16 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center py-10">
+        <div className="mb-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] ${!otpStep ? "bg-orange-500 text-white" : "bg-slate-700 text-slate-200"}`}>1</span>
+                <span className={!otpStep ? "text-orange-300" : "text-slate-400"}>Account Details</span>
+                <span className="mx-1 h-px flex-1 bg-white/15" />
+                <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] ${otpStep ? "bg-orange-500 text-white" : "bg-slate-700 text-slate-200"}`}>2</span>
+                <span className={otpStep ? "text-orange-300" : "text-slate-400"}>Verify Email</span>
+            </div>
+        </div>
         <div className="auth-form-title text-2xl font-bold text-slate-50">Create Account</div>
         <p className="-mt-1 mb-1 text-sm text-slate-300">Start your career journey today</p>
         {!otpStep ? <>
         <TextInput value={data.name} error={formError.name} name="name" onChange={handleChange} leftSection={<IconUser size={16} stroke={1.5} />} label="Full Name" withAsterisk placeholder="Your name" size="sm" styles={authFieldStyles} />
         <TextInput error={formError.email} value={data.email} name="email" onChange={handleChange} leftSection={<IconAt size={16} stroke={1.5} />} label="Email" withAsterisk placeholder="Your email" size="sm" styles={authFieldStyles} />
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <PasswordInput className="flex-1" value={data.password} error={formError.password} name="password" onChange={handleChange} leftSection={<IconLock size={16} stroke={1.5} />} label="Password" withAsterisk placeholder="Password" size="sm" styles={authFieldStyles} />
-            <PasswordInput className="flex-1" value={data.confirmPassword} error={formError.confirmPassword} name="confirmPassword" onChange={handleChange} leftSection={<IconLock size={16} stroke={1.5} />} label="Confirm Password" withAsterisk placeholder="Confirm" size="sm" styles={authFieldStyles} />
+            <PasswordInput
+                className="flex-1"
+                value={data.confirmPassword}
+                error={formError.confirmPassword}
+                name="confirmPassword"
+                onChange={handleChange}
+                onPaste={(event) => event.preventDefault()}
+                onDrop={(event) => event.preventDefault()}
+                leftSection={<IconLock size={16} stroke={1.5} />}
+                label="Confirm Password"
+                withAsterisk
+                placeholder="Confirm"
+                size="sm"
+                styles={authFieldStyles}
+            />
+        </div>
+        <div className="-mt-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+            <div className="mb-1 flex items-center justify-between text-[11px]">
+                <span className="font-medium text-slate-300">Password Strength</span>
+                <span className={`font-semibold ${passwordStrength.score >= 5 ? "text-emerald-300" : passwordStrength.score >= 3 ? "text-amber-300" : "text-rose-300"}`}>
+                    {passwordStrength.label}
+                </span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-700/70">
+                <div className={`h-full transition-all duration-200 ${passwordStrength.barClass}`} style={{ width: `${(passwordStrength.score / 5) * 100}%` }} />
+            </div>
+            <div className="mt-2 grid grid-cols-1 gap-1 text-[11px] text-slate-400 sm:grid-cols-2">
+                <span className={passwordChecks.minLength ? "text-emerald-300" : ""}>• At least 8 characters</span>
+                <span className={passwordChecks.upper ? "text-emerald-300" : ""}>• One uppercase letter</span>
+                <span className={passwordChecks.lower ? "text-emerald-300" : ""}>• One lowercase letter</span>
+                <span className={passwordChecks.digit ? "text-emerald-300" : ""}>• One number</span>
+                <span className={passwordChecks.special ? "text-emerald-300" : ""}>• One special character</span>
+            </div>
         </div>
         <div className="mt-1">
             <div className="mb-2 text-sm font-medium text-slate-200">I am a <span className="text-rose-400">*</span></div>
@@ -168,6 +229,8 @@ const SignUp = () => {
                     <button
                         key={type.value}
                         type="button"
+                        disabled={otpStep}
+                        aria-disabled={otpStep}
                         onClick={() => setData({ ...data, accountType: type.value })}
                         className={`group relative flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 transition-all duration-200 cursor-pointer
                             ${data.accountType === type.value
@@ -195,6 +258,7 @@ const SignUp = () => {
                 <div className="text-sm font-medium text-slate-100">Verify your email</div>
                 <div className="mt-1 text-xs text-slate-300">Enter the 6-digit code sent to</div>
                 <div className="mt-0.5 text-sm font-semibold text-orange-400">{data.email}</div>
+                <div className="mt-1 text-[11px] text-slate-400">Account type locked: <span className="font-semibold text-slate-200">{accountTypes.find((type) => type.value === data.accountType)?.label}</span></div>
             </div>
             <div className="my-2">
                 <PinInput length={6} type="number" onComplete={handleVerifyOtp} size="md" gap="sm" />

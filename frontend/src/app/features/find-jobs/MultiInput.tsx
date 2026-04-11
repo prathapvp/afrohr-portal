@@ -84,7 +84,7 @@ const MultiInput = (props: MultiInputProps) => {
         ));
 
     return (
-        <Combobox  store={combobox} onOptionSubmit={handleValueSelect} withinPortal={false}>
+        <Combobox store={combobox} onOptionSubmit={handleValueSelect} withinPortal zIndex={900}>
             <Combobox.DropdownTarget>
                 <PillsInput variant='unstyled' size="sm" pointer onClick={() => combobox.toggleDropdown()}
                     leftSection={<div className="bg-mine-shaft-900 rounded-full mr-2 text-bright-sun-400 p-1"><props.icon size={20} /> </div>}

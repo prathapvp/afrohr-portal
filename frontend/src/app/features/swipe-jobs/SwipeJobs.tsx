@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IconBriefcase, IconClockHour3, IconHeart, IconMapPin, IconSparkles, IconX } from "@tabler/icons-react";
-import { Button, Text } from "@mantine/core";
+import { Button, Drawer, Text } from "@mantine/core";
 import { useAppDispatch, useAppSelector } from "../../store";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { getAllJobs } from "../../services/job-service";
 import { changeProfile } from "../../store/slices/ProfileSlice";
 import { computeMatchScore } from "../../services/match-service";
@@ -35,10 +35,27 @@ interface SwipeProfile {
     [key: string]: unknown;
 }
 
+interface LastSwipeAction {
+    job: SwipeJob;
+    direction: "left" | "right";
+    addedToSaved: boolean;
+}
+
 // ── Single job card rendered inside the stack ─────────────────────────────────
-const SwipeCard = ({ job, posX, profile }: { job: SwipeJob; posX: number; profile: SwipeProfile }) => {
+const SwipeCard = ({
+    job,
+    posX,
+    profile,
+    onPreviewJob,
+}: {
+    job: SwipeJob;
+    posX: number;
+    profile: SwipeProfile;
+    onPreviewJob?: () => void;
+}) => {
     const match = computeMatchScore(job, profile);
     const showMatch = (profile?.skills?.length ?? 0) + (profile?.itSkills?.length ?? 0) > 0;
+    const isSaved = Array.isArray(profile?.savedJobs) && profile.savedJobs.includes(job.id);
 
     const saveOpacity = Math.max(0, Math.min(1, posX / SWIPE_THRESHOLD));
     const skipOpacity = Math.max(0, Math.min(1, -posX / SWIPE_THRESHOLD));
@@ -82,16 +99,23 @@ const SwipeCard = ({ job, posX, profile }: { job: SwipeJob; posX: number; profil
                         <div className="text-xs text-mine-shaft-400">{job.company}</div>
                     </div>
                 </div>
-                {showMatch && match.score > 0 && (
-                    <div className={`flex items-center gap-0.5 px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
-                        match.score >= 70 ? "bg-green-500 text-white" :
-                        match.score >= 40 ? "bg-yellow-400 text-black" :
-                        "bg-red-500 text-white"
-                    }`}>
-                        <IconSparkles size={10} stroke={2} />
-                        {match.score}%
-                    </div>
-                )}
+                <div className="flex flex-col items-end gap-2">
+                    {isSaved && (
+                        <div className="rounded-full border border-emerald-300/35 bg-emerald-400/12 px-2.5 py-1 text-[11px] font-semibold text-emerald-200">
+                            Saved job
+                        </div>
+                    )}
+                    {showMatch && match.score > 0 && (
+                        <div className={`flex items-center gap-0.5 px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
+                            match.score >= 70 ? "bg-green-500 text-white" :
+                            match.score >= 40 ? "bg-yellow-400 text-black" :
+                            "bg-red-500 text-white"
+                        }`}>
+                            <IconSparkles size={10} stroke={2} />
+                            {match.score}%
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Tags */}
@@ -140,14 +164,35 @@ const SwipeCard = ({ job, posX, profile }: { job: SwipeJob; posX: number; profil
                     <IconClockHour3 size={13} />{timeAgo(job.postTime)}
                 </span>
             </div>
+
+            {onPreviewJob && (
+                <Button
+                    variant="light"
+                    color="brightSun.4"
+                    fullWidth
+                    className="mt-2 !font-semibold"
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onPreviewJob();
+                    }}
+                >
+                    Quick Preview
+                </Button>
+            )}
         </div>
     );
 };
 
 // ── Main SwipeJobs component ──────────────────────────────────────────────────
-const SwipeJobs = () => {
+interface SwipeJobsProps {
+    embedded?: boolean;
+}
+
+const SwipeJobs = ({ embedded = false }: SwipeJobsProps) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
     const profile = useAppSelector((state) => state.profile as SwipeProfile);
 
     const [jobs, setJobs] = useState<SwipeJob[]>([]);
@@ -155,7 +200,8 @@ const SwipeJobs = () => {
     const [seenIds, setSeenIds] = useState<number[]>(() =>
         JSON.parse(localStorage.getItem(SEEN_KEY) || "[]")
     );
-    const [savedCount, setSavedCount] = useState(0);
+    const [lastSwipe, setLastSwipe] = useState<LastSwipeAction | null>(null);
+    const [previewJob, setPreviewJob] = useState<SwipeJob | null>(null);
 
     // Drag state
     const [dragging, setDragging] = useState(false);
@@ -173,21 +219,30 @@ const SwipeJobs = () => {
     }, []);
 
     const pendingJobs = jobs.filter((j) => !seenIds.includes(j.id));
+    const savedCount = Array.isArray(profile.savedJobs) ? profile.savedJobs.length : 0;
+    const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
 
     const markSeen = useCallback((id: number) => {
         setSeenIds((prev) => {
+            if (prev.includes(id)) {
+                return prev;
+            }
             const next = [...prev, id];
             localStorage.setItem(SEEN_KEY, JSON.stringify(next));
             return next;
         });
     }, []);
 
-    const animateAndAdvance = useCallback((direction: "left" | "right") => {
+    const animateAndAdvance = useCallback((direction: "left" | "right", addedToSaved = false) => {
         const dx = direction === "right" ? 700 : -700;
         setPosX(dx);
         setTimeout(() => {
             const job = pendingJobs[0];
-            if (job) markSeen(job.id);
+            if (job) {
+                markSeen(job.id);
+                setLastSwipe({ job, direction, addedToSaved });
+                setPreviewJob((current) => current?.id === job.id ? null : current);
+            }
             setPosX(0);
             setDragging(false);
         }, 350);
@@ -197,17 +252,39 @@ const SwipeJobs = () => {
         const job = pendingJobs[0];
         if (!job) return;
         const saved = Array.isArray(profile.savedJobs) ? [...profile.savedJobs] : [];
+        let addedToSaved = false;
         if (!saved.includes(job.id)) {
             dispatch(changeProfile({ ...profile, savedJobs: [...saved, job.id] }));
-            setSavedCount((n) => n + 1);
+            addedToSaved = true;
         }
-        animateAndAdvance("right");
+        animateAndAdvance("right", addedToSaved);
     }, [pendingJobs, profile, dispatch, animateAndAdvance]);
 
     const doSkip = useCallback(() => {
         if (!pendingJobs[0]) return;
         animateAndAdvance("left");
     }, [pendingJobs, animateAndAdvance]);
+
+    const undoLastSwipe = useCallback(() => {
+        if (!lastSwipe) {
+            return;
+        }
+
+        setSeenIds((prev) => {
+            const next = prev.filter((id) => id !== lastSwipe.job.id);
+            localStorage.setItem(SEEN_KEY, JSON.stringify(next));
+            return next;
+        });
+
+        if (lastSwipe.direction === "right" && lastSwipe.addedToSaved) {
+            const saved = Array.isArray(profile.savedJobs) ? profile.savedJobs.filter((id) => id !== lastSwipe.job.id) : [];
+            dispatch(changeProfile({ ...profile, savedJobs: saved }));
+        }
+
+        setLastSwipe(null);
+        setPosX(0);
+        setDragging(false);
+    }, [lastSwipe, profile, dispatch]);
 
     const handlePointerDown = (e: React.PointerEvent) => {
         setDragging(true);
@@ -254,7 +331,6 @@ const SwipeJobs = () => {
                         onClick={() => {
                             localStorage.removeItem(SEEN_KEY);
                             setSeenIds([]);
-                            setSavedCount(0);
                         }}
                     >
                         Start over
@@ -274,24 +350,121 @@ const SwipeJobs = () => {
     // ── Card stack ───────────────────────────────────────────────────────────
     const stack = pendingJobs.slice(0, 3);
     const progress = ((jobs.length - pendingJobs.length) / Math.max(jobs.length, 1)) * 100;
+    const reviewedCount = jobs.length - pendingJobs.length;
+    const previewMatch = previewJob ? computeMatchScore(previewJob, profile) : null;
+    const previewSkills = previewMatch?.matchedSkills.slice(0, 6) ?? [];
 
     return (
-        <div className="min-h-screen flex flex-col items-center px-4 pb-12 pt-6 select-none font-['poppins']">
-            {/* Header */}
-            <div className="mb-3 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.28)]">
-                <div className="mb-1 flex items-center justify-between">
-                <button
-                    onClick={() => navigate("/find-jobs")}
-                    className="text-mine-shaft-400 hover:text-mine-shaft-200 text-sm transition-colors"
-                >
-                    ← Back
-                </button>
-                <div className="flex items-center gap-1.5 text-bright-sun-400 font-bold text-lg">
-                    <IconSparkles size={18} stroke={2} /> Swipe Jobs
+        <div className={`flex flex-col items-center px-4 pb-12 select-none font-['poppins'] ${embedded ? "min-h-0 pt-4" : "min-h-screen pt-6"}`}>
+            <Drawer
+                opened={Boolean(previewJob)}
+                onClose={() => setPreviewJob(null)}
+                position="right"
+                size="md"
+                title={previewJob?.jobTitle ?? "Job Preview"}
+                overlayProps={{ backgroundOpacity: 0.55, blur: 4 }}
+                classNames={{ body: "bg-[#0a1020]", header: "bg-[#0a1020] border-b border-white/10", content: "bg-[#0a1020] text-white" }}
+            >
+                {previewJob && (
+                    <div className="space-y-4 text-sm text-slate-200">
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <div className="text-lg font-bold text-white">{previewJob.jobTitle}</div>
+                                    <div className="mt-1 text-sm text-slate-400">{previewJob.company}</div>
+                                </div>
+                                {previewMatch && previewMatch.score > 0 && (
+                                    <div className="rounded-full bg-bright-sun-400/15 px-3 py-1 text-xs font-semibold text-bright-sun-200">
+                                        {previewMatch.score}% match
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {previewJob.experience && <span className="rounded-full border border-bright-sun-400/25 bg-bright-sun-400/10 px-2.5 py-1 text-xs text-bright-sun-300">{previewJob.experience}</span>}
+                                {previewJob.jobType && <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-xs text-cyan-200">{previewJob.jobType}</span>}
+                                {previewJob.workMode && <span className="rounded-full border border-fuchsia-300/25 bg-fuchsia-400/10 px-2.5 py-1 text-xs text-fuchsia-200">{previewJob.workMode}</span>}
+                                {previewJob.location && <span className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-200">{previewJob.location}</span>}
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
+                                <span>{previewJob.hideSalary ? "Salary hidden" : `$${previewJob.packageOffered}K${previewJob.maxPackageOffered ? ` - $${previewJob.maxPackageOffered}K` : ""}`}</span>
+                                <span className="flex items-center gap-1"><IconClockHour3 size={13} />{timeAgo(previewJob.postTime)}</span>
+                            </div>
+                        </div>
+
+                        {previewSkills.length > 0 && (
+                            <div>
+                                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Why It Matches</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {previewSkills.map((skill) => (
+                                        <span key={skill} className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-200">
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Role Summary</div>
+                            <Text className="!text-sm !leading-6 !text-slate-300">
+                                {previewJob.description || previewJob.about || "No description available for this job yet."}
+                            </Text>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <Button
+                                fullWidth
+                                variant="light"
+                                color="gray"
+                                onClick={() => setPreviewJob(null)}
+                            >
+                                Back to Swipe
+                            </Button>
+                            <Button
+                                fullWidth
+                                variant="gradient"
+                                gradient={{ from: "brightSun.5", to: "orange.6", deg: 90 }}
+                                onClick={() => navigate(`/jobs/${previewJob.id}?returnTo=${returnTo}`)}
+                            >
+                                Open Full Job
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Drawer>
+            {!embedded && (
+                <div className="mb-3 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.28)]">
+                    <div className="mb-1 flex items-center justify-between">
+                    <button
+                        onClick={() => navigate("/find-jobs")}
+                        className="text-mine-shaft-400 hover:text-mine-shaft-200 text-sm transition-colors"
+                    >
+                        ← Back
+                    </button>
+                    <div className="flex items-center gap-1.5 text-bright-sun-400 font-bold text-lg">
+                        <IconSparkles size={18} stroke={2} /> Swipe Jobs
+                    </div>
+                    <div className="text-mine-shaft-500 text-sm">{pendingJobs.length} left</div>
+                    </div>
+                    <div className="text-[11px] text-mine-shaft-400">Save your favorites with right swipe and skip with left swipe.</div>
                 </div>
-                <div className="text-mine-shaft-500 text-sm">{pendingJobs.length} left</div>
+            )}
+
+            <div className="mb-4 grid w-full max-w-sm grid-cols-3 gap-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-center">
+                    <div className="text-[10px] uppercase tracking-[0.14em] text-mine-shaft-500">Remaining</div>
+                    <div className="mt-1 text-lg font-bold text-white">{pendingJobs.length}</div>
                 </div>
-                <div className="text-[11px] text-mine-shaft-400">Save your favorites with right swipe and skip with left swipe.</div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-center">
+                    <div className="text-[10px] uppercase tracking-[0.14em] text-mine-shaft-500">Saved</div>
+                    <div className="mt-1 text-lg font-bold text-emerald-300">{savedCount}</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-center">
+                    <div className="text-[10px] uppercase tracking-[0.14em] text-mine-shaft-500">Reviewed</div>
+                    <div className="mt-1 text-lg font-bold text-bright-sun-300">{reviewedCount}</div>
+                </div>
             </div>
 
             {/* Progress bar */}
@@ -334,7 +507,12 @@ const SwipeJobs = () => {
                             onPointerUp={isTop ? handlePointerUp : undefined}
                             onPointerCancel={isTop ? () => { setDragging(false); setPosX(0); } : undefined}
                         >
-                            <SwipeCard job={job} posX={isTop ? posX : 0} profile={profile} />
+                            <SwipeCard
+                                job={job}
+                                posX={isTop ? posX : 0}
+                                profile={profile}
+                                onPreviewJob={isTop ? () => setPreviewJob(job) : undefined}
+                            />
                         </div>
                     );
                 })}
@@ -356,6 +534,19 @@ const SwipeJobs = () => {
                 >
                     <IconHeart size={28} className="text-green-400" stroke={2} />
                 </button>
+            </div>
+
+            <div className="mt-4 flex min-h-10 items-center justify-center">
+                {lastSwipe && (
+                    <Button
+                        size="compact-md"
+                        variant="light"
+                        color="gray"
+                        onClick={undoLastSwipe}
+                    >
+                        Undo last {lastSwipe.direction === "right" ? "save" : "skip"}
+                    </Button>
+                )}
             </div>
 
             <p className="text-mine-shaft-700 text-xs mt-5">Drag or tap buttons · Right = Save · Left = Skip</p>

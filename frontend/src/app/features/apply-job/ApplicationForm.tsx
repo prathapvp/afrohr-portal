@@ -71,6 +71,8 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
             const resumePayload = typeof resumeBase64 === "string" ? resumeBase64.split(",")[1] : undefined;
 
             await applyToMyJob(effectiveJobId, {
+                applicantName: form.getValues().name,
+                applicantEmail: form.getValues().email,
                 applicantPhone: form.getValues().phone,
                 website: form.getValues().website,
                 resumeUrl: resumePayload,
@@ -96,8 +98,8 @@ const ApplicationForm = ({ jobId, onSuccess }: ApplicationFormProps) => {
         mode: 'controlled',
         validateInputOnChange: true,
         initialValues: {
-            name: user.name,
-            email: user.email,
+            name: user?.name || '',
+            email: user?.email || '',
             phone: profile?.phone || '',
             website: profile?.website || '',
             resume: null,

@@ -2,6 +2,8 @@ package com.jobportal.api;
 
 import java.util.List;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.jobportal.entity.SubscriptionRequest;
 
 import com.jobportal.dto.AdminOverviewDTO;
 import com.jobportal.dto.EmployerSubscriptionDTO;
@@ -61,6 +65,12 @@ public class AdminAPI {
         return ResponseEntity.ok(employerSubscriptionService.upsertEmployerSubscription(employerId, request));
     }
 
+    @PostMapping("/subscriptions/{employerId}/reset-usage")
+    public ResponseEntity<EmployerSubscriptionDTO> resetSubscriptionUsage(
+            @PathVariable Long employerId) throws JobPortalException {
+        return ResponseEntity.ok(employerSubscriptionService.resetMonthlyResumeUsage(employerId));
+    }
+
     @GetMapping("/subscription-requests")
     public ResponseEntity<List<SubscriptionRequestDTO>> getAllSubscriptionRequests() throws JobPortalException {
         return ResponseEntity.ok(employerSubscriptionService.getAllSubscriptionRequests());
@@ -71,5 +81,21 @@ public class AdminAPI {
             @PathVariable Long requestId,
             @RequestBody @Valid ResolveSubscriptionRequestDTO dto) throws JobPortalException {
         return ResponseEntity.ok(employerSubscriptionService.resolveSubscriptionRequest(requestId, dto));
+    }
+
+    @GetMapping("/subscription-requests/{requestId}/statement")
+    public ResponseEntity<byte[]> downloadStatementAsAdmin(
+            @PathVariable Long requestId) throws JobPortalException {
+        SubscriptionRequest req = employerSubscriptionService.getPaymentStatementForDownload(requestId);
+        HttpHeaders headers = new HttpHeaders();
+        String contentType = req.getPaymentStatementType();
+        if (contentType == null || contentType.isBlank()) {
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        } else {
+            headers.setContentType(MediaType.parseMediaType(contentType));
+        }
+        String disposition = "inline; filename=\"" + (req.getPaymentStatementName() != null ? req.getPaymentStatementName() : "statement") + "\"";
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, disposition);
+        return ResponseEntity.ok().headers(headers).body(req.getPaymentStatement());
     }
 }

@@ -31,4 +31,10 @@ public class UpsertEmployerSubscriptionRequest {
 
     @Positive(message = "{subscription.maxActiveJobs.invalid}")
     private Integer maxActiveJobs;
+
+    @Positive(message = "Resume view limit must be positive")
+    private Integer maxResumeViewsPerMonth;
+
+    @Positive(message = "Resume download limit must be positive")
+    private Integer maxResumeDownloadsPerMonth;
 }

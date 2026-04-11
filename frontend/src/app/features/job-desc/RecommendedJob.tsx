@@ -5,6 +5,8 @@ import { IconArrowRight, IconBuilding, IconMapPin } from "@tabler/icons-react";
 import { Button } from "@mantine/core";
 import { timeAgo } from "../../services/utilities";
 
+const INITIAL_RECOMMENDED_VISIBLE = 6;
+
 interface RecommendedJobProps {
     currentJobId?: number;
 }
@@ -20,6 +22,7 @@ interface RecommendedJobItem {
 
 const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
     const [jobList, setJobList] = useState<RecommendedJobItem[]>([]);
+    const [showAll, setShowAll] = useState(false);
 
     useEffect(() => {
         getAllJobs().then((res) => {
@@ -28,8 +31,11 @@ const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
     }, []);
 
     const recommended = jobList
-        .filter((job) => job?.id && job?.id !== currentJobId && job?.jobStatus !== "CLOSED")
-        .slice(0, 5);
+        .filter((job) => job?.id && job?.id !== currentJobId && job?.jobStatus !== "CLOSED");
+
+    const visibleRecommended = showAll
+        ? recommended
+        : recommended.slice(0, INITIAL_RECOMMENDED_VISIBLE);
 
     return <div className="premium-card-hover rounded-3xl border border-white/12 bg-[linear-gradient(180deg,rgba(17,24,39,0.88),rgba(2,6,23,0.94))] p-5 shadow-[0_18px_48px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -46,7 +52,7 @@ const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
                 </p>
             )}
 
-            {recommended.map((job) => (
+            {visibleRecommended.map((job) => (
                 <Link
                     key={job.id}
                     to={`/jobs/${job.id}`}
@@ -63,6 +69,19 @@ const RecommendedJob = ({ currentJobId }: RecommendedJobProps) => {
                     </div>
                 </Link>
             ))}
+
+            {recommended.length > INITIAL_RECOMMENDED_VISIBLE && (
+                <Button
+                    variant="subtle"
+                    color="gray"
+                    onClick={() => setShowAll((prev) => !prev)}
+                    fullWidth
+                >
+                    {showAll
+                        ? "Show less"
+                        : `Show all ${recommended.length} recommended jobs`}
+                </Button>
+            )}
         </div>
 
         <Link className="mt-4 block" to="/find-jobs">

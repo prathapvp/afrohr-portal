@@ -5,7 +5,7 @@
  * MantineProvider + theme are injected at root level (main.tsx).
  * Legacy routes are nested inside this layout via <Outlet />.
  */
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { Outlet } from "react-router";
 
 /** Context so nested legacy pages can read colorScheme */
@@ -19,8 +19,6 @@ import "@mantine/carousel/styles.css";
 import "@mantine/tiptap/styles.css";
 import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
-import AOS from "aos";
-import "aos/dist/aos.css";
 import "../../App.css";
 import "../../../styles/index.css";
 import PremiumNavbar from "./PremiumNavbar";
@@ -31,11 +29,6 @@ function LegacyShell() {
   const [colorScheme, setColorScheme] = useState<"light" | "dark">("light");
   const toggleColorScheme = () =>
     setColorScheme((prev) => (prev === "dark" ? "light" : "dark"));
-
-  useEffect(() => {
-    AOS.init({ offset: 0, duration: 800, easing: "ease-out" });
-    AOS.refresh();
-  }, []);
 
   return (
     <LegacyThemeCtx.Provider value={colorScheme}>

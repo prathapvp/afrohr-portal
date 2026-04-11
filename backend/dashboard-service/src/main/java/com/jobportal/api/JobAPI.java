@@ -59,6 +59,11 @@ public class JobAPI {
 		return new ResponseEntity<>(jobService.postJob(jobDTO), HttpStatus.CREATED);
 	}
 
+	@PostMapping("/me/{jobId}/close")
+	public ResponseEntity<JobDTO> closeMyJob(@PathVariable Long jobId) throws JobPortalException {
+		return new ResponseEntity<>(jobService.closeJob(jobId), HttpStatus.OK);
+	}
+
 	@PostMapping("/postAll")
 	public ResponseEntity<List<JobDTO>> postAllJob(@RequestBody @Valid List<JobDTO> jobDTOs) throws JobPortalException {
 		return new ResponseEntity<>(jobDTOs.stream().map((x) -> {
@@ -72,8 +77,21 @@ public class JobAPI {
 	}
 
 	@GetMapping("/getAll")
-	public ResponseEntity<List<JobDTO>> getAllJobs() throws JobPortalException {
-		return new ResponseEntity<>(jobService.getAllJobs(), HttpStatus.OK);
+	public ResponseEntity<List<JobDTO>> getAllJobs(@RequestParam(required = false) String postedBy) throws JobPortalException {
+		if (postedBy == null || postedBy.isBlank()) {
+			return new ResponseEntity<>(jobService.getAllJobs(), HttpStatus.OK);
+		}
+
+		if ("me".equalsIgnoreCase(postedBy.trim())) {
+			return new ResponseEntity<>(jobService.getMyPostedJobs(), HttpStatus.OK);
+		}
+
+		try {
+			Long postedById = Long.parseLong(postedBy.trim());
+			return new ResponseEntity<>(jobService.getPublicJobsByPoster(postedById), HttpStatus.OK);
+		} catch (NumberFormatException ex) {
+			throw new JobPortalException("Invalid postedBy filter");
+		}
 	}
 
 	@GetMapping("/get/{id}")
@@ -115,6 +133,15 @@ public class JobAPI {
 	@GetMapping("/me/posted")
 	public ResponseEntity<List<JobDTO>> getMyPostedJobs() throws JobPortalException {
 		return new ResponseEntity<>(jobService.getMyPostedJobs(), HttpStatus.OK);
+	}
+
+	@GetMapping("/me/{jobId}/applications/{applicantId}/resume")
+	public ResponseEntity<ResponseDTO> getApplicantResumeForMyJob(
+			@PathVariable Long jobId,
+			@PathVariable Long applicantId,
+			@RequestParam(defaultValue = "VIEW") String action) throws JobPortalException {
+		String resumeBase64 = jobService.getApplicantResumeForMyJob(jobId, applicantId, action);
+		return new ResponseEntity<>(new ResponseDTO(resumeBase64), HttpStatus.OK);
 	}
 
 	@GetMapping("/history/{id}/{applicationStatus}")

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jobportal.dto.LoginDTO;
+import com.jobportal.dto.EmployerRole;
 import com.jobportal.dto.ResponseDTO;
 import com.jobportal.dto.UserDTO;
 import com.jobportal.exception.JobPortalException;
@@ -21,6 +22,7 @@ import com.jobportal.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 @RestController
@@ -39,6 +41,33 @@ public class UserAPI {
 	@PostMapping("/login")
 	public ResponseEntity<UserDTO> loginUser(@RequestBody @Valid LoginDTO loginDTO) throws JobPortalException {
 		return new ResponseEntity<>(userService.loginUser(loginDTO), HttpStatus.OK);
+	}
+
+	@PostMapping("/employer/link/{email}")
+	public ResponseEntity<UserDTO> linkEmployerMember(
+			@PathVariable @NotBlank(message = "{user.email.absent}") @Email(message = "{user.email.invalid}") String email)
+			throws JobPortalException {
+		return new ResponseEntity<>(userService.linkEmployerMember(email), HttpStatus.OK);
+	}
+
+	@PostMapping("/employer/invite-otp/{email}")
+	public ResponseEntity<ResponseDTO> sendEmployerInviteOtp(
+			@PathVariable @NotBlank(message = "{user.email.absent}") @Email(message = "{user.email.invalid}") String email)
+			throws Exception {
+		userService.sendEmployerInviteOTP(email);
+		return new ResponseEntity<>(new ResponseDTO("Invite OTP sent successfully."), HttpStatus.OK);
+	}
+
+	@GetMapping("/employer/members")
+	public ResponseEntity<java.util.List<UserDTO>> getEmployerMembers() throws JobPortalException {
+		return new ResponseEntity<>(userService.getEmployerMembers(), HttpStatus.OK);
+	}
+
+	@PostMapping("/employer/members/{userId}/role/{role}")
+	public ResponseEntity<UserDTO> updateEmployerMemberRole(
+			@PathVariable @NotNull Long userId,
+			@PathVariable EmployerRole role) throws JobPortalException {
+		return new ResponseEntity<>(userService.updateEmployerMemberRole(userId, role), HttpStatus.OK);
 	}
 
 	@PostMapping("/changePass")

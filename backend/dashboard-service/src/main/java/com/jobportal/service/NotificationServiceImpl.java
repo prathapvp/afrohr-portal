@@ -2,6 +2,7 @@ package com.jobportal.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class NotificationServiceImpl implements NotificationService {
 	public void sendNotification(NotificationDTO notificationDTO) throws JobPortalException {
 		notificationDTO.setStatus(NotificationStatus.UNREAD);
 		notificationDTO.setTimestamp(LocalDateTime.now());
-		notificationRepository.save(notificationDTO.toEntity());
+		notificationRepository.save(Objects.requireNonNull(notificationDTO.toEntity()));
 	}
 
 	@Override
@@ -32,7 +33,8 @@ public class NotificationServiceImpl implements NotificationService {
 
 	@Override
 	public void readNotification(Long id, CurrentUser currentUser) throws JobPortalException {
-		Notification noti = notificationRepository.findById(id)
+		Long safeId = Objects.requireNonNull(id, "Notification ID is required");
+		Notification noti = notificationRepository.findById(safeId)
 				.orElseThrow(() -> new JobPortalException("No Notification found"));
 		if (!currentUser.isAdmin() && !noti.getUserId().equals(currentUser.id())) {
 			throw new JobPortalException("You are not authorized to update this notification");

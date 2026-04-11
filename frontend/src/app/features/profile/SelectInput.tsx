@@ -16,10 +16,11 @@ interface ProfileSelectInputProps {
 
 const SelectInput=(props: ProfileSelectInputProps)=> {
     useEffect(()=>{
-        setData(props.options);
-        setValue(props.form.getInputProps(props.name).value);
-        setSearch(props.form.getInputProps(props.name).value);
-    }, [])
+    setData(Array.isArray(props.options) ? props.options : []);
+    const nextValue = props.form.getInputProps(props.name).value;
+    setValue(typeof nextValue === 'string' ? nextValue : '');
+    setSearch(typeof nextValue === 'string' ? nextValue : '');
+  }, [props.form, props.name, props.options])
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
@@ -28,10 +29,12 @@ const SelectInput=(props: ProfileSelectInputProps)=> {
   const [value, setValue] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
-  const exactOptionMatch = data.some((item) => item === search);
+  const safeSearch = typeof search === 'string' ? search : '';
+
+  const exactOptionMatch = data.some((item) => item === safeSearch);
   const filteredOptions = exactOptionMatch
     ? data
-    : data.filter((item) => item.toLowerCase().includes(search?.toLowerCase().trim()));
+    : data.filter((item) => item.toLowerCase().includes(safeSearch.toLowerCase().trim()));
 
   const options = filteredOptions.map((item) => (
     <Combobox.Option value={item} key={item}>
@@ -42,7 +45,8 @@ const SelectInput=(props: ProfileSelectInputProps)=> {
   return (
     <Combobox
       store={combobox}
-      withinPortal={false}
+      withinPortal
+      zIndex={900}
       onOptionSubmit={(val) => {
         if (val === '$create') {
           setData((current) => [...current, search]);
@@ -83,8 +87,8 @@ const SelectInput=(props: ProfileSelectInputProps)=> {
       <Combobox.Dropdown>
         <Combobox.Options>
         <ScrollArea.Autosize mah={200} type="scroll">
-          {options}
-          {!exactOptionMatch && search?.trim().length > 0 && (
+          {options.length > 0 ? options : <Combobox.Empty>Nothing found</Combobox.Empty>}
+          {!exactOptionMatch && safeSearch.trim().length > 0 && (
             <Combobox.Option value="$create">+ Create {search}</Combobox.Option>
           )}
           </ScrollArea.Autosize>

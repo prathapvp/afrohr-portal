@@ -1,8 +1,12 @@
 import { Button, Divider } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import CandidateFlowNav, { type CandidateBreadcrumbItem } from "../components/navigation/CandidateFlowNav";
 import Job from "../features/job-desc/Job";
 import RecommendedJob from "../features/job-desc/RecommendedJob";
+import {
+    CANDIDATE_FLOW_ROUTE,
+} from "../navigation/candidateFlowNav";
 import { useEffect, useState } from "react";
 import { getJob } from "../services/job-service";
 import { useDispatch } from "react-redux";
@@ -12,16 +16,32 @@ const JobPage = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [job, setJob] = useState<any>(null);
+    const requestedReturnTo = searchParams.get("returnTo");
+    const returnTo = requestedReturnTo && requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
+        ? requestedReturnTo
+        : "/find-jobs";
+    const returnLabel = returnTo.startsWith("/dashboard") ? "Candidate Dashboard" : "Find Jobs";
+    const breadcrumbs: CandidateBreadcrumbItem[] = [
+        { label: "Candidate Dashboard", to: CANDIDATE_FLOW_ROUTE.dashboard },
+        { label: returnLabel, to: returnTo },
+        { label: "Job Detail", activeTone: "brightSun" },
+    ];
+
+    const handleBack = () => {
+        navigate(returnTo);
+    };
+
     useEffect(() => {
         window.scrollTo(0, 0);
         dispatch(showOverlay());
         getJob(id).then((res) => {
             setJob(res);
-            if (res.jobStatus === "CLOSED") navigate(-1);
+            if (res.jobStatus === "CLOSED") navigate(returnTo, { replace: true });
         }).catch((err) => console.log(err))
             .finally(() => dispatch(hideOverlay()));
-    }, [dispatch, id, navigate]);
+    }, [dispatch, id, navigate, returnTo]);
 
     return <div className="min-h-screen bg-gradient-to-br from-[#080b14] via-[#0b1120] to-[#130f24] font-['poppins'] text-white">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -33,13 +53,13 @@ const JobPage = () => {
             <Divider size="xs" color="rgba(255,255,255,0.16)" />
 
             <div className="my-5 flex items-center justify-between gap-4">
-                <Link className="inline-block" to="/find-jobs">
-                    <Button color="brightSun.4" leftSection={<IconArrowLeft size={20} />} variant="light">Back To Jobs</Button>
-                </Link>
+                <Button color="brightSun.4" leftSection={<IconArrowLeft size={20} />} variant="light" onClick={handleBack}>Back</Button>
                 <div className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.2em] text-slate-200 md:block">
                     Premium Job View
                 </div>
             </div>
+
+            <CandidateFlowNav breadcrumbs={breadcrumbs} breadcrumbsClassName="mb-4" />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                 <div>

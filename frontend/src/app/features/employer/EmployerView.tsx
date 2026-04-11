@@ -24,6 +24,7 @@ import { getAllDepartments, type Department } from "../../services/department-se
 import { getAllIndustries, type Industry } from "../../services/industry-service";
 import employmentTypeService, { type EmploymentType } from "../../services/employment-type-service";
 import workModeService, { type WorkMode } from "../../services/workmode-service";
+import { getEmployerMembers, type EmployerMember } from "../../services/user-service";
 import { iconMap, toneClasses } from "../../shared";
 import {
   Briefcase,
@@ -51,6 +52,10 @@ import {
   ArrowDownRight,
   Lightbulb,
   Crown,
+  CreditCard,
+  Search,
+  AlertTriangle,
+  BellRing,
 } from "lucide-react";
 import type {
   EmployerDashboard,
@@ -93,6 +98,14 @@ function formatMoney(value: number, currency: string): string {
     currency,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function getProgressPercentage(used: number, limit?: number | null) {
+  if (!limit || limit <= 0) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
 }
 
 function normalizeOptionKey(value: string): string {
@@ -270,6 +283,8 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   const [subscription, setSubscription] = useState<EmployerSubscription | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<EmployerMember[]>([]);
+  const [teamMembersLoading, setTeamMembersLoading] = useState(false);
   const accountType = (localStorage.getItem("accountType") ?? "").toUpperCase();
   const token = localStorage.getItem("token");
   const isEmployerAuthorized = Boolean(token) && accountType === "EMPLOYER";
@@ -327,8 +342,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
       return;
     }
 
-    resetPostForm();
-    setIsPostJobDialogOpen(true);
+    void navigate("/post-job/0");
   }
 
   useEffect(() => {
@@ -363,6 +377,40 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
     }
 
     void loadSubscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEmployerAuthorized]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadEmployerMembers() {
+      if (!isEmployerAuthorized) {
+        setTeamMembers([]);
+        setTeamMembersLoading(false);
+        return;
+      }
+
+      try {
+        setTeamMembersLoading(true);
+        const data = await getEmployerMembers();
+        if (!cancelled) {
+          setTeamMembers(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setTeamMembers([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setTeamMembersLoading(false);
+        }
+      }
+    }
+
+    void loadEmployerMembers();
 
     return () => {
       cancelled = true;
@@ -615,6 +663,162 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
   const visibleLegacyJobs = legacyJobs
     .filter((job) => job.jobStatus === legacyTab)
     .sort((a, b) => new Date(b.postTime ?? 0).getTime() - new Date(a.postTime ?? 0).getTime());
+  const latestWorkspaceJob = [...legacyJobs].sort((a, b) => new Date(b.postTime ?? 0).getTime() - new Date(a.postTime ?? 0).getTime())[0] ?? null;
+  const ownerCount = teamMembers.filter((member) => member.employerRole === "OWNER").length;
+  const latestWorkspaceJobTitle = latestWorkspaceJob?.jobTitle ?? "No jobs yet";
+  const latestWorkspaceJobDetail = latestWorkspaceJob?.postTime
+    ? `Updated on ${new Date(latestWorkspaceJob.postTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} with status ${latestWorkspaceJob.jobStatus.toLowerCase()}.`
+    : latestWorkspaceJob
+      ? `Current status is ${latestWorkspaceJob.jobStatus.toLowerCase()}.`
+      : "Create your first employer posting.";
+  const workspaceSummary = [
+    {
+      key: "team",
+      label: "Team Access",
+      value: teamMembersLoading ? "Loading..." : `${teamMembers.length}`,
+      detail: teamMembers.length === 1 ? "1 member in workspace" : `${teamMembers.length} members in workspace`,
+      accentClass: "from-cyan-500/20 to-blue-500/10",
+      icon: Users,
+    },
+    {
+      key: "activity",
+      label: "Latest Job Activity",
+      value: latestWorkspaceJob?.jobTitle ?? "No jobs yet",
+      detail: latestWorkspaceJob?.postTime
+        ? `Updated ${new Date(latestWorkspaceJob.postTime).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+        : "Create your first employer posting",
+      accentClass: "from-violet-500/20 to-fuchsia-500/10",
+      icon: Activity,
+    },
+    {
+      key: "renewal",
+      label: "Renewal Urgency",
+      value: subscription
+        ? subscription.remainingDays <= 14
+          ? `${Math.max(subscription.remainingDays, 0)}d left`
+          : "On track"
+        : subscriptionLoading
+          ? "Checking..."
+          : "No plan",
+      detail: subscription
+        ? subscription.remainingDays <= 14
+          ? "Renew soon to avoid posting disruption"
+          : `Plan ${subscription.planName} is healthy`
+        : getSubscriptionBlockReason(),
+      accentClass: subscription && subscription.remainingDays <= 14 ? "from-amber-500/20 to-orange-500/10" : "from-emerald-500/20 to-teal-500/10",
+      icon: Crown,
+    },
+  ];
+  const employerActivityFeed = [
+    subscription && subscription.remainingDays <= 14
+      ? {
+          key: "renewal-alert",
+          title: "Renewal window is tightening",
+          detail: `${Math.max(subscription.remainingDays, 0)} day${Math.max(subscription.remainingDays, 0) === 1 ? "" : "s"} left on ${subscription.planName}. Renew now to avoid posting interruptions.`,
+          toneClass: "border-amber-400/20 bg-amber-500/10 text-amber-100",
+          meta: "Subscription",
+          actionLabel: "Renew now",
+          actionKey: "renewal",
+        }
+      : null,
+    latestWorkspaceJob
+      ? {
+          key: "latest-job",
+          title: `Latest job activity: ${latestWorkspaceJobTitle}`,
+          detail: latestWorkspaceJobDetail,
+          toneClass: "border-cyan-400/20 bg-cyan-500/10 text-cyan-100",
+          meta: "Hiring activity",
+          actionLabel: "View job",
+          actionKey: "view-job",
+        }
+      : null,
+    teamMembers.length > 0
+      ? {
+          key: "team-members",
+          title: `Workspace connected to ${teamMembers.length} team member${teamMembers.length === 1 ? "" : "s"}`,
+          detail: `${ownerCount || 1} owner-level member${ownerCount === 1 ? "" : "s"} and recruiter access is available for collaboration.`,
+          toneClass: "border-violet-400/20 bg-violet-500/10 text-violet-100",
+          meta: "Team access",
+          actionLabel: "Manage team",
+          actionKey: "manage-team",
+        }
+      : null,
+    statusCounts.DRAFT > 0
+      ? {
+          key: "draft-reminder",
+          title: `${statusCounts.DRAFT} draft job${statusCounts.DRAFT === 1 ? "" : "s"} awaiting review`,
+          detail: "Publish or refine draft listings to improve candidate reach and keep hiring momentum high.",
+          toneClass: "border-sky-400/20 bg-sky-500/10 text-sky-100",
+          meta: "Pipeline",
+          actionLabel: "Publish drafts",
+          actionKey: "publish-drafts",
+        }
+      : null,
+    (!subscription && !subscriptionLoading) || subscriptionError
+      ? {
+          key: "subscription-missing",
+          title: "Subscription access needs attention",
+          detail: getSubscriptionBlockReason(),
+          toneClass: "border-rose-400/20 bg-rose-500/10 text-rose-100",
+          meta: "Billing",
+          actionLabel: "Set up billing",
+          actionKey: "setup-billing",
+        }
+      : null,
+  ].filter((item): item is { key: string; title: string; detail: string; toneClass: string; meta: string; actionLabel: string; actionKey: string } => item !== null);
+  const subscriptionUsage = subscription
+    ? [
+        {
+          label: "Active jobs",
+          used: subscription.activeJobs,
+          limit: subscription.maxActiveJobs,
+          progress: getProgressPercentage(subscription.activeJobs, subscription.maxActiveJobs),
+          accentClass: subscription.maxActiveJobs > 0 && subscription.activeJobs >= subscription.maxActiveJobs ? "bg-rose-500" : "bg-cyan-400",
+        },
+        {
+          label: "Resume views",
+          used: subscription.monthlyResumeViewsUsed,
+          limit: subscription.maxResumeViewsPerMonth,
+          progress: getProgressPercentage(subscription.monthlyResumeViewsUsed, subscription.maxResumeViewsPerMonth),
+          accentClass: subscription.maxResumeViewsPerMonth > 0 && subscription.monthlyResumeViewsUsed >= subscription.maxResumeViewsPerMonth ? "bg-rose-500" : "bg-emerald-400",
+        },
+        {
+          label: "Downloads",
+          used: subscription.monthlyResumeDownloadsUsed,
+          limit: subscription.maxResumeDownloadsPerMonth,
+          progress: getProgressPercentage(subscription.monthlyResumeDownloadsUsed, subscription.maxResumeDownloadsPerMonth),
+          accentClass: subscription.maxResumeDownloadsPerMonth > 0 && subscription.monthlyResumeDownloadsUsed >= subscription.maxResumeDownloadsPerMonth ? "bg-rose-500" : "bg-violet-400",
+        },
+      ]
+    : [];
+  const jobsNeedingAttention = [
+    subscriptionLoading
+      ? { key: "subscription-loading", tone: "cyan", title: "Checking subscription", detail: "Validating current plan permissions and usage counters." }
+      : null,
+    subscriptionError
+      ? { key: "subscription-error", tone: "rose", title: "Subscription issue", detail: subscriptionError }
+      : null,
+    subscription && subscription.paymentStatus !== "PAID"
+      ? { key: "payment", tone: "amber", title: "Payment pending", detail: "Complete the current billing cycle to restore full posting access." }
+      : null,
+    subscription && subscription.remainingDays > 0 && subscription.remainingDays <= 14
+      ? { key: "renewal", tone: "amber", title: "Renewal approaching", detail: `${subscription.remainingDays} day${subscription.remainingDays === 1 ? "" : "s"} left on the current plan.` }
+      : null,
+    subscription && subscription.maxActiveJobs > 0 && subscription.activeJobs >= subscription.maxActiveJobs
+      ? { key: "capacity", tone: "rose", title: "Active job cap reached", detail: `You are using ${subscription.activeJobs}/${subscription.maxActiveJobs} active job slots.` }
+      : null,
+    statusCounts.DRAFT > 0
+      ? { key: "drafts", tone: "violet", title: "Draft jobs waiting", detail: `${statusCounts.DRAFT} draft job${statusCounts.DRAFT === 1 ? "" : "s"} can be published.` }
+      : null,
+    legacyJobs.filter((job) => !job.skills || job.skills.trim().length === 0).length > 0
+      ? {
+          key: "skills",
+          tone: "sky",
+          title: "Jobs missing skills",
+          detail: `${legacyJobs.filter((job) => !job.skills || job.skills.trim().length === 0).length} posting${legacyJobs.filter((job) => !job.skills || job.skills.trim().length === 0).length === 1 ? "" : "s"} could be improved with skills tags.`
+        }
+      : null,
+  ].filter((item): item is { key: string; tone: string; title: string; detail: string } => item !== null);
 
   const postFormSalarySuggestion = useMemo(
     () =>
@@ -770,40 +974,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
       return;
     }
 
-    try {
-      setJobActionBusyId(jobId);
-      setLegacyJobsError(null);
-      const data = (await getJob(jobId)) as Record<string, unknown>;
-      const normalized = normalizeEmployerJob(data);
-      setPostForm({
-        title: normalized.jobTitle,
-        company: normalized.company,
-        department: normalized.department ?? "",
-        role: normalized.role ?? "",
-        experience: normalized.experience ?? "",
-        employmentType: normalized.employmentType ?? "",
-        industry: normalized.industry ?? "",
-        workMode: normalized.workMode ?? "",
-        currency: normalized.currency ?? "USD",
-        vacancies: normalized.vacancies ? String(normalized.vacancies) : "",
-        skills: normalized.skills ?? "",
-        location: normalized.location,
-        salary: normalized.salary ?? "",
-        description: normalizeDescriptionForEdit(normalized.description ?? ""),
-        logoTone: normalized.logoTone ?? "blue",
-        jobStatus: (normalized.jobStatus as "ACTIVE" | "DRAFT" | "CLOSED") ?? "ACTIVE",
-      });
-      setPostJobMode("edit");
-      setEditingJobId(normalized.id);
-      setEditingJobPostedBy(normalized.postedBy);
-      setPostJobError(null);
-      setPostJobSuccess(null);
-      setIsPostJobDialogOpen(true);
-    } catch (error) {
-      setLegacyJobsError(error instanceof Error ? error.message : "Failed to load job for editing.");
-    } finally {
-      setJobActionBusyId(null);
-    }
+    void navigate(`/post-job/${jobId}`);
   }
 
   async function handleDeleteJob(jobId: number) {
@@ -884,7 +1055,7 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
                   size="lg"
                   className="min-h-12 gap-2 bg-white px-6 font-semibold text-green-700 shadow-lg shadow-black/10 transition-all hover:bg-green-50 hover:shadow-xl sm:w-auto"
                   disabled={!isEmployerAuthorized}
-                  onClick={openPostJobDialog}
+                  onClick={() => void navigate("/post-job/0")}
                 >
                   <Plus className="h-4 w-4" />
                   {dashboard.hero.actionLabel}
@@ -924,6 +1095,252 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
         </CardContent>
       </Card>
 
+      <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#0f172a]/95 via-[#11243b]/92 to-[#151d32]/95 shadow-xl ring-1 ring-white/[0.08] glass-card">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20">
+                    <CreditCard className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">Subscription Status</p>
+                    <h3 className="text-xl font-bold tracking-tight text-white">Plan Control Center</h3>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-slate-300">
+                  {subscriptionLoading
+                    ? "Loading current subscription details..."
+                    : subscription
+                      ? `${subscription.planName} plan is ${subscription.subscriptionStatus.toLowerCase()} with ${Math.max(subscription.remainingDays, 0)} day${Math.max(subscription.remainingDays, 0) === 1 ? "" : "s"} remaining.`
+                      : getSubscriptionBlockReason()}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-cyan-300/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
+                  onClick={() => void navigate("/dashboard?tab=employers&section=subscription")}
+                >
+                  <Crown className="mr-2 h-4 w-4" />
+                  Manage Subscription
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-white text-slate-900 hover:bg-slate-100"
+                  disabled={!canPostBySubscription}
+                  onClick={openPostJobDialog}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Post Job
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Plan</p>
+                <p className="mt-2 text-2xl font-black text-white">{subscription?.planName ?? "Not configured"}</p>
+                <p className="mt-1 text-xs text-slate-400">Payment: {subscription?.paymentStatus ?? "Unavailable"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Status</p>
+                <p className="mt-2 text-2xl font-black text-white">{subscription?.subscriptionStatus ?? "Unavailable"}</p>
+                <p className="mt-1 text-xs text-slate-400">Posting: {canPostBySubscription ? "Enabled" : "Blocked"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Renewal Window</p>
+                <p className="mt-2 text-2xl font-black text-white">{subscription ? `${Math.max(subscription.remainingDays, 0)}d` : "--"}</p>
+                <p className="mt-1 text-xs text-slate-400">Active jobs: {subscription ? `${subscription.activeJobs}/${subscription.maxActiveJobs > 0 ? subscription.maxActiveJobs : "∞"}` : "--"}</p>
+              </div>
+            </div>
+
+            {subscriptionUsage.length > 0 && (
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                {subscriptionUsage.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">{item.label}</p>
+                      <span className="text-xs text-slate-400">{item.used}/{item.limit > 0 ? item.limit : "∞"}</span>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                      <div className={`h-full rounded-full ${item.accentClass}`} style={{ width: `${item.limit > 0 ? item.progress : 100}%` }} />
+                    </div>
+                    <p className="mt-2 text-[11px] text-slate-400">{item.limit > 0 ? `${item.progress}% used` : "No plan limit configured"}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#111827]/95 via-[#171f34]/92 to-[#0d1524]/95 shadow-xl ring-1 ring-white/[0.08] glass-card">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/20">
+                <AlertTriangle className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300/80">Action Queue</p>
+                <h3 className="text-xl font-bold tracking-tight text-white">Jobs Needing Attention</h3>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {jobsNeedingAttention.length > 0 ? jobsNeedingAttention.map((item) => {
+                const toneMap: Record<string, string> = {
+                  rose: "border-rose-400/25 bg-rose-500/10 text-rose-100",
+                  amber: "border-amber-400/25 bg-amber-500/10 text-amber-100",
+                  violet: "border-violet-400/25 bg-violet-500/10 text-violet-100",
+                  sky: "border-sky-400/25 bg-sky-500/10 text-sky-100",
+                  cyan: "border-cyan-400/25 bg-cyan-500/10 text-cyan-100",
+                };
+                return (
+                  <div key={item.key} className={`rounded-2xl border p-3 ${toneMap[item.tone] ?? toneMap.cyan}`}>
+                    <p className="text-sm font-semibold">{item.title}</p>
+                    <p className="mt-1 text-xs opacity-90">{item.detail}</p>
+                  </div>
+                );
+              }) : (
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                  No urgent action items right now. Your employer workspace looks healthy.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#111827]/95 via-[#171f34]/92 to-[#0d1524]/95 shadow-xl ring-1 ring-white/[0.08] glass-card">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300/80">Quick Actions</p>
+              <h3 className="mt-1 text-xl font-bold tracking-tight text-white">Employer Workspace Shortcuts</h3>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <Button className="min-h-12 justify-start gap-2 bg-white text-slate-900 hover:bg-slate-100" disabled={!canPostBySubscription} onClick={openPostJobDialog}>
+                <Plus className="h-4 w-4" />
+                Post Job
+              </Button>
+              <Button variant="outline" className="min-h-12 justify-start gap-2 border-cyan-300/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20" onClick={() => void navigate("/dashboard?tab=employers&section=viewall")}>
+                <FileText className="h-4 w-4" />
+                Posted Jobs
+              </Button>
+              <Button variant="outline" className="min-h-12 justify-start gap-2 border-violet-300/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20" onClick={() => void navigate("/dashboard?tab=employers&section=subscription")}>
+                <Crown className="h-4 w-4" />
+                Subscription
+              </Button>
+              <Button variant="outline" className="min-h-12 justify-start gap-2 border-emerald-300/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20" onClick={() => void navigate("/find-talent")}>
+                <Search className="h-4 w-4" />
+                Find Talent
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#0f172a]/95 via-[#132033]/92 to-[#0d1524]/95 shadow-xl ring-1 ring-white/[0.08] glass-card">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 shadow-lg shadow-sky-500/20">
+              <ShieldCheck className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300/80">Workspace Summary</p>
+              <h3 className="text-xl font-bold tracking-tight text-white">Team and Workspace Health</h3>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {workspaceSummary.map((item) => {
+              const ItemIcon = item.icon;
+              return (
+                <div key={item.key} className={`rounded-2xl bg-gradient-to-br ${item.accentClass} p-4 ring-1 ring-white/[0.08]`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">{item.label}</p>
+                      <p className="mt-2 text-xl font-black text-white">{item.value}</p>
+                      <p className="mt-1 text-xs text-slate-300">{item.detail}</p>
+                    </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm">
+                      <ItemIcon className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#111827]/95 via-[#181c35]/92 to-[#0d1524]/95 shadow-xl ring-1 ring-white/[0.08] glass-card">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 shadow-lg shadow-fuchsia-500/20">
+              <BellRing className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300/80">Notifications Feed</p>
+              <h3 className="text-xl font-bold tracking-tight text-white">Employer Activity and Alerts</h3>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-2">
+            {employerActivityFeed.length > 0 ? employerActivityFeed.map((item) => {
+              const handleAction = () => {
+                switch (item.actionKey) {
+                  case "renewal":
+                    navigate("/dashboard?tab=employers&section=subscription");
+                    break;
+                  case "view-job":
+                    if (latestWorkspaceJob?.id) {
+                      navigate(`/dashboard?tab=employers&section=job-detail&id=${latestWorkspaceJob.id}`);
+                    }
+                    break;
+                  case "manage-team":
+                    navigate("/dashboard?tab=employers&section=team");
+                    break;
+                  case "publish-drafts":
+                    navigate("/dashboard?tab=employers&section=drafts");
+                    break;
+                  case "setup-billing":
+                    navigate("/dashboard?tab=employers&section=subscription");
+                    break;
+                  default:
+                    break;
+                }
+              };
+              return (
+                <div key={item.key} className={`rounded-2xl border p-4 ${item.toneClass}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">{item.title}</p>
+                    <span className="rounded-full border border-white/10 bg-black/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">{item.meta}</span>
+                  </div>
+                  <p className="mt-2 text-xs opacity-90">{item.detail}</p>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="bg-white/10 text-xs font-semibold hover:bg-white/20"
+                      onClick={handleAction}
+                    >
+                      {item.actionLabel}
+                    </Button>
+                  </div>
+                </div>
+              );
+            }) : (
+              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100 lg:col-span-2">
+                No new workspace alerts right now. Hiring operations and subscription health look stable.
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {!isEmployerAuthorized && (
         <Card className="border border-amber-400/30 bg-amber-500/10 text-amber-100 shadow-lg">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -948,307 +1365,6 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
           </CardContent>
         </Card>
       )}
-
-      <Dialog
-        open={isEmployerAuthorized && isPostJobDialogOpen}
-        onOpenChange={(open) => {
-          if (!isEmployerAuthorized) {
-            setIsPostJobDialogOpen(false);
-            return;
-          }
-
-          setIsPostJobDialogOpen(open);
-          if (!open) {
-            resetPostForm();
-          }
-        }}
-      >
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-0 bg-[#0f172a] p-0 shadow-2xl shadow-black/40">
-          <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
-            {/* Header */}
-            <DialogHeader className="relative overflow-hidden border-b border-white/10 px-6 pt-7 pb-5 sm:px-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-teal-600/10 to-transparent" />
-              <div className="relative flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/25">
-                  <Briefcase className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <DialogTitle className="text-xl font-semibold tracking-tight text-white">
-                    {postJobMode === "edit" ? "Edit Job" : "Post a New Job"}
-                  </DialogTitle>
-                  <DialogDescription className="text-sm text-slate-400">
-                    {postJobMode === "edit"
-                      ? "Update the job details and save your changes."
-                      : "Fill in the details below to create a new job listing."}
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="space-y-6 px-6 py-6 sm:px-8">
-              {/* Section: Basic Info */}
-              <fieldset className="space-y-4 rounded-xl border border-white/[.07] bg-white/[.02] p-5">
-                <legend className="flex items-center gap-2 px-2 text-xs font-semibold tracking-widest text-emerald-400 uppercase">
-                  <FileText className="h-3.5 w-3.5" /> Basic Information
-                </legend>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Job Title</label>
-                    <Input
-                      value={postForm.title}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, title: event.target.value }))}
-                      placeholder="Senior AI Engineer"
-                      className="min-h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500/40"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Role</label>
-                    <Input
-                      value={postForm.role}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, role: event.target.value }))}
-                      placeholder="AI Platform Engineer"
-                      className="min-h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500/40"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Company</label>
-                    <Input
-                      value={postForm.company}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, company: event.target.value }))}
-                      placeholder="TechCorp"
-                      className="min-h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500/40"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Location</label>
-                    <Input
-                      value={postForm.location}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, location: event.target.value }))}
-                      placeholder="San Francisco, CA"
-                      className="min-h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500/40"
-                    />
-                  </div>
-                </div>
-              </fieldset>
-
-              {/* Section: Classification */}
-              <fieldset className="space-y-4 rounded-xl border border-white/[.07] bg-white/[.02] p-5">
-                <legend className="flex items-center gap-2 px-2 text-xs font-semibold tracking-widest text-sky-400 uppercase">
-                  <Building2 className="h-3.5 w-3.5" /> Classification
-                </legend>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Department</label>
-                    <select
-                      value={postForm.department}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, department: event.target.value }))}
-                      className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
-                    >
-                      <option value="" className="bg-slate-900">Select department</option>
-                      {departmentOptions.map((department) => (
-                        <option key={department} value={department} className="bg-slate-900">{department}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Industry</label>
-                    <select
-                      value={postForm.industry}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, industry: event.target.value }))}
-                      className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
-                    >
-                      <option value="" className="bg-slate-900">Select industry</option>
-                      {industryOptions.map((industry) => (
-                        <option key={industry} value={industry} className="bg-slate-900">{industry}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Employment Type</label>
-                    <select
-                      value={postForm.employmentType}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, employmentType: event.target.value }))}
-                      className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
-                    >
-                      <option value="" className="bg-slate-900">Select employment type</option>
-                      {employmentTypeOptions.map((employmentType) => (
-                        <option key={employmentType} value={employmentType} className="bg-slate-900">{employmentType}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Work Mode</label>
-                    <select
-                      value={postForm.workMode}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, workMode: event.target.value }))}
-                      className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
-                    >
-                      <option value="" className="bg-slate-900">Select work mode</option>
-                      {workModeOptions.map((workMode) => (
-                        <option key={workMode} value={workMode} className="bg-slate-900">{workMode}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </fieldset>
-
-              {/* Section: Compensation & Requirements */}
-              <fieldset className="space-y-4 rounded-xl border border-white/[.07] bg-white/[.02] p-5">
-                <legend className="flex items-center gap-2 px-2 text-xs font-semibold tracking-widest text-amber-400 uppercase">
-                  <DollarSign className="h-3.5 w-3.5" /> Compensation & Requirements
-                </legend>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Salary</label>
-                    <Input
-                      value={postForm.salary}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, salary: event.target.value }))}
-                      placeholder="$180k - $240k"
-                      className="min-h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-amber-500/40"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Currency</label>
-                    <select
-                      value={postForm.currency}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, currency: event.target.value }))}
-                      className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-                    >
-                      {currencyOptions.map((currency) => (
-                        <option key={currency} value={currency} className="bg-slate-900">{currency}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Experience</label>
-                    <select
-                      value={postForm.experience}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, experience: event.target.value }))}
-                      className="min-h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-                    >
-                      <option value="" className="bg-slate-900">Select experience</option>
-                      {experienceOptions.map((experience) => (
-                        <option key={experience} value={experience} className="bg-slate-900">{experience}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Vacancies</label>
-                    <Input
-                      value={postForm.vacancies}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, vacancies: event.target.value }))}
-                      placeholder="5"
-                      className="min-h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-amber-500/40"
-                    />
-                  </div>
-                </div>
-                <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Auto Salary Suggestion</p>
-                      <p className="mt-1 text-sm text-emerald-100">
-                        {formatMoney(postFormSalarySuggestion.min, postFormSalarySuggestion.currency)} - {formatMoney(postFormSalarySuggestion.max, postFormSalarySuggestion.currency)} / year
-                      </p>
-                      <p className="mt-1 text-[11px] text-emerald-200/80">Confidence: {postFormSalarySuggestion.confidence}% based on role, experience, location, and market factors.</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-8 border-emerald-400/40 bg-emerald-500/10 px-3 text-xs text-emerald-100 hover:bg-emerald-500/20"
-                      onClick={() =>
-                        setPostForm((prev) => ({
-                          ...prev,
-                          salary: `${formatMoney(postFormSalarySuggestion.min, postFormSalarySuggestion.currency)} - ${formatMoney(postFormSalarySuggestion.max, postFormSalarySuggestion.currency)}`,
-                        }))
-                      }
-                    >
-                      Use suggestion
-                    </Button>
-                  </div>
-                </div>
-              </fieldset>
-
-              {/* Section: Details */}
-              <fieldset className="space-y-4 rounded-xl border border-white/[.07] bg-white/[.02] p-5">
-                <legend className="flex items-center gap-2 px-2 text-xs font-semibold tracking-widest text-violet-400 uppercase">
-                  <Sparkles className="h-3.5 w-3.5" /> Details
-                </legend>
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">Skills (comma separated)</label>
-                    <Input
-                      value={postForm.skills}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, skills: event.target.value }))}
-                      placeholder="TypeScript, React, REST APIs, Python"
-                      className="min-h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-violet-500/40"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-400">About the Job</label>
-                    <Textarea
-                      value={postForm.description}
-                      onChange={(event) => setPostForm((prev) => ({ ...prev, description: event.target.value }))}
-                      placeholder="Describe the role, responsibilities, and what makes it exciting..."
-                      className="min-h-28 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-violet-500/40"
-                    />
-                  </div>
-                </div>
-              </fieldset>
-
-              {/* Status selector */}
-              <fieldset className="space-y-3 rounded-xl border border-white/[.07] bg-white/[.02] p-5">
-                <legend className="flex items-center gap-2 px-2 text-xs font-semibold tracking-widest text-emerald-400 uppercase">
-                  <CheckCircle className="h-3.5 w-3.5" /> Status
-                </legend>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["ACTIVE", "DRAFT", "CLOSED"] as const).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setPostForm((prev) => ({ ...prev, jobStatus: s }))}
-                      className={`flex h-10 items-center justify-center gap-2 rounded-lg border text-xs font-semibold transition-all ${
-                        postForm.jobStatus === s
-                          ? s === "ACTIVE" ? "border-emerald-500 bg-emerald-500/20 text-emerald-300 ring-2 ring-emerald-500/30"
-                          : s === "DRAFT" ? "border-amber-500 bg-amber-500/20 text-amber-300 ring-2 ring-amber-500/30"
-                          : "border-rose-500 bg-rose-500/20 text-rose-300 ring-2 ring-rose-500/30"
-                          : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/10"
-                      }`}
-                    >
-                      <span className={`h-2 w-2 rounded-full ${
-                        s === "ACTIVE" ? "bg-emerald-400" : s === "DRAFT" ? "bg-amber-400" : "bg-rose-400"
-                      }`} />
-                      {s === "ACTIVE" ? "Active" : s === "DRAFT" ? "Draft" : "Closed"}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              {/* Feedback */}
-              {postJobError && (
-                <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                  {postJobError}
-                </div>
-              )}
-              {postJobSuccess && (
-                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                  {postJobSuccess}
-                </div>
-              )}
-
-              {/* Save */}
-              <div className="border-t border-white/[.07] pt-5">
-                <Button
-                  className="min-h-12 w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-400 hover:to-teal-400 hover:shadow-emerald-500/40"
-                  disabled={postJobBusy || !isEmployerAuthorized}
-                  onClick={() => void handleSubmitPostJob()}
-                >
-                  {postJobBusy ? "Saving..." : postJobMode === "edit" ? "Save Changes" : "Save Job"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isViewJobDialogOpen} onOpenChange={setIsViewJobDialogOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-0 bg-[#0f172a] p-0 shadow-2xl shadow-black/40">
@@ -1372,237 +1488,6 @@ export default function EmployerView({ dashboard }: { dashboard: EmployerDashboa
           </div>
         </DialogContent>
       </Dialog>
-
-      <div id="operations" className="scroll-mt-24 flex items-end justify-between gap-4 px-1 pt-3">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Hiring Operations</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">Execution Center</h2>
-          <p className="mt-1 text-sm text-slate-400">Manage open roles, keep the pipeline moving, and act on live vacancies.</p>
-        </div>
-      </div>
-
-      {/* ── Employer Jobs ── */}
-      <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#0a0f1e]/98 via-[#0f1628]/95 to-[#091220]/98 shadow-2xl ring-1 ring-white/[.10] glass-card elevated-card transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-        <div
-          ref={jobsRailRef}
-          className={`sticky top-0 z-20 border-b border-white/[.08] bg-[#09111e]/94 backdrop-blur-md transition-shadow ${jobsRailScrolled ? "shadow-lg shadow-black/40" : "shadow-none"}`}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-md shadow-emerald-200/50">
-                  <Briefcase className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-semibold text-white">Employer Jobs</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">Manage your active, draft, and closed listings.</CardDescription>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                className="gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-xs font-semibold text-white shadow-md shadow-emerald-900/50 transition-all hover:from-emerald-400 hover:to-teal-400 hover:shadow-emerald-700/50"
-                disabled={!isEmployerAuthorized || !canPostBySubscription}
-                onClick={openPostJobDialog}
-              >
-                <Plus className="h-3.5 w-3.5" /> New Job
-              </Button>
-            </div>
-          </CardHeader>
-          {/* Status tabs */}
-          <div className="flex border-t border-white/[.07]">
-            {([
-              { key: "ACTIVE", label: "Active" },
-              { key: "DRAFT", label: "Drafts" },
-              { key: "CLOSED", label: "Closed" },
-            ] as const).map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setLegacyTab(tab.key)}
-                className={`relative flex min-h-11 flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors focus-visible:outline-none ${
-                  legacyTab === tab.key
-                    ? "text-white after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-gradient-to-r after:from-emerald-400 after:to-teal-400"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[.04]"
-                }`}
-              >
-                {tab.label}
-                <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-                  legacyTab === tab.key
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-white/[.08] text-slate-400"
-                }`}>{statusCounts[tab.key]}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <CardContent className="p-0">
-
-          {/* Job cards grid */}
-          <div className="p-5">
-            {/* Success toast */}
-            {postJobSuccess && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 shadow-sm">
-                <CheckCircle className="h-4 w-4 shrink-0" />
-                {postJobSuccess}
-              </div>
-            )}
-            {/* Skeleton loading */}
-            {legacyJobsLoading && (
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="animate-pulse rounded-2xl border border-white/[.06] bg-white/[.03] p-5">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div className="h-3 w-10 rounded bg-white/[.08]" />
-                      <div className="h-5 w-16 rounded-full bg-white/[.06]" />
-                    </div>
-                    <div className="h-4 w-3/4 rounded bg-white/[.10]" />
-                    <div className="mt-2 h-3 w-1/2 rounded bg-white/[.07]" />
-                    <div className="mt-4 flex gap-2">
-                      <div className="h-5 w-16 rounded bg-white/[.06]" />
-                      <div className="h-5 w-14 rounded bg-blue-500/[.10]" />
-                    </div>
-                    <div className="mt-4 space-y-1.5">
-                      <div className="h-3 w-full rounded bg-white/[.06]" />
-                      <div className="h-3 w-2/3 rounded bg-white/[.06]" />
-                    </div>
-                    <div className="mt-5 grid grid-cols-3 gap-1.5">
-                      <div className="h-8 rounded bg-white/[.06]" />
-                      <div className="h-8 rounded bg-emerald-500/[.10]" />
-                      <div className="h-8 rounded bg-rose-500/[.10]" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!legacyJobsLoading && legacyJobsError && (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-                  <FileText className="h-5 w-5 text-red-400" />
-                </div>
-                <p className="text-sm font-medium text-red-600">{legacyJobsError}</p>
-              </div>
-            )}
-            {!legacyJobsLoading && !legacyJobsError && visibleLegacyJobs.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-14">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-emerald-900/60">
-                  <Briefcase className="h-7 w-7 text-slate-400" />
-                </div>
-                <p className="text-sm font-semibold text-slate-700">No {legacyTab.toLowerCase()} jobs yet</p>
-                <p className="mt-1 text-xs text-slate-400">Post your first job to start attracting talent</p>
-                <Button
-                  size="sm"
-                  className="mt-4 gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-xs font-semibold text-white shadow-md"
-                  disabled={!isEmployerAuthorized}
-                  onClick={openPostJobDialog}
-                >
-                  <Plus className="h-3.5 w-3.5" /> Post a Job
-                </Button>
-              </div>
-            )}
-
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {!legacyJobsLoading &&
-                !legacyJobsError &&
-                visibleLegacyJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className={`group relative flex flex-col overflow-hidden rounded-2xl border-l-4 bg-gradient-to-br from-[#111827]/90 via-[#1a2744]/60 to-[#0d1520]/90 backdrop-blur-sm p-5 shadow-xl ring-1 ring-white/[.07] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:ring-white/[.15] ${
-                      job.logoTone === "green" ? "border-l-emerald-400"
-                      : job.logoTone === "purple" ? "border-l-violet-400"
-                      : job.logoTone === "orange" ? "border-l-amber-400"
-                      : "border-l-blue-400"
-                    }`}
-                  >
-                    {/* Top shimmer line accent */}
-                    <div className={`pointer-events-none absolute inset-x-0 top-0 h-px ${
-                      job.logoTone === "green" ? "bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent"
-                      : job.logoTone === "purple" ? "bg-gradient-to-r from-transparent via-violet-400/60 to-transparent"
-                      : job.logoTone === "orange" ? "bg-gradient-to-r from-transparent via-amber-400/60 to-transparent"
-                      : "bg-gradient-to-r from-transparent via-blue-400/60 to-transparent"
-                    }`} />
-                    {/* Card header */}
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-medium text-slate-500">#{job.id}</span>
-                      <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest ${
-                        job.jobStatus === "ACTIVE"
-                          ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
-                          : job.jobStatus === "DRAFT"
-                            ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
-                            : "bg-rose-500/15 text-rose-400 ring-1 ring-rose-500/30"
-                      }`}>
-                        <span className={`inline-flex h-1.5 w-1.5 rounded-full ${
-                          job.jobStatus === "ACTIVE" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
-                          : job.jobStatus === "DRAFT" ? "bg-amber-400" : "bg-rose-400"
-                        }`} />
-                        {job.jobStatus}
-                      </span>
-                    </div>
-
-                    {/* Title & location */}
-                    <h3 className="line-clamp-2 text-sm font-bold leading-snug text-white">{job.jobTitle}</h3>
-                    {job.location && (
-                      <p className="mt-1 flex items-center gap-1 text-xs text-slate-400">
-                        <MapPin className="h-3 w-3 text-slate-500" />{job.location}
-                      </p>
-                    )}
-
-                    {/* Tags */}
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {job.department && <span className="rounded-md bg-slate-600/30 px-2 py-0.5 text-[10px] font-medium text-slate-300 ring-1 ring-white/[.08]">{job.department}</span>}
-                      {job.workMode && <span className="rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 ring-1 ring-blue-500/20">{job.workMode}</span>}
-                      {job.experience && <span className="rounded-md bg-violet-500/15 px-2 py-0.5 text-[10px] font-medium text-violet-300 ring-1 ring-violet-500/20">{job.experience}</span>}
-                      {job.employmentType && <span className="rounded-md bg-teal-500/15 px-2 py-0.5 text-[10px] font-medium text-teal-300 ring-1 ring-teal-500/20">{job.employmentType}</span>}
-                    </div>
-
-                    {/* Meta */}
-                    <div className="mt-3 space-y-1 text-xs text-slate-400">
-                      {job.industry && <p><span className="text-slate-500">Industry:</span> {job.industry}</p>}
-                      {job.salary && <p><span className="text-slate-500">Salary:</span> <span className="font-semibold text-emerald-300/90">{job.salary}</span></p>}
-                      {job.vacancies && <p><span className="text-slate-500">Vacancies:</span> {job.vacancies}</p>}
-                      {job.skills && <p className="line-clamp-1"><span className="text-slate-500">Skills:</span> {job.skills}</p>}
-                    </div>
-
-                    {/* Spacer + Footer */}
-                    <div className="mt-auto pt-4">
-                      <div className="mb-3 flex items-center justify-between border-t border-white/[.05] pt-3 text-[10px] text-slate-500">
-                        <span>{job.postTime ? new Date(job.postTime).toLocaleDateString() : "Recently"}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 border-white/[.08] bg-white/[.03] text-xs text-slate-300 transition-all duration-200 hover:bg-white/[.10] hover:text-white"
-                          disabled={viewJobBusy || jobActionBusyId === job.id || !isEmployerAuthorized}
-                          onClick={() => void handleViewJob(job.id)}
-                        >
-                          <Eye className="mr-1 h-3 w-3" />View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 border-emerald-500/20 bg-emerald-500/[.08] text-xs text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all duration-200"
-                          disabled={jobActionBusyId === job.id || !isEmployerAuthorized}
-                          onClick={() => void handleEditJob(job.id)}
-                        >
-                          <Pencil className="mr-1 h-3 w-3" />Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 border-rose-500/20 bg-rose-500/[.08] text-xs text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition-all duration-200"
-                          disabled={jobActionBusyId === job.id || !isEmployerAuthorized}
-                          onClick={() => void handleDeleteJob(job.id)}
-                        >
-                          <Trash2 className="mr-1 h-3 w-3" />Delete
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <div id="intelligence" className="scroll-mt-24 flex items-end justify-between gap-4 px-1 pt-3">
         <div>

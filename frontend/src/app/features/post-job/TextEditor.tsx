@@ -1,12 +1,11 @@
-import { RichTextEditor, Link } from '@mantine/tiptap';
+import { RichTextEditor } from '@mantine/tiptap';
 import { useEditor } from '@tiptap/react';
 import Highlight from '@tiptap/extension-highlight';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 
 
@@ -25,8 +24,6 @@ const TextEditor = (props: TextEditorProps) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Underline,
-      Link,
       Superscript,
       SubScript,
       Highlight,
@@ -37,28 +34,47 @@ const TextEditor = (props: TextEditorProps) => {
       props.form.setFieldValue('description', editor.getHTML());
     },
   });
-  // Detect color scheme from document
-  const [isDark, setIsDark] = useState(false);
-  useLayoutEffect(() => {
-    const checkScheme = () => {
-      const root = document.querySelector('[data-mantine-color-scheme]');
-      setIsDark(root?.getAttribute('data-mantine-color-scheme') === 'dark');
-    };
-    checkScheme();
-    const observer = new MutationObserver(checkScheme);
-    const root = document.querySelector('[data-mantine-color-scheme]');
-    if (root) {
-      observer.observe(root, { attributes: true, attributeFilter: ['data-mantine-color-scheme'] });
-    }
-    return () => observer.disconnect();
-  }, []);
 
   return (
-    <RichTextEditor editor={editor}>
+    <RichTextEditor
+      editor={editor}
+      styles={{
+        root: {
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          background: 'rgba(2, 6, 23, 0.9)',
+          borderRadius: '10px',
+        },
+        toolbar: {
+          background: 'rgba(15, 23, 42, 0.96)',
+          borderBottom: '1px solid rgba(148, 163, 184, 0.25)',
+          padding: '6px 8px',
+          gap: '6px',
+        },
+        control: {
+          color: '#f1f5f9',
+          borderColor: 'rgba(148, 163, 184, 0.28)',
+          background: 'rgba(30, 41, 59, 0.82)',
+          transition: 'all 140ms ease',
+          '&:hover': {
+            background: 'rgba(51, 65, 85, 0.95)',
+            borderColor: 'rgba(148, 163, 184, 0.42)',
+          },
+          '&[data-active]': {
+            background: 'rgba(245, 158, 11, 0.22)',
+            borderColor: 'rgba(245, 158, 11, 0.55)',
+            color: '#fde68a',
+          },
+        },
+        content: {
+          background: 'rgba(2, 6, 23, 0.6)',
+          color: '#f8fafc',
+        },
+      }}
+    >
       <RichTextEditor.Toolbar
         sticky
         stickyOffset={60}
-        style={{ background: isDark ? 'black' : 'white' }}
+        className="[&_.mantine-RichTextEditor-controlsGroup]:gap-1"
       >
         <RichTextEditor.ControlsGroup >
           <RichTextEditor.Bold />
@@ -104,9 +120,7 @@ const TextEditor = (props: TextEditorProps) => {
         </RichTextEditor.ControlsGroup>
       </RichTextEditor.Toolbar>
 
-      <RichTextEditor.Content
-        style={{ background: 'white', color: 'black' }}
-      />
+      <RichTextEditor.Content className="[&_.ProseMirror]:min-h-[220px] [&_.ProseMirror]:px-3 [&_.ProseMirror]:py-2 [&_.ProseMirror]:text-sm [&_.ProseMirror]:leading-7 [&_.ProseMirror]:text-slate-100 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-black [&_.ProseMirror_h1]:text-white [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-extrabold [&_.ProseMirror_h2]:text-white [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-bold [&_.ProseMirror_h3]:text-white [&_.ProseMirror_h4]:text-lg [&_.ProseMirror_h4]:font-semibold [&_.ProseMirror_h4]:text-slate-100 [&_.ProseMirror_p]:text-slate-100 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ul]:my-2 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_ol]:my-2 [&_.ProseMirror_li]:list-item [&_.ProseMirror_li]:text-slate-100 [&_.ProseMirror_li::marker]:text-amber-300 [&_.ProseMirror_strong]:text-white [&_.ProseMirror_mark]:rounded-sm [&_.ProseMirror_mark]:bg-amber-300/30 [&_.ProseMirror_mark]:px-1 [&_.ProseMirror_mark]:text-amber-50 [&_.ProseMirror_a]:text-cyan-300 [&_.ProseMirror_a]:underline" />
 
     </RichTextEditor>
   );

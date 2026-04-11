@@ -1,5 +1,8 @@
 export { default as EmployerView } from "./EmployerView";
 export { default as EmployerSubscriptionPage } from "./EmployerSubscriptionPage";
+export { default as EmployerJobsPage } from "./EmployerJobsPage";
+export { default as EmployerTeamAccessPage } from "./EmployerTeamAccessPage";
+export { default as SearchCandidatesPage } from "./SearchCandidatesPage";
 export type {
   EmployerDashboard,
   EmployerMetric,

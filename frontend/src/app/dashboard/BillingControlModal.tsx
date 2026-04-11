@@ -1,4 +1,5 @@
 import { Modal, Tooltip } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import {
   AlertTriangle,
@@ -12,6 +13,7 @@ import {
 import {
   deleteEmployerSubscription,
   getEmployerSubscription,
+  resetEmployerSubscriptionUsage,
   upsertEmployerSubscription,
   type AdminEmployerSummary,
   type EmployerSubscription,
@@ -23,6 +25,8 @@ import {
 const PLAN_OPTIONS = ["STARTER", "GROWTH", "PRO", "ENTERPRISE"];
 const DURATION_OPTIONS = [30, 60, 90, 180, 365];
 const MAX_ACTIVE_JOB_OPTIONS = [5, 10, 20, 50, 100];
+const MAX_RESUME_VIEW_OPTIONS = [20, 50, 100, 250, 500, 1000, 5000];
+const MAX_RESUME_DOWNLOAD_OPTIONS = [10, 25, 50, 100, 250, 500, 2500];
 
 function getPlanOptions(current: string): string[] {
   if (PLAN_OPTIONS.includes(current)) return PLAN_OPTIONS;
@@ -61,6 +65,47 @@ function statusColor(status: string) {
   return "text-rose-300";
 }
 
+function formatUsagePeriod(value?: string | null) {
+  if (!value) return "Current month";
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getQuotaHealth(used?: number | null, limit?: number | null) {
+  const normalizedUsed = used ?? 0;
+  const normalizedLimit = limit ?? 0;
+  if (normalizedLimit <= 0) {
+    return {
+      valueClass: "text-slate-200",
+      badgeClass: "border-slate-400/30 bg-slate-400/10 text-slate-200",
+      statusText: "Not set",
+    };
+  }
+
+  const ratio = normalizedUsed / normalizedLimit;
+  if (ratio >= 1) {
+    return {
+      valueClass: "text-rose-300",
+      badgeClass: "border-rose-400/35 bg-rose-500/10 text-rose-200",
+      statusText: "Limit reached",
+    };
+  }
+  if (ratio >= 0.8) {
+    return {
+      valueClass: "text-amber-300",
+      badgeClass: "border-amber-400/35 bg-amber-500/10 text-amber-200",
+      statusText: "Near limit",
+    };
+  }
+  return {
+    valueClass: "text-emerald-300",
+    badgeClass: "border-emerald-400/35 bg-emerald-500/10 text-emerald-200",
+    statusText: "Healthy",
+  };
+}
+
 function DetailRow({ label, value, valueClass = "text-white" }: { label: string; value: React.ReactNode; valueClass?: string }) {
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
@@ -89,6 +134,8 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
     paymentStatus: "PENDING",
     durationDays: 30,
     maxActiveJobs: 5,
+    maxResumeViewsPerMonth: 100,
+    maxResumeDownloadsPerMonth: 50,
   });
 
   const [saving, setSaving] = useState(false);
@@ -97,6 +144,7 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [resettingUsage, setResettingUsage] = useState(false);
 
   // Reset state whenever the modal opens for a new employer
   useEffect(() => {
@@ -120,6 +168,8 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
       paymentStatus: isActive ? "PAID" : "PENDING",
       durationDays: 30,
       maxActiveJobs: 5,
+      maxResumeViewsPerMonth: 100,
+      maxResumeDownloadsPerMonth: 50,
     });
 
     // Load live details from backend
@@ -135,6 +185,8 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
           paymentStatus: data.paymentStatus,
           durationDays: 30,
           maxActiveJobs: data.maxActiveJobs ?? 5,
+          maxResumeViewsPerMonth: data.maxResumeViewsPerMonth ?? 100,
+          maxResumeDownloadsPerMonth: data.maxResumeDownloadsPerMonth ?? 50,
         });
       })
       .catch(() => {
@@ -160,8 +212,18 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
       const updated = await upsertEmployerSubscription(employer.employerId, form);
       setSubscription(updated);
       setSaveMessage({ type: "ok", text: "Subscription saved successfully." });
+      notifications.show({
+        color: "green",
+        title: "Subscription saved",
+        message: `${employer.companyName} billing settings were updated successfully.`,
+      });
       onSaved(updated);
     } catch (err) {
+      notifications.show({
+        color: "red",
+        title: "Save failed",
+        message: err instanceof Error ? err.message : "Failed to save subscription.",
+      });
       setSaveMessage({
         type: "err",
         text: err instanceof Error ? err.message : "Failed to save subscription.",
@@ -177,17 +239,59 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
       setDeleting(true);
       setDeleteError(null);
       await deleteEmployerSubscription(employer.employerId);
+      notifications.show({
+        color: "orange",
+        title: "Subscription deleted",
+        message: `${employer.companyName} subscription record was removed.`,
+      });
       onDeleted(employer.employerId);
       onClose();
     } catch (err) {
+      notifications.show({
+        color: "red",
+        title: "Delete failed",
+        message: err instanceof Error ? err.message : "Failed to delete subscription.",
+      });
       setDeleteError(err instanceof Error ? err.message : "Failed to delete subscription.");
     } finally {
       setDeleting(false);
     }
   }
 
+  async function handleResetUsage() {
+    if (!employer) return;
+    try {
+      setResettingUsage(true);
+      setSaveMessage(null);
+      const updated = await resetEmployerSubscriptionUsage(employer.employerId);
+      setSubscription(updated);
+      onSaved(updated);
+      notifications.show({
+        color: "cyan",
+        title: "Usage reset",
+        message: `${employer.companyName} monthly resume usage counters were reset.`,
+      });
+      setSaveMessage({ type: "ok", text: "Monthly resume usage counters reset." });
+    } catch (err) {
+      notifications.show({
+        color: "red",
+        title: "Reset failed",
+        message: err instanceof Error ? err.message : "Failed to reset usage counters.",
+      });
+      setSaveMessage({
+        type: "err",
+        text: err instanceof Error ? err.message : "Failed to reset usage counters.",
+      });
+    } finally {
+      setResettingUsage(false);
+    }
+  }
+
   const selectClass =
     "w-full rounded-lg border border-white/20 bg-slate-900/80 px-2.5 py-1.5 text-xs text-white outline-none focus:border-cyan-400/60 transition-colors";
+
+  const viewHealth = getQuotaHealth(subscription?.monthlyResumeViewsUsed, subscription?.maxResumeViewsPerMonth);
+  const downloadHealth = getQuotaHealth(subscription?.monthlyResumeDownloadsUsed, subscription?.maxResumeDownloadsPerMonth);
 
   return (
     <Modal
@@ -213,6 +317,12 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">
             Current Subscription
           </p>
+
+          {subscription && (
+            <p className="mb-3 text-xs text-slate-400">
+              Usage Period: <span className="font-medium text-cyan-200">{formatUsagePeriod(subscription.usageWindowStartAt)}</span>
+            </p>
+          )}
 
           {loadingRead && (
             <p className="text-xs text-slate-400">Loading subscription details…</p>
@@ -272,6 +382,26 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
                 label="Posting"
                 value={subscription.postingAllowed ? "Allowed" : "Blocked"}
                 valueClass={subscription.postingAllowed ? "text-emerald-300" : "text-rose-300"}
+              />
+              <DetailRow
+                label="Resume Views"
+                value={
+                  <span className="space-y-1">
+                    <span className="block">{subscription.monthlyResumeViewsUsed} / {subscription.maxResumeViewsPerMonth}</span>
+                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${viewHealth.badgeClass}`}>{viewHealth.statusText}</span>
+                  </span>
+                }
+                valueClass={viewHealth.valueClass}
+              />
+              <DetailRow
+                label="Downloads"
+                value={
+                  <span className="space-y-1">
+                    <span className="block">{subscription.monthlyResumeDownloadsUsed} / {subscription.maxResumeDownloadsPerMonth}</span>
+                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${downloadHealth.badgeClass}`}>{downloadHealth.statusText}</span>
+                  </span>
+                }
+                valueClass={downloadHealth.valueClass}
               />
             </div>
           )}
@@ -349,6 +479,32 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
                 ))}
               </select>
             </div>
+
+            <div>
+              <FieldLabel label="Resume Views / Month" hint="Maximum monthly resume views for this employer" />
+              <select
+                value={form.maxResumeViewsPerMonth}
+                onChange={(e) => patch({ maxResumeViewsPerMonth: Number(e.target.value) })}
+                className={selectClass}
+              >
+                {MAX_RESUME_VIEW_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <FieldLabel label="Downloads / Month" hint="Maximum monthly resume downloads for this employer" />
+              <select
+                value={form.maxResumeDownloadsPerMonth}
+                onChange={(e) => patch({ maxResumeDownloadsPerMonth: Number(e.target.value) })}
+                className={selectClass}
+              >
+                {MAX_RESUME_DOWNLOAD_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="mt-3 flex items-center gap-3">
@@ -376,6 +532,23 @@ export default function BillingControlModal({ opened, employer, onClose, onSaved
         {subscription && (
           <>
             <div className="h-px bg-white/10" />
+            <div className="rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
+                Usage Controls
+              </p>
+              <p className="mb-3 text-xs text-slate-400">
+                Active Period: <span className="font-medium text-cyan-200">{formatUsagePeriod(subscription.usageWindowStartAt)}</span>
+              </p>
+              <button
+                type="button"
+                disabled={resettingUsage}
+                onClick={() => void handleResetUsage()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/20 disabled:opacity-60"
+              >
+                {resettingUsage ? "Resetting..." : "Reset Monthly Resume Usage"}
+              </button>
+            </div>
+
             <div className="rounded-xl border border-rose-500/25 bg-rose-500/5 p-3">
               <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-300/80">
                 <AlertTriangle className="h-3.5 w-3.5" />

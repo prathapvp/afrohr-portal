@@ -4,13 +4,19 @@ import { useNavigate } from "react-router";
 import PremiumNavbar from "./components/layout/PremiumNavbar";
 import PremiumSidebar from "./components/layout/PremiumSidebar";
 import { Card, CardContent } from "./components/ui/card";
+import AdminBillingControlPage from "./dashboard/AdminBillingControlPage";
 import AdminDashboardView from "./dashboard/AdminDashboardView";
+import AdminSubscriptionRequestsPage from "./dashboard/AdminSubscriptionRequestsPage";
+import AdminSubscriptionSnapshotPage from "./dashboard/AdminSubscriptionSnapshotPage";
 import CandidateDashboardView from "./dashboard/CandidateDashboardView";
 import StudentDashboardView from "./dashboard/StudentDashboardView";
 import { useDashboardController } from "./dashboard/useDashboardController";
 import type { CandidateJob, CareerItem } from "./dashboard/types";
+import FindJobsPage from "./pages/FindJobsPage";
+import JobHistoryPage from "./pages/JobHistoryPage";
+import SwipeJobsPage from "./pages/SwipeJobsPage";
 import Departments from "./features/departments/Departments";
-import { EmployerView } from "./features/employer";
+import { EmployerJobsPage, EmployerTeamAccessPage, EmployerView, SearchCandidatesPage } from "./features/employer";
 import EmployerSubscriptionPage from "./features/employer/EmployerSubscriptionPage";
 import EmploymentTypes from "./features/employment-types/EmploymentTypes";
 import Industries from "./features/industries/Industries";
@@ -31,6 +37,8 @@ export default function App() {
     adminError,
     adminLoading,
     adminOverview,
+    adminSection,
+    candidateSection,
     candidateDashboard,
     deptModalOpen,
     empTypeModalOpen,
@@ -47,6 +55,7 @@ export default function App() {
     searchLoading,
     searchQuery,
     searchResults,
+    searchCandidatesRefreshSeed,
     setDeptModalOpen,
     setEmpTypeModalOpen,
     setIndModalOpen,
@@ -81,7 +90,7 @@ export default function App() {
                 </Card>
               )}
 
-              {!loading && !error && activeTab === "candidates" && (
+              {!loading && !error && activeTab === "candidates" && candidateSection === "overview" && (
                 <CandidateDashboardView
                   dashboard={candidateDashboard}
                   searchQuery={searchQuery}
@@ -96,9 +105,23 @@ export default function App() {
                 />
               )}
 
+              {!loading && !error && activeTab === "candidates" && candidateSection === "find-jobs" && <FindJobsPage embedded />}
+
+              {!loading && !error && activeTab === "candidates" && candidateSection === "job-history" && <JobHistoryPage embedded />}
+
+              {!loading && !error && activeTab === "candidates" && candidateSection === "swipe" && <SwipeJobsPage embedded />}
+
               {!loading && !error && activeTab === "employers" && employerSection === "overview" && <EmployerView dashboard={payload.dashboards.employers} />}
 
               {!loading && !error && activeTab === "employers" && employerSection === "subscription" && <EmployerSubscriptionPage />}
+
+              {!loading && !error && activeTab === "employers" && employerSection === "viewall" && <EmployerJobsPage />}
+
+              {!loading && !error && activeTab === "employers" && employerSection === "search-candidates" && (
+                <SearchCandidatesPage key={`search-candidates-${searchCandidatesRefreshSeed}`} />
+              )}
+
+              {!loading && !error && activeTab === "employers" && employerSection === "team" && <EmployerTeamAccessPage />}
 
               {!loading && !error && activeTab === "students" && (
                 <StudentDashboardView
@@ -111,8 +134,20 @@ export default function App() {
                 />
               )}
 
-              {!loading && !error && activeTab === "admin" && (
+              {!loading && !error && activeTab === "admin" && adminSection === "overview" && (
                 <AdminDashboardView overview={adminOverview} loading={adminLoading} error={adminError} />
+              )}
+
+              {!loading && !error && activeTab === "admin" && adminSection === "billing-control" && (
+                <AdminBillingControlPage overview={adminOverview} loading={adminLoading} error={adminError} />
+              )}
+
+              {!loading && !error && activeTab === "admin" && adminSection === "subscription-requests" && (
+                <AdminSubscriptionRequestsPage />
+              )}
+
+              {!loading && !error && activeTab === "admin" && adminSection === "subscription-snapshot" && (
+                <AdminSubscriptionSnapshotPage overview={adminOverview} loading={adminLoading} error={adminError} />
               )}
             </div>
           </div>

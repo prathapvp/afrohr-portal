@@ -3,20 +3,26 @@ import { getAuthHeaders } from "./http-auth";
 export interface JobPayload {
   id?: number;
   title: string;
+  jobTitle?: string;
   company: string;
   description?: string;
   location: string;
+  country?: string;
   salary: string;
+  packageOffered?: number;
+  maxPackageOffered?: number;
   logoTone?: string;
   department?: string;
   role?: string;
   experience?: string;
   employmentType?: string;
+  jobType?: string;
   industry?: string;
   workMode?: string;
   currency?: string;
   vacancies?: number;
   skills?: string;
+  skillsRequired?: string[];
   postedBy?: number;
   jobStatus?: string;
 }
@@ -81,6 +87,12 @@ function normalizeJobStatus(status?: string): string {
 
 function toJobDto(payload: JobPayload) {
   const salary = parseSalaryRange(payload.salary);
+  const directMinSalary = typeof payload.packageOffered === "number" && Number.isFinite(payload.packageOffered) && payload.packageOffered > 0
+    ? payload.packageOffered
+    : undefined;
+  const directMaxSalary = typeof payload.maxPackageOffered === "number" && Number.isFinite(payload.maxPackageOffered) && payload.maxPackageOffered > 0
+    ? payload.maxPackageOffered
+    : undefined;
   const title = (payload.title || "").trim();
   const jobTitle = title || (payload as unknown as { jobTitle?: string }).jobTitle || "";
   const jobType = (payload.employmentType || "").trim() || (payload as unknown as { jobType?: string }).jobType || "";
@@ -93,14 +105,15 @@ function toJobDto(payload: JobPayload) {
     role: payload.role?.trim() || "",
     company: payload.company?.trim() || "",
     location: payload.location?.trim() || "",
+    country: payload.country?.trim() || "",
     description: payload.description?.trim() || "",
     experience: payload.experience?.trim() || "",
     jobType,
     workMode: payload.workMode?.trim() || "",
     industry: payload.industry?.trim() || "",
     vacancies: payload.vacancies,
-    packageOffered: salary.min,
-    maxPackageOffered: salary.max,
+    packageOffered: directMinSalary ?? salary.min,
+    maxPackageOffered: directMaxSalary ?? salary.max,
     skillsRequired,
     postedBy: payload.postedBy ?? getStoredUserId(),
     jobStatus: normalizeJobStatus(payload.jobStatus),
@@ -114,10 +127,18 @@ function toJobDto(payload: JobPayload) {
 }
 
 export interface ApplicationStatusPayload {
-  applicationId: number;
-  jobId: number;
+  applicationId?: number;
+  jobId?: number;
+  id?: number;
   applicantUserId?: number;
+  applicantId?: number;
   applicationStatus: string;
+  screeningOwner?: string;
+  interviewStatus?: string;
+  offerSalaryBandConfirmed?: boolean;
+  offerApprovalsDone?: boolean;
+  offerStartDateConfirmed?: boolean;
+  rejectionReason?: string;
 }
 
 export interface PostImageResponse {
@@ -166,8 +187,16 @@ export async function postAllJobs(payload: JobPayload[]) {
   return response.json();
 }
 
-export async function getAllJobs() {
-  const response = await fetch("/api/ahrm/v3/jobs/getAll");
+export async function getAllJobs(options?: { postedBy?: number | "me" }) {
+  const query = new URLSearchParams();
+  if (options?.postedBy !== undefined) {
+    query.set("postedBy", String(options.postedBy));
+  }
+
+  const url = query.size > 0 ? `/api/ahrm/v3/jobs/getAll?${query.toString()}` : "/api/ahrm/v3/jobs/getAll";
+  const response = await fetch(url, {
+    headers: options?.postedBy !== undefined ? { ...getAuthHeaders() } : undefined,
+  });
   if (!response.ok) {
     throw new Error("Failed to fetch jobs");
   }
@@ -221,6 +250,8 @@ export async function applyToJob(
 export async function applyToMyJob(
   id: number,
   payload: {
+    applicantName: string;
+    applicantEmail: string;
     applicantPhone?: string;
     website?: string;
     resumeUrl?: string;
@@ -260,6 +291,26 @@ export async function getMyPostedJobs() {
     throw new Error("Failed to fetch posted jobs");
   }
   return response.json();
+}
+
+export async function getMyApplicantResume(jobId: number, applicantId: number, action: "VIEW" | "DOWNLOAD" = "VIEW") {
+  const response = await fetch(`/api/ahrm/v3/jobs/me/${jobId}/applications/${applicantId}/resume?action=${action}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!response.ok) {
+    let message = "Failed to access resume";
+    try {
+      const errorBody = await response.json();
+      message = errorBody?.errorMessage || message;
+    } catch {
+      // Keep default message.
+    }
+    throw new Error(message);
+  }
+  const data = await response.json();
+  return data?.message as string;
 }
 
 export async function getJobHistory(id: number, applicationStatus: string) {
@@ -305,6 +356,26 @@ export async function postMyJob(payload: JobPayload) {
   return response.json();
 }
 
+export async function closeMyJob(jobId: number) {
+  const response = await fetch(`/api/ahrm/v3/jobs/me/${jobId}/close`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!response.ok) {
+    let message = "Failed to close job";
+    try {
+      const errorBody = await response.json();
+      message = errorBody?.errorMessage || message;
+    } catch {
+      // Keep default message.
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
 export async function deleteMyJob(jobId: number) {
   const response = await fetch(`/api/ahrm/v3/jobs/me/${jobId}`, {
     method: "DELETE",
@@ -319,10 +390,22 @@ export async function deleteMyJob(jobId: number) {
 }
 
 export async function changeApplicationStatus(payload: ApplicationStatusPayload) {
+  const normalizedPayload = {
+    id: payload.id ?? payload.jobId,
+    applicantId: payload.applicantId ?? payload.applicantUserId ?? payload.applicationId,
+    applicationStatus: payload.applicationStatus,
+    screeningOwner: payload.screeningOwner,
+    interviewStatus: payload.interviewStatus,
+    offerSalaryBandConfirmed: payload.offerSalaryBandConfirmed,
+    offerApprovalsDone: payload.offerApprovalsDone,
+    offerStartDateConfirmed: payload.offerStartDateConfirmed,
+    rejectionReason: payload.rejectionReason,
+  };
+
   const response = await fetch("/api/ahrm/v3/jobs/changeAppStatus", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(normalizedPayload),
   });
   if (!response.ok) {
     throw new Error("Failed to change application status");

@@ -20,7 +20,17 @@ public interface EmployerSubscriptionService {
 
     void ensureEmployerCanPost(Long employerId, boolean consumesActiveSlot) throws JobPortalException;
 
-    SubscriptionRequestDTO submitSubscriptionRequest(CreateSubscriptionRequestDTO dto) throws JobPortalException;
+    EmployerSubscriptionDTO consumeResumeAccess(Long employerId, String action) throws JobPortalException;
+
+    EmployerSubscriptionDTO resetMonthlyResumeUsage(Long employerId) throws JobPortalException;
+
+    SubscriptionRequestDTO submitSubscriptionRequest(CreateSubscriptionRequestDTO dto, byte[] statementBytes, String statementName, String statementType) throws JobPortalException;
+
+    SubscriptionRequestDTO updateMySubscriptionRequest(Long requestId, CreateSubscriptionRequestDTO dto, byte[] statementBytes, String statementName, String statementType) throws JobPortalException;
+
+    void deleteMySubscriptionRequest(Long requestId) throws JobPortalException;
+
+    com.jobportal.entity.SubscriptionRequest getPaymentStatementForDownload(Long requestId) throws JobPortalException;
 
     List<SubscriptionRequestDTO> getMySubscriptionRequests() throws JobPortalException;
 

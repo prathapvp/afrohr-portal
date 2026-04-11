@@ -357,6 +357,8 @@
 
   .auth-card {
     max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .auth-form-panel {

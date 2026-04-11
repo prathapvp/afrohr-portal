@@ -25,6 +25,9 @@ public class Job {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "job_code", length = 40)
+    private String jobCode;
+
     private String jobTitle;
     private String department;
     private String role;
@@ -41,6 +44,8 @@ public class Job {
     private boolean freshersAllowed;
     private String jobType;
     private String location;
+    private String country;
+    private String currency;
     private Long packageOffered;
     private Long maxPackageOffered;
     private Integer variableComponent;
@@ -65,10 +70,10 @@ public class Job {
 
     public JobDTO toDTO() {
         return new JobDTO(
-            this.id, this.jobTitle, this.department, this.role, this.company,
+            this.id, this.jobCode, this.jobTitle, this.department, this.role, this.company,
             this.applicants != null ? this.applicants.stream().map(Applicant::toDTO).toList() : null,
             this.about, this.experience, this.freshersAllowed, this.jobType,
-            this.location, this.packageOffered, this.maxPackageOffered, this.variableComponent,
+            this.location, this.country, this.currency, this.packageOffered, this.maxPackageOffered, this.variableComponent,
             this.hideSalary, this.workMode, this.willingToRelocate, this.industry,
             this.vacancies, this.postTime, this.description, this.skillsRequired,
             this.jobStatus, this.postedBy

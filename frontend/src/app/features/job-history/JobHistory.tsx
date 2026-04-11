@@ -1,25 +1,52 @@
 import { Divider, Tabs } from "@mantine/core";
+import { IconBriefcase2, IconBookmark, IconChecklist, IconProgressCheck } from "@tabler/icons-react";
 import Card from "./Card";
 import { useJobHistoryController } from "./useJobHistoryController";
 
 const JobHistory = () => { 
     const { activeTab, showList, handleTabChange } = useJobHistoryController();
 
-    return <div>
-        <div className="text-2xl font-semibold mb-5">Job History</div>
-        <div>
-            <Tabs  value={activeTab} onChange={handleTabChange} radius="lg" autoContrast variant="outline">
-                <Tabs.List className="font-semibold [&_button[data-active='true']]:!border-b-mine-shaft-950 [&_button]:!text-xl sm-mx:[&_button]:!text-lg  xs-mx:[&_button]:!text-base xsm-mx:[&_button]:!text-sm xs-mx:[&_button]:!px-1.5 xs-mx:[&_button]:!py-2 mb-5 [&_button[data-active='true']]:text-bright-sun-400 xs-mx:font-medium">
-                    <Tabs.Tab value="APPLIED">Applied</Tabs.Tab>
-                    <Tabs.Tab value="SAVED"> Saved</Tabs.Tab>
-                    <Tabs.Tab value="OFFERED">Shortlisted</Tabs.Tab>
-                    <Tabs.Tab value="INTERVIEWING">In Progress</Tabs.Tab>
+    const tabMeta: Record<string, { label: string; icon: JSX.Element }> = {
+        APPLIED: { label: "Applied", icon: <IconChecklist size={16} /> },
+        SAVED: { label: "Saved", icon: <IconBookmark size={16} /> },
+        OFFERED: { label: "Shortlisted", icon: <IconBriefcase2 size={16} /> },
+        INTERVIEWING: { label: "In Progress", icon: <IconProgressCheck size={16} /> },
+    };
+
+    return <div className="space-y-5 text-white">
+        <div className="premium-enter flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.03] to-transparent px-4 py-4 sm:px-5">
+            <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">Career Moves</div>
+                <div className="mt-1 text-2xl font-black tracking-tight text-white">Job History</div>
+            </div>
+            <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">
+                {showList.length} item{showList.length === 1 ? "" : "s"} in {tabMeta[activeTab]?.label ?? "tab"}
+            </div>
+        </div>
+
+        <div className="premium-enter [animation-delay:80ms]">
+            <Tabs value={activeTab} onChange={handleTabChange} radius="xl" variant="outline">
+                <Tabs.List className="mb-6 grid grid-cols-2 gap-2 border-none bg-transparent p-0 md:grid-cols-4 [&_button]:!rounded-2xl [&_button]:!border [&_button]:!border-white/12 [&_button]:!bg-white/[0.04] [&_button]:!px-3 [&_button]:!py-3 [&_button]:!text-[13px] [&_button]:!font-semibold [&_button]:!tracking-[0.01em] [&_button]:!text-slate-200 [&_button]:transition [&_button:hover]:!bg-white/[0.08] [&_button[data-active='true']]:!border-cyan-300/35 [&_button[data-active='true']]:!bg-cyan-400/15 [&_button[data-active='true']]:!text-cyan-100">
+                    <Tabs.Tab value="APPLIED" leftSection={tabMeta.APPLIED.icon}>{tabMeta.APPLIED.label}</Tabs.Tab>
+                    <Tabs.Tab value="SAVED" leftSection={tabMeta.SAVED.icon}>{tabMeta.SAVED.label}</Tabs.Tab>
+                    <Tabs.Tab value="OFFERED" leftSection={tabMeta.OFFERED.icon}>{tabMeta.OFFERED.label}</Tabs.Tab>
+                    <Tabs.Tab value="INTERVIEWING" leftSection={tabMeta.INTERVIEWING.icon}>{tabMeta.INTERVIEWING.label}</Tabs.Tab>
                 </Tabs.List>
+
                 <Tabs.Panel value={activeTab} className="[&>div]:w-full">
-                    <div className="flex mt-10 flex-wrap gap-5">
-                        {
-                            showList.length>0?showList.map((item)=> <Card key={item.id} {...item} {...{ [activeTab.toLowerCase()]: true }} />):<div className="text-lg font-medium">Nothing to show..</div>
-                        }
+                    <div className="flex flex-wrap gap-5">
+                        {showList.length > 0
+                            ? showList.map((item, index) => <Card key={item.id} cardIndex={index} {...item} {...{ [activeTab.toLowerCase()]: true }} />)
+                            : (
+                                <div className="premium-enter w-full rounded-2xl border border-white/12 bg-gradient-to-br from-white/[0.05] to-white/[0.02] px-6 py-12 text-center [animation-delay:120ms]">
+                                    <div className="mx-auto max-w-md">
+                                        <p className="text-xl font-semibold text-white">Nothing to show yet</p>
+                                        <p className="mt-2 text-sm text-slate-300">
+                                            Your {tabMeta[activeTab]?.label?.toLowerCase() ?? "selected"} jobs will appear here once activity starts.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                     </div>
                 </Tabs.Panel>
 

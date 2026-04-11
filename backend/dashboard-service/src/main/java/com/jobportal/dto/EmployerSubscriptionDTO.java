@@ -20,6 +20,11 @@ public class EmployerSubscriptionDTO {
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private Integer maxActiveJobs;
+    private Integer maxResumeViewsPerMonth;
+    private Integer maxResumeDownloadsPerMonth;
+    private Integer monthlyResumeViewsUsed;
+    private Integer monthlyResumeDownloadsUsed;
+    private LocalDateTime usageWindowStartAt;
     private Integer activeJobs;
     private boolean postingAllowed;
     private long remainingDays;
@@ -34,6 +39,11 @@ public class EmployerSubscriptionDTO {
                 entity.getStartAt(),
                 entity.getEndAt(),
                 entity.getMaxActiveJobs(),
+                entity.getMaxResumeViewsPerMonth(),
+                entity.getMaxResumeDownloadsPerMonth(),
+                entity.getMonthlyResumeViewsUsed(),
+                entity.getMonthlyResumeDownloadsUsed(),
+                entity.getUsageWindowStartAt(),
                 activeJobs,
                 postingAllowed,
                 remainingDays);

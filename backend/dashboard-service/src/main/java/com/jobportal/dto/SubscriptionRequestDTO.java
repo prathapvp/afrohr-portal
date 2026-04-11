@@ -16,8 +16,11 @@ public class SubscriptionRequestDTO {
     private Long employerId;
     private SubscriptionRequestType requestType;
     private SubscriptionRequestStatus status;
+    private String requestedPlan;
     private String note;
     private String adminNote;
+    private boolean hasPaymentStatement;
+    private String paymentStatementName;
     private LocalDateTime createdAt;
     private LocalDateTime resolvedAt;
 
@@ -27,8 +30,11 @@ public class SubscriptionRequestDTO {
                 entity.getEmployerId(),
                 entity.getRequestType(),
                 entity.getStatus(),
+                entity.getRequestedPlan(),
                 entity.getNote(),
                 entity.getAdminNote(),
+                entity.getPaymentStatement() != null && entity.getPaymentStatement().length > 0,
+                entity.getPaymentStatementName(),
                 entity.getCreatedAt(),
                 entity.getResolvedAt());
     }

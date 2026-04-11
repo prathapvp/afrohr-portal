@@ -53,6 +53,21 @@ public class EmployerSubscription {
     private Integer maxActiveJobs;
 
     @Column(nullable = false)
+    private Integer maxResumeViewsPerMonth;
+
+    @Column(nullable = false)
+    private Integer maxResumeDownloadsPerMonth;
+
+    @Column(nullable = false)
+    private Integer monthlyResumeViewsUsed;
+
+    @Column(nullable = false)
+    private Integer monthlyResumeDownloadsUsed;
+
+    @Column
+    private LocalDateTime usageWindowStartAt;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
@@ -63,6 +78,15 @@ public class EmployerSubscription {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
+        if (monthlyResumeViewsUsed == null) {
+            monthlyResumeViewsUsed = 0;
+        }
+        if (monthlyResumeDownloadsUsed == null) {
+            monthlyResumeDownloadsUsed = 0;
+        }
+        if (usageWindowStartAt == null) {
+            usageWindowStartAt = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
+        }
     }
 
     @PreUpdate

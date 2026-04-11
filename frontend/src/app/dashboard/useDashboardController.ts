@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { getAdminOverview, type AdminOverview } from "../services/admin-service";
 import { useAppSelector } from "../store";
-import { selectAccountType, selectIsAuthenticated, selectIsEmployer } from "../store/selectors/authSelectors";
+import { selectAccountType, selectIsAuthenticated, selectIsEmployer, selectIsEmployerOwner } from "../store/selectors/authSelectors";
 import { emptyPayload, getTabFromAccountType, mapApiJobToCandidateJob, mergeDashboardPayload } from "./data";
 import type { AudienceId, CandidateJob, CareerItem, DashboardPayload } from "./types";
 
@@ -12,25 +12,59 @@ function isAudienceId(value: string | null): value is AudienceId {
 
 export function useDashboardController() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const accountType = useAppSelector(selectAccountType);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const isEmployer = useAppSelector(selectIsEmployer);
-    const roleTab = isAuthenticated ? getTabFromAccountType(accountType) : null;
-  const queryTab = searchParams.get("tab");
+  const isEmployerOwner = useAppSelector(selectIsEmployerOwner);
+  const roleTab = isAuthenticated ? getTabFromAccountType(accountType) : null;
+  const queryTabRaw = searchParams.get("tab");
   const querySection = searchParams.get("section");
-  const initialTab = roleTab ?? (isAudienceId(queryTab) ? queryTab : null) ?? "candidates";
+  const queryIsEmployerPostJob = queryTabRaw === "employers/postJob";
+  const queryTab = queryTabRaw;
+  const initialTab = roleTab ?? (queryIsEmployerPostJob ? "employers" : (isAudienceId(queryTabRaw) ? queryTabRaw : null)) ?? "candidates";
+
+  const initialEmployerSection: "overview" | "subscription" | "viewall" | "team" | "search-candidates" =
+    querySection === "subscription"
+      ? "subscription"
+      : querySection === "team" && isEmployerOwner
+        ? "team"
+      : querySection === "search-candidates"
+        ? "search-candidates"
+      : querySection === "viewall" || querySection === "postJob"
+        ? "viewall"
+        : "overview";
+  const initialCandidateSection: "overview" | "find-jobs" | "job-history" | "swipe" =
+    querySection === "find-jobs"
+      ? "find-jobs"
+      : querySection === "job-history"
+        ? "job-history"
+        : querySection === "swipe"
+          ? "swipe"
+          : "overview";
+  const initialAdminSection: "overview" | "subscription-snapshot" | "billing-control" | "subscription-requests" =
+    querySection === "overview"
+      ? "overview"
+      : querySection === "subscription-snapshot"
+      ? "subscription-snapshot"
+      : querySection === "billing-control"
+        ? "billing-control"
+      : querySection === "subscription-requests"
+        ? "subscription-requests"
+        : "subscription-snapshot";
 
   const [activeTab, setActiveTab] = useState<AudienceId>(initialTab);
-  const [employerSection, setEmployerSection] = useState<"overview" | "subscription">(
-    querySection === "subscription" ? "subscription" : "overview"
-  );
+  const [candidateSection, setCandidateSection] = useState<"overview" | "find-jobs" | "job-history" | "swipe">(initialCandidateSection);
+  const [employerSection, setEmployerSection] = useState<"overview" | "subscription" | "viewall" | "team" | "search-candidates">(initialEmployerSection);
+  const [adminSection, setAdminSection] = useState<"overview" | "subscription-snapshot" | "billing-control" | "subscription-requests">(initialAdminSection);
   const [payload, setPayload] = useState<DashboardPayload>(emptyPayload);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<CandidateJob | CareerItem> | null>(null);
+  const [searchCandidatesRefreshSeed, setSearchCandidatesRefreshSeed] = useState(0);
   const [candidateJobs, setCandidateJobs] = useState<CandidateJob[]>([]);
   const [viewedJobIds, setViewedJobIds] = useState<Set<number>>(() => {
     try {
@@ -132,12 +166,69 @@ export function useDashboardController() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (activeTab !== "candidates") {
+      return;
+    }
+
+    setCandidateSection(
+      querySection === "find-jobs"
+        ? "find-jobs"
+        : querySection === "job-history"
+          ? "job-history"
+          : querySection === "swipe"
+            ? "swipe"
+            : "overview",
+    );
+  }, [activeTab, querySection]);
+
+  useEffect(() => {
     if (activeTab !== "employers") {
       return;
     }
 
-    setEmployerSection(querySection === "subscription" ? "subscription" : "overview");
+    setEmployerSection(
+      querySection === "subscription"
+        ? "subscription"
+        : querySection === "team" && isEmployerOwner
+          ? "team"
+        : querySection === "viewall" || querySection === "postJob"
+          ? "viewall"
+          : "overview",
+    );
+  }, [activeTab, isEmployerOwner, querySection, queryTab]);
+
+  useEffect(() => {
+    if (activeTab !== "admin") {
+      return;
+    }
+
+    setAdminSection(
+      querySection === "overview"
+        ? "overview"
+        : querySection === "subscription-snapshot"
+        ? "subscription-snapshot"
+        : querySection === "billing-control"
+          ? "billing-control"
+        : querySection === "subscription-requests"
+          ? "subscription-requests"
+          : "subscription-snapshot",
+    );
   }, [activeTab, querySection]);
+
+  useEffect(() => {
+    if (activeTab !== "employers") {
+      return;
+    }
+    if (employerSection !== "team") {
+      return;
+    }
+    if (isEmployerOwner) {
+      return;
+    }
+
+    setEmployerSection("overview");
+    setSearchParams({ tab: "employers" }, { replace: true });
+  }, [activeTab, employerSection, isEmployerOwner, setSearchParams]);
 
   useEffect(() => {
     if (!isAuthenticated || !roleTab) {
@@ -149,14 +240,34 @@ export function useDashboardController() {
       return;
     }
 
-    if (queryTab !== roleTab) {
-      if (roleTab === "employers" && employerSection === "subscription") {
+    if (queryTab !== roleTab || queryIsEmployerPostJob || querySection === "postJob") {
+      if (roleTab === "candidates" && candidateSection === "find-jobs") {
+        setSearchParams({ tab: roleTab, section: "find-jobs" }, { replace: true });
+      } else if (roleTab === "candidates" && candidateSection === "job-history") {
+        setSearchParams({ tab: roleTab, section: "job-history" }, { replace: true });
+      } else if (roleTab === "candidates" && candidateSection === "swipe") {
+        setSearchParams({ tab: roleTab, section: "swipe" }, { replace: true });
+      } else if (roleTab === "employers" && employerSection === "subscription") {
         setSearchParams({ tab: roleTab, section: "subscription" }, { replace: true });
+      } else if (roleTab === "employers" && employerSection === "team") {
+        setSearchParams({ tab: roleTab, section: "team" }, { replace: true });
+      } else if (roleTab === "employers" && employerSection === "viewall") {
+        setSearchParams({ tab: roleTab, section: "viewall" }, { replace: true });
+      } else if (roleTab === "admin" && adminSection === "subscription-snapshot") {
+        setSearchParams({ tab: roleTab, section: "subscription-snapshot" }, { replace: true });
+      } else if (roleTab === "admin" && adminSection === "billing-control") {
+        setSearchParams({ tab: roleTab, section: "billing-control" }, { replace: true });
+      } else if (roleTab === "admin" && adminSection === "subscription-requests") {
+        setSearchParams({ tab: roleTab, section: "subscription-requests" }, { replace: true });
+      } else if (roleTab === "admin" && adminSection === "overview") {
+        setSearchParams({ tab: roleTab, section: "overview" }, { replace: true });
       } else {
         setSearchParams({ tab: roleTab }, { replace: true });
       }
+    } else if (roleTab === "admin" && !querySection) {
+      setSearchParams({ tab: roleTab, section: "subscription-snapshot" }, { replace: true });
     }
-  }, [activeTab, employerSection, isAuthenticated, queryTab, roleTab, setSearchParams]);
+  }, [activeTab, adminSection, candidateSection, employerSection, isAuthenticated, querySection, queryTab, roleTab, setSearchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -257,7 +368,8 @@ export function useDashboardController() {
       next.add(job.id as number);
       return next;
     });
-    navigate(`/jobs/${job.id}`);
+    const returnTo = `${location.pathname}${location.search}`;
+    navigate(`/jobs/${job.id}?returnTo=${encodeURIComponent(returnTo)}`);
   }
 
   function handleViewAllJobs() {
@@ -280,6 +392,37 @@ export function useDashboardController() {
       setDeptModalOpen(true);
       return;
     }
+    if (label === "Posted Jobs") {
+      if (!isEmployer) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setEmployerSection("viewall");
+      setActiveTab("employers");
+      setSearchParams({ tab: "employers", section: "viewall" }, { replace: true });
+      return;
+    }
+    if (label === "Team Access") {
+      if (!isEmployer || !isEmployerOwner) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setEmployerSection("team");
+      setActiveTab("employers");
+      setSearchParams({ tab: "employers", section: "team" }, { replace: true });
+      return;
+    }
+    if (label === "Search Candidates") {
+      if (!isEmployer) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setSearchCandidatesRefreshSeed((seed) => seed + 1);
+      setEmployerSection("search-candidates");
+      setActiveTab("employers");
+      setSearchParams({ tab: "employers", section: "search-candidates" }, { replace: true });
+      return;
+    }
     if (label === "Industry") {
       setIndModalOpen(true);
       return;
@@ -290,6 +433,42 @@ export function useDashboardController() {
     }
     if (label === "Work Mode") {
       setWorkModeModalOpen(true);
+      return;
+    }
+    if (label === "Find Jobs") {
+      setCandidateSection("find-jobs");
+      setActiveTab("candidates");
+      setSearchParams({ tab: "candidates", section: "find-jobs" }, { replace: true });
+      return;
+    }
+    if (label === "Job History") {
+      setCandidateSection("job-history");
+      setActiveTab("candidates");
+      setSearchParams({ tab: "candidates", section: "job-history" }, { replace: true });
+      return;
+    }
+    if (label === "Swipe Mode") {
+      setCandidateSection("swipe");
+      setActiveTab("candidates");
+      setSearchParams({ tab: "candidates", section: "swipe" }, { replace: true });
+      return;
+    }
+    if (label === "Snapshot" || label === "Employer Subscription Snapshot") {
+      setAdminSection("subscription-snapshot");
+      setActiveTab("admin");
+      setSearchParams({ tab: "admin", section: "subscription-snapshot" }, { replace: true });
+      return;
+    }
+    if (label === "Billing Control") {
+      setAdminSection("billing-control");
+      setActiveTab("admin");
+      setSearchParams({ tab: "admin", section: "billing-control" }, { replace: true });
+      return;
+    }
+    if (label === "Requests" || label === "Employer Subscription Requests") {
+      setAdminSection("subscription-requests");
+      setActiveTab("admin");
+      setSearchParams({ tab: "admin", section: "subscription-requests" }, { replace: true });
       return;
     }
 
@@ -303,8 +482,15 @@ export function useDashboardController() {
       return;
     }
 
+    if (tab === "candidates") {
+      setCandidateSection("overview");
+    }
+
     if (tab === "employers") {
       setEmployerSection("overview");
+    }
+    if (tab === "admin") {
+      setAdminSection("subscription-snapshot");
     }
 
     setActiveTab(tab);
@@ -328,8 +514,26 @@ export function useDashboardController() {
       ? "Employment Type"
       : workModeModalOpen
       ? "Work Mode"
+      : activeTab === "candidates" && candidateSection === "find-jobs"
+      ? "Find Jobs"
+      : activeTab === "candidates" && candidateSection === "job-history"
+      ? "Job History"
+      : activeTab === "candidates" && candidateSection === "swipe"
+      ? "Swipe Mode"
+      : activeTab === "employers" && employerSection === "viewall"
+      ? "Posted Jobs"
+      : activeTab === "employers" && employerSection === "team"
+      ? "Team Access"
+      : activeTab === "employers" && employerSection === "search-candidates"
+      ? "Search Candidates"
       : activeTab === "employers" && employerSection === "subscription"
       ? "Subscription"
+      : activeTab === "admin" && adminSection === "subscription-snapshot"
+      ? "Snapshot"
+      : activeTab === "admin" && adminSection === "billing-control"
+      ? "Billing Control"
+      : activeTab === "admin" && adminSection === "subscription-requests"
+      ? "Requests"
       : activeTab === "employers"
       ? "Employer"
       : activeTab === "students"
@@ -343,6 +547,8 @@ export function useDashboardController() {
     adminError,
     adminLoading,
     adminOverview,
+    adminSection,
+    candidateSection,
     candidateDashboard,
     deptModalOpen,
     empTypeModalOpen,
@@ -359,6 +565,7 @@ export function useDashboardController() {
     searchLoading,
     searchQuery,
     searchResults,
+    searchCandidatesRefreshSeed,
     setDeptModalOpen,
     setEmpTypeModalOpen,
     setIndModalOpen,

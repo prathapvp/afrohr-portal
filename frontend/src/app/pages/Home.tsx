@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowRight, Award, Building2, ChevronRight, Globe, GraduationCap, Play, Sparkles, TrendingUp, Zap } from "lucide-react";
 import PremiumNavbar from "../components/layout/PremiumNavbar";
+import { getLandingTabForAccountType } from "../store/selectors/authSelectors";
+import { errorNotification } from "../services/NotificationService";
 
 type AudienceTab = "candidates" | "employers" | "students";
 
@@ -145,6 +147,7 @@ function buildHomePayloadFromJobs(jobs: ApiJobItem[]): DashboardResponse {
         primaryActions: [
           { label: "Explore Jobs", tab: "candidates" },
           { label: "Hire Talent", tab: "employers" },
+          { label: "Students", tab: "students" },
         ],
       },
       cards: {
@@ -314,10 +317,11 @@ interface AudienceCardProps {
   chart: ReactNode;
   cta: string;
   audienceTab: AudienceTab;
+  onNavigate: (tab: AudienceTab) => void;
+  locked?: boolean;
 }
 
-function AudienceCard({ color, iconBg, icon, badge, title, subtitle, chart, cta, audienceTab }: AudienceCardProps) {
-  const navigate = useNavigate();
+function AudienceCard({ color, iconBg, icon, badge, title, subtitle, chart, cta, audienceTab, onNavigate, locked = false }: AudienceCardProps) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -344,8 +348,12 @@ function AudienceCard({ color, iconBg, icon, badge, title, subtitle, chart, cta,
 
       <div className="px-6 pb-6 pt-4">
         <button
-          onClick={() => void navigate(`/dashboard?tab=${audienceTab}`)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/20 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-white/30"
+          onClick={() => onNavigate(audienceTab)}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition-colors ${
+            locked
+              ? "bg-white/10 opacity-70 hover:bg-white/20"
+              : "bg-white/20 hover:bg-white/30"
+          }`}
         >
           {cta}
           <ArrowRight className="h-4 w-4" />
@@ -355,8 +363,7 @@ function AudienceCard({ color, iconBg, icon, badge, title, subtitle, chart, cta,
   );
 }
 
-function CareerWizard({ card }: { card: StudentCard }) {
-  const navigate = useNavigate();
+function CareerWizard({ card, onNavigate, locked = false }: { card: StudentCard; onNavigate: (tab: AudienceTab) => void; locked?: boolean }) {
   const [step, setStep] = useState(0);
   const [selections, setSelections] = useState<string[]>([]);
 
@@ -418,8 +425,12 @@ function CareerWizard({ card }: { card: StudentCard }) {
 
       <div className="px-6 pb-6 pt-2">
         <button
-          onClick={() => void navigate("/dashboard?tab=students")}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/20 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-white/30"
+          onClick={() => onNavigate("students")}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition-colors ${
+            locked
+              ? "bg-white/10 opacity-70 hover:bg-white/20"
+              : "bg-white/20 hover:bg-white/30"
+          }`}
         >
           {done ? card.cta : "Explore All Careers"}
           <ArrowRight className="h-4 w-4" />
@@ -462,6 +473,58 @@ export default function Home() {
   const [payload, setPayload] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const tabActionLabel: Record<AudienceTab, string> = {
+    candidates: "Explore Jobs",
+    employers: "Hire Talent",
+    students: "Students",
+  };
+
+  const tabRoleLabel: Record<AudienceTab, string> = {
+    candidates: "Applicant",
+    employers: "Employer",
+    students: "Student",
+  };
+
+  const token = localStorage.getItem("token");
+  const accountType = localStorage.getItem("accountType") ?? "";
+  const activeLandingTab = getLandingTabForAccountType(accountType);
+
+  const isActionLocked = (tab: AudienceTab) => Boolean(token && activeLandingTab && activeLandingTab !== tab);
+
+  const navigateWithRoleGate = (tab: AudienceTab) => {
+    const landingTab = activeLandingTab;
+
+    if (token && landingTab === tab) {
+      navigate(`/dashboard?tab=${tab}`);
+      return;
+    }
+
+    if (token && landingTab && landingTab !== tab) {
+      errorNotification(
+        "Access Restricted",
+        `You are logged in as ${tabRoleLabel[landingTab]}. Only ${tabActionLabel[landingTab]} is allowed.`,
+      );
+      return;
+    }
+
+    navigate(`/login?next=${tab}`);
+  };
+
+  const navigateToAllowedDashboard = () => {
+    const landingTab = activeLandingTab;
+
+    if (token && landingTab) {
+      navigate(`/dashboard?tab=${landingTab}`);
+      return;
+    }
+
+    navigate("/login");
+  };
+
+  const handlePrimaryActionClick = (tab: AudienceTab) => {
+    navigateWithRoleGate(tab);
+  };
 
   useEffect(() => {
     // Keep Home fully static/public with no backend dependency on initial load.
@@ -542,14 +605,14 @@ export default function Home() {
             {home.hero.primaryActions.map((action) => (
               <button
                 key={action.tab}
-                onClick={() => void navigate(`/dashboard?tab=${action.tab}`)}
+                onClick={() => handlePrimaryActionClick(action.tab)}
                 className={`flex items-center gap-2 rounded-2xl px-6 py-3.5 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 ${
                   action.tab === "candidates"
                     ? "bg-gradient-to-r from-blue-600 to-cyan-500 hover:shadow-blue-500/30"
                     : action.tab === "employers"
                       ? "bg-gradient-to-r from-green-600 to-emerald-500 hover:shadow-green-500/30"
                       : "bg-gradient-to-r from-purple-600 to-pink-500 hover:shadow-purple-500/30"
-                }`}
+                } ${isActionLocked(action.tab) ? "opacity-65 ring-1 ring-white/30 saturate-50" : ""}`}
               >
                 {action.label}
                 <ArrowRight className="h-4 w-4" />
@@ -562,9 +625,9 @@ export default function Home() {
       <section className="px-4 pb-16">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <AudienceCard color="from-blue-700 to-cyan-600" iconBg="bg-white/20" icon={<TrendingUp className="h-6 w-6 text-white" />} badge={candidateCard.badge} title={candidateCard.title} subtitle={candidateCard.subtitle} chart={candidateChart} cta={candidateCard.cta} audienceTab="candidates" />
-            <AudienceCard color="from-emerald-700 to-teal-600" iconBg="bg-white/20" icon={<Building2 className="h-6 w-6 text-white" />} badge={employerCard.badge} title={employerCard.title} subtitle={employerCard.subtitle} chart={employerChart} cta={employerCard.cta} audienceTab="employers" />
-            <CareerWizard card={studentCard} />
+            <AudienceCard color="from-blue-700 to-cyan-600" iconBg="bg-white/20" icon={<TrendingUp className="h-6 w-6 text-white" />} badge={candidateCard.badge} title={candidateCard.title} subtitle={candidateCard.subtitle} chart={candidateChart} cta={candidateCard.cta} audienceTab="candidates" onNavigate={navigateWithRoleGate} locked={isActionLocked("candidates")} />
+            <AudienceCard color="from-emerald-700 to-teal-600" iconBg="bg-white/20" icon={<Building2 className="h-6 w-6 text-white" />} badge={employerCard.badge} title={employerCard.title} subtitle={employerCard.subtitle} chart={employerChart} cta={employerCard.cta} audienceTab="employers" onNavigate={navigateWithRoleGate} locked={isActionLocked("employers")} />
+            <CareerWizard card={studentCard} onNavigate={navigateWithRoleGate} locked={isActionLocked("students")} />
           </div>
         </div>
       </section>
@@ -652,7 +715,7 @@ export default function Home() {
               <span className="text-xs font-bold uppercase tracking-widest text-orange-400">{home.videos.eyebrow}</span>
               <h2 className="mt-2 text-3xl font-black">{home.videos.title}</h2>
             </div>
-            <button onClick={() => void navigate("/dashboard")} className="hidden items-center gap-1 text-sm text-white/50 transition-colors hover:text-white sm:flex">
+            <button onClick={() => navigateToAllowedDashboard()} className="hidden items-center gap-1 text-sm text-white/50 transition-colors hover:text-white sm:flex">
               {home.videos.actionLabel ?? "View all"} <ChevronRight className="h-4 w-4" />
             </button>
           </div>
@@ -696,7 +759,7 @@ export default function Home() {
           </h2>
           <p className="mb-10 text-lg leading-relaxed text-white/60">{home.cta.description}</p>
           <div className="flex flex-wrap justify-center gap-4">
-            <button onClick={() => void navigate("/dashboard")} className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 px-8 py-4 text-base font-bold text-white shadow-xl transition-all hover:-translate-y-0.5 hover:shadow-orange-500/30">
+            <button onClick={() => navigateToAllowedDashboard()} className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 px-8 py-4 text-base font-bold text-white shadow-xl transition-all hover:-translate-y-0.5 hover:shadow-orange-500/30">
               {home.cta.actionLabel}
               <ArrowRight className="h-5 w-5" />
             </button>
@@ -716,9 +779,9 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-6 text-sm text-white/40">
-            <button onClick={() => void navigate("/dashboard?tab=candidates")} className="transition-colors hover:text-white/70">Candidates</button>
-            <button onClick={() => void navigate("/dashboard?tab=employers")} className="transition-colors hover:text-white/70">Employers</button>
-            <button onClick={() => void navigate("/dashboard?tab=students")} className="transition-colors hover:text-white/70">Students</button>
+            <button onClick={() => navigateWithRoleGate("candidates")} className="transition-colors hover:text-white/70">Candidates</button>
+            <button onClick={() => navigateWithRoleGate("employers")} className="transition-colors hover:text-white/70">Employers</button>
+            <button onClick={() => navigateWithRoleGate("students")} className="transition-colors hover:text-white/70">Students</button>
           </div>
           <p className="text-xs text-white/30">© {currentYear} {branding.name} · {branding.subtitle}</p>
         </div>

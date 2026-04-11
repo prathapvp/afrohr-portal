@@ -1,6 +1,7 @@
-import { IconBriefcase, IconMapPin, IconCurrencyDollar, IconRecharging } from "@tabler/icons-react"
+import { IconBriefcase, IconMapPin, IconCurrencyDollar, IconRecharging, IconHash } from "@tabler/icons-react"
 
 const card=[
+    {name:"Job ID", icon:IconHash, value:"AFR-0001" , id:"jobCode"},
     {name:"Location", icon:IconMapPin, value:"New York" , id:"location"},
     {name:"Experience", icon:IconBriefcase, value:"Expert", id:"experience"},
     {name:"Salary", icon:IconCurrencyDollar, value:"90K", id:"packageOffered"},

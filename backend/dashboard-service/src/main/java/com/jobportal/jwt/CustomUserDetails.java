@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.jobportal.dto.AccountType;
+import com.jobportal.dto.EmployerRole;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class CustomUserDetails implements UserDetails {
 	private String password;
 	private Long profileId;
 	private AccountType accountType;
+	private EmployerRole employerRole;
 	private Collection<? extends GrantedAuthority> authorities;
 
 	@Override

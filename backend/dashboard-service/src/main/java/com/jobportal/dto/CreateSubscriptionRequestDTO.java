@@ -12,4 +12,7 @@ public class CreateSubscriptionRequestDTO {
 
     @Size(max = 500, message = "{subscription.request.note.size}")
     private String note;
+
+    @Size(max = 80, message = "{subscription.request.plan.size}")
+    private String requestedPlan;
 }

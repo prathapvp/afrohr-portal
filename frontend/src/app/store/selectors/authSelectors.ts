@@ -4,6 +4,7 @@ export type AccountType = "APPLICANT" | "EMPLOYER" | "STUDENT" | "ADMIN" | "CAND
 
 type UserWithAccountType = {
   accountType?: string | null;
+  employerRole?: string | null;
 } | null;
 
 export function selectJwt(state: RootState): string {
@@ -20,6 +21,14 @@ export function selectAccountType(state: RootState): string {
 
 export function selectIsEmployer(state: RootState): boolean {
   return selectAccountType(state) === "EMPLOYER";
+}
+
+export function selectEmployerRole(state: RootState): string {
+  return String((state.user as UserWithAccountType)?.employerRole ?? "").toUpperCase();
+}
+
+export function selectIsEmployerOwner(state: RootState): boolean {
+  return selectIsEmployer(state) && selectEmployerRole(state) === "OWNER";
 }
 
 export function getLandingTabForAccountType(accountType: string): "candidates" | "employers" | "students" | null {

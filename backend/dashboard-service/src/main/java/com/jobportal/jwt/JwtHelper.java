@@ -57,6 +57,7 @@ public class JwtHelper {
 		claims.put("id", customUser.getId());
 		claims.put("name", customUser.getName());
 		claims.put("accountType", customUser.getAccountType());
+		claims.put("employerRole", customUser.getEmployerRole());
 		claims.put("profileId", customUser.getProfileId());
 		return doGenerateToken(claims, userDetails.getUsername());
 	}

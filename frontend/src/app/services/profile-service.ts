@@ -17,6 +17,11 @@ export async function getProfile(id: number) {
   return response.data;
 }
 
+export async function getProfileByUserId(userId: number) {
+  const response = await axiosInstance.get(`/profiles/by-user/${userId}`);
+  return response.data;
+}
+
 export async function getMyProfile() {
 	const response = await axiosInstance.get("/profiles/me");
 	return response.data;
@@ -24,6 +29,13 @@ export async function getMyProfile() {
 
 export async function getAllProfiles() {
   const response = await axiosInstance.get("/profiles/getAll");
+  return response.data;
+}
+
+export async function getProfilesByAccountType(accountType: "APPLICANT" | "STUDENT" | "EMPLOYER") {
+  const response = await axiosInstance.get("/profiles/getAll", {
+    params: { accountType }
+  });
   return response.data;
 }
 

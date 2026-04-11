@@ -15,9 +15,12 @@ export interface JobListItem {
   jobTitle: string;
   company: string;
   location?: string;
+  country?: string;
   experience?: string;
   jobType?: string;
+  currency?: string;
   packageOffered?: number;
+  maxPackageOffered?: number;
   postTime?: string;
   about?: string;
   jobStatus?: string;

@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.jobportal.dto.ProfileDTO;
+import com.jobportal.dto.AccountType;
 import com.jobportal.exception.JobPortalException;
 import com.jobportal.service.AiAssistantService;
 import com.jobportal.service.CurrentUserService;
@@ -90,6 +92,14 @@ public class ProfileAPI {
 		}
 	}
 
+	@GetMapping("/by-user/{userId}")
+	public ResponseEntity<ProfileDTO> getProfileByUserId(@PathVariable Long userId) throws JobPortalException {
+		logger.info("Fetching profile for user ID: {}", userId);
+		ProfileDTO profile = profileService.getProfileByUserId(userId);
+		logger.info("Successfully fetched profile for user ID: {}", userId);
+		return new ResponseEntity<>(profile, HttpStatus.OK);
+	}
+
 	@GetMapping("/me")
 	public ResponseEntity<ProfileDTO> getMyProfile() throws JobPortalException {
 		Long profileId = requireCurrentProfileId();
@@ -97,14 +107,40 @@ public class ProfileAPI {
 	}
 
 	@GetMapping("/getAll")
-	public ResponseEntity<List<ProfileDTO>> getAllProfiles() throws JobPortalException {
+	public ResponseEntity<List<ProfileDTO>> getAllProfiles(@RequestParam(required = false) String accountType)
+			throws JobPortalException {
 		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
-		if (!currentUser.isAdmin()) {
-			throw new JobPortalException("Admin access required to view all profiles");
+		boolean isAdmin = currentUser.isAdmin();
+		boolean isEmployer = currentUser.accountType() == AccountType.EMPLOYER;
+
+		if (!isAdmin && !isEmployer) {
+			throw new JobPortalException("Admin or employer access required to view profiles");
 		}
-		logger.info("Fetching all profiles");
+
+		logger.info("Fetching profiles" + (accountType != null ? " with accountType: " + accountType : ""));
 		try {
-			List<ProfileDTO> profiles = profileService.getAllProfiles();
+			List<ProfileDTO> profiles;
+			if (isAdmin) {
+				if (accountType != null && !accountType.isEmpty()) {
+					profiles = profileService.getProfilesByAccountType(accountType.trim().toUpperCase());
+				} else {
+					profiles = profileService.getAllProfiles();
+				}
+			} else {
+				if (accountType == null || accountType.isEmpty()) {
+					profiles = new java.util.ArrayList<>();
+					profiles.addAll(profileService.getProfilesByAccountType(AccountType.APPLICANT.name()));
+					profiles.addAll(profileService.getProfilesByAccountType(AccountType.STUDENT.name()));
+				} else {
+					String normalizedType = accountType.trim().toUpperCase();
+					if (!AccountType.APPLICANT.name().equals(normalizedType)
+							&& !AccountType.STUDENT.name().equals(normalizedType)) {
+						throw new JobPortalException("Employers can only view applicant and student profiles");
+					}
+					profiles = profileService.getProfilesByAccountType(normalizedType);
+				}
+			}
+
 			if (profiles == null || profiles.isEmpty()) {
 				logger.info("No profiles found in the system");
 				return new ResponseEntity<>(List.of(), HttpStatus.OK);
@@ -112,7 +148,7 @@ public class ProfileAPI {
 			logger.info("Successfully fetched {} profiles", profiles.size());
 			return new ResponseEntity<>(profiles, HttpStatus.OK);
 		} catch (Exception e) {
-			logger.error("Error fetching all profiles", e);
+			logger.error("Error fetching profiles", e);
 			throw new JobPortalException("Error fetching profiles: " + e.getMessage());
 		}
 	}

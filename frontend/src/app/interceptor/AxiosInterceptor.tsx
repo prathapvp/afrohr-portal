@@ -9,7 +9,6 @@ const axiosInstance = axios.create({
     timeout: 30000, // 30 second timeout
     withCredentials: false,
     headers: {
-        'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest', // CSRF protection
     }
 });
@@ -19,6 +18,16 @@ initializeCsrfToken();
 
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+        // Let the browser set multipart boundaries automatically for FormData requests.
+        if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+            if (config.headers) {
+                if (typeof (config.headers as any).delete === 'function') {
+                    (config.headers as any).delete('Content-Type');
+                }
+                delete (config.headers as any)['Content-Type'];
+            }
+        }
+
         // Get JWT token from localStorage (will migrate to httpOnly cookies with backend support)
         const token = localStorage.getItem('token');
         if (token) {

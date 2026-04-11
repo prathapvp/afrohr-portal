@@ -6,7 +6,14 @@ const formatDate=(dateString:string)=> {
   function timeAgo(timestamp:string) {
     const now = new Date();
     const postDate = new Date(timestamp);
-    const diffInMs = now.getTime() - postDate.getTime();
+    const postDateMs = postDate.getTime();
+    if (!Number.isFinite(postDateMs)) {
+      return "Recently posted";
+    }
+    const diffInMs = now.getTime() - postDateMs;
+    if (diffInMs < 0) {
+      return "Recently posted";
+    }
 
   
     const seconds = Math.floor(diffInMs / 1000);
@@ -94,6 +101,25 @@ const openPDF=(base64: string)=>{
     alert('Popup was blocked. Please allow popups for this website.');
   }
 }
+
+const downloadPDF = (base64: string, fileName = "resume.pdf") => {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: "application/pdf" });
+  const blobUrl = URL.createObjectURL(blob);
+
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(blobUrl);
+};
 const formatInterviewTime=(dateString:string)=>{
   const date = new Date(dateString);
 
@@ -109,4 +135,4 @@ const options: Intl.DateTimeFormatOptions = {
 return date.toLocaleString('en-US', options);
 }  
 
-  export {formatDate, timeAgo, getBase64, resizeImage, openPDF, formatInterviewTime};
+  export {formatDate, timeAgo, getBase64, resizeImage, openPDF, downloadPDF, formatInterviewTime};

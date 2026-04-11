@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { Avatar, Tooltip } from "@mantine/core";
 import { IconGripVertical } from "@tabler/icons-react";
@@ -77,6 +77,7 @@ interface KanbanBoardProps {
 
 const KanbanBoard = ({ applicants: initialApplicants }: KanbanBoardProps) => {
     const { id: jobId } = useParams<{ id: string }>();
+    const scrollRef = useRef<HTMLDivElement | null>(null);
     const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants || []);
     const [draggedApplicant, setDraggedApplicant] = useState<Applicant | null>(null);
     const [dragOverCol, setDragOverCol] = useState<string | null>(null);
@@ -144,8 +145,23 @@ const KanbanBoard = ({ applicants: initialApplicants }: KanbanBoardProps) => {
         }
     };
 
+    const handleHorizontalWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+        const container = scrollRef.current;
+        if (!container) return;
+
+        // Make vertical wheel gestures scroll the kanban columns horizontally.
+        if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+            container.scrollLeft += event.deltaY;
+            event.preventDefault();
+        }
+    };
+
     return (
-        <div className="overflow-x-auto pb-4 -mx-2 px-2">
+        <div
+            ref={scrollRef}
+            onWheel={handleHorizontalWheel}
+            className="overflow-x-auto pb-4 -mx-2 px-2"
+        >
             <div className="flex gap-3 min-w-max py-1">
                 {COLUMNS.map((col) => {
                     const cards = applicants.filter((a) => a.applicationStatus === col.id);

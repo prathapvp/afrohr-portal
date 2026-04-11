@@ -1,4 +1,4 @@
-import { ActionIcon, Stack } from "@mantine/core";
+import { ActionIcon, TextInput } from "@mantine/core";
 import { IconCheck, IconPencil, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store";
@@ -6,6 +6,9 @@ import { persistProfile } from "../../store/slices/ProfileSlice";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import { extractErrorMessage } from "../../services/error-extractor-service";
 import { useMediaQuery } from "@mantine/hooks";
+import ProfileEditorModal, { premiumProfileInputStyles } from "./ProfileEditorModal";
+
+const inputClassName = "[&_input]:bg-slate-950/70 [&_input]:text-slate-100 [&_input]:border-white/20 [&_input]:focus:border-cyan-400 [&_input]:placeholder:text-slate-500";
 
 const AccountDetails = () => {
     const dispatch = useAppDispatch();
@@ -14,18 +17,18 @@ const AccountDetails = () => {
 
     const matches = useMediaQuery("(max-width: 475px)");
 
-    const [edit, setEdit] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
     const [reportingManager, setReportingManager] = useState(profile?.reportingManager || "");
     const [mobileNumber, setMobileNumber] = useState(profile?.mobileNumber || "");
 
-    const handleClick = () => {
-        if (!edit) {
-            setReportingManager(profile?.reportingManager || "");
-            setMobileNumber(profile?.mobileNumber || "");
-            setEdit(true);
-        } else {
-            setEdit(false);
-        }
+    const handleOpenEdit = () => {
+        setReportingManager(profile?.reportingManager || "");
+        setMobileNumber(profile?.mobileNumber || "");
+        setEditOpen(true);
+    };
+
+    const handleCloseEdit = () => {
+        setEditOpen(false);
     };
 
     const handleSave = async () => {
@@ -37,7 +40,7 @@ const AccountDetails = () => {
         try {
             await dispatch(persistProfile(updatedProfile)).unwrap();
             successNotification("Success", "Account Details Updated Successfully");
-            setEdit(false);
+            setEditOpen(false);
         } catch (error: unknown) {
             const errorMessage = extractErrorMessage(error);
             errorNotification("Update Failed", errorMessage);
@@ -46,94 +49,92 @@ const AccountDetails = () => {
 
     return (
         <div data-aos="fade-up" className="mb-6">
-            {/* Header with edit/save icons */}
-            <div className="text-2xl font-semibold mb-3 flex justify-between">
-                Account Details
+            <div className="mb-3 flex items-center justify-between">
                 <div>
-                    {edit && (
-                        <ActionIcon
-                            onClick={handleSave}
-                            variant="subtle"
-                            color="green.8"
-                            size={matches ? "md" : "lg"}
-                        >
-                            <IconCheck className="w-4/5 h-4/5" stroke={1.5} />
-                        </ActionIcon>
-                    )}
+                    <h3 className="text-xl font-semibold text-white">Account Details</h3>
+                    <p className="text-xs text-slate-400">Keep your communication and account contact information up to date.</p>
+                </div>
+                <div className="flex items-center gap-2">
                     <ActionIcon
-                        onClick={handleClick}
-                        variant="subtle"
-                        color={edit ? "red.8" : "brightSun.4"}
+                        onClick={handleOpenEdit}
+                        variant="light"
+                        color="yellow"
                         size={matches ? "md" : "lg"}
+                        className="!bg-bright-sun-400/20 !text-bright-sun-300 hover:!bg-bright-sun-400/30"
                     >
-                        {edit ? (
-                            <IconX className="w-4/5 h-4/5" stroke={1.5} />
-                        ) : (
-                            <IconPencil className="w-4/5 h-4/5" stroke={1.5} />
-                        )}
+                        <IconPencil className="h-4 w-4" stroke={1.8} />
                     </ActionIcon>
                 </div>
             </div>
 
-            {/* Account details rows */}
-            <div className="border rounded shadow-sm">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Username</div>
-                    <div className="w-2/3">{user?.name || profile?.username || "-"}</div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Group</div>
-                    <div className="w-2/3">{profile?.group || "-"}</div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Email for Communication</div>
-                    <div className="w-2/3">{user?.email || profile?.email || "-"}</div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Role</div>
-                    <div className="w-2/3">
-                        {user?.accountType === "EMPLOYER"
-                            ? "Recruiter"
-                            : user?.accountType === "APPLICANT"
-                            ? "Applicant"
-                            : profile?.role || "-"}
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.85),rgba(2,6,23,0.9))]">
+                <div className="grid grid-cols-1 divide-y divide-white/10">
+                    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Username</p>
+                        <p className="text-sm font-medium text-slate-100">{String(user?.name || profile?.username || "-")}</p>
                     </div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Reporting Manager</div>
-                    <div className="w-2/3">
-                        {edit ? (
-                            <input
-                                type="text"
-                                value={reportingManager}
-                                onChange={(e) => setReportingManager(e.target.value)}
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                autoComplete="off"
-                                placeholder="Enter reporting manager name"
-                            />
-                        ) : (
-                            <div>{reportingManager || "-"}</div>
-                        )}
+
+                    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Group</p>
+                        <p className="text-sm font-medium text-slate-100">{String(profile?.group || "-")}</p>
                     </div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <div className="text-gray-500 font-medium w-1/3">Mobile Number</div>
-                    <div className="w-2/3">
-                        {edit ? (
-                            <input
-                                type="text"
-                                value={mobileNumber}
-                                onChange={(e) => setMobileNumber(e.target.value)}
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                autoComplete="off"
-                                placeholder="Enter mobile number"
-                            />
-                        ) : (
-                            <div>{mobileNumber || "-"}</div>
-                        )}
+
+                    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Email for Communication</p>
+                        <p className="text-sm font-medium text-slate-100 break-all">{String(user?.email || profile?.email || "-")}</p>
+                    </div>
+
+                    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Role</p>
+                        <p className="text-sm font-medium text-slate-100">
+                            {user?.accountType === "EMPLOYER"
+                                ? "Recruiter"
+                                : user?.accountType === "APPLICANT"
+                                ? "Applicant"
+                                : String(profile?.role || "-")}
+                        </p>
+                    </div>
+
+                    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Reporting Manager</p>
+                        <p className="text-sm font-medium text-slate-100">{String(profile?.reportingManager || "-")}</p>
+                    </div>
+
+                    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Mobile Number</p>
+                        <p className="text-sm font-medium text-slate-100">{String(profile?.mobileNumber || "-")}</p>
                     </div>
                 </div>
             </div>
+
+            <ProfileEditorModal
+                opened={editOpen}
+                onClose={handleCloseEdit}
+                onSave={handleSave}
+                title="Edit Account Details"
+                size="lg"
+            >
+                <div className="flex flex-col gap-4">
+                    <TextInput
+                        label="Reporting Manager"
+                        value={String(reportingManager)}
+                        onChange={(e) => setReportingManager(e.currentTarget.value)}
+                        className={inputClassName}
+                        autoComplete="off"
+                        placeholder="Enter reporting manager name"
+                        styles={premiumProfileInputStyles}
+                    />
+                    <TextInput
+                        label="Mobile Number"
+                        value={String(mobileNumber)}
+                        onChange={(e) => setMobileNumber(e.currentTarget.value)}
+                        className={inputClassName}
+                        autoComplete="off"
+                        placeholder="Enter mobile number"
+                        styles={premiumProfileInputStyles}
+                    />
+                </div>
+            </ProfileEditorModal>
         </div>
     );
 };

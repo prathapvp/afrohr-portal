@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class JobDTO {
     private Long id;
+    private String jobCode;
 
     @NotBlank(message = "{job.title.required}")
     @Size(max = 200, message = "{job.title.max}")
@@ -55,6 +56,13 @@ public class JobDTO {
     @NotBlank(message = "{job.location.required}")
     @Size(max = 200, message = "{job.location.max}")
     private String location;
+
+    @Size(max = 80, message = "{job.country.max}")
+    private String country;
+
+    @NotBlank(message = "{job.currency.required}")
+    @Size(max = 10, message = "{job.currency.max}")
+    private String currency;
 
     @Positive(message = "{job.package.min.positive}")
     private Long packageOffered;
@@ -102,10 +110,10 @@ public class JobDTO {
 
     public Job toEntity() {
         return new Job(
-            this.id, this.jobTitle, this.department, this.role, this.company,
+            this.id, this.jobCode, this.jobTitle, this.department, this.role, this.company,
             this.applicants != null ? this.applicants.stream().map(ApplicantDTO::toEntity).toList() : null,
             this.about, this.experience, this.freshersAllowed, this.jobType,
-            this.location, this.packageOffered, this.maxPackageOffered, this.variableComponent,
+            this.location, this.country, this.currency, this.packageOffered, this.maxPackageOffered, this.variableComponent,
             this.hideSalary, this.workMode, this.willingToRelocate, this.industry,
             this.vacancies, this.postTime, this.description, this.skillsRequired,
             this.jobStatus, this.postedBy

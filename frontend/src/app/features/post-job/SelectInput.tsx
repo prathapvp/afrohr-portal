@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Combobox, InputBase, ScrollArea, useCombobox } from '@mantine/core';
 
 type SelectOption = string | { value: string; label: string };
@@ -10,8 +10,9 @@ interface SelectInputProps {
     setFieldValue: (name: string, value: string) => void;
   };
   name: string;
-  label?: string;
+  label?: ReactNode;
   placeholder?: string;
+  withAsterisk?: boolean;
 }
 
 const SelectInput = (props: SelectInputProps) => {
@@ -23,13 +24,14 @@ const SelectInput = (props: SelectInputProps) => {
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
 
+  const fieldValueRaw = props.form.getInputProps(props.name).value;
+  const fieldValue = typeof fieldValueRaw === 'string' ? fieldValueRaw : '';
+
   useEffect(() => {
-    // ✅ Updated: Initialize data and search/value properly
     setData(Array.isArray(props.options) ? props.options : []);
-    const val = props.form.getInputProps(props.name).value;
-    setValue(val);
-    setSearch(val);
-  }, [props]);
+    setValue(fieldValue);
+    setSearch(fieldValue);
+  }, [fieldValue, props.name, props.options]);
 
   const safeSearch = typeof search === 'string' ? search : '';
 
@@ -45,42 +47,80 @@ const SelectInput = (props: SelectInputProps) => {
     const val = typeof item === 'string' ? item : item.value;
     const label = typeof item === 'string' ? item : item.label;
     return (
-      <Combobox.Option value={val} key={val}>
+      <Combobox.Option
+        value={val}
+        key={val}
+        className="!bg-transparent !text-slate-200 transition-colors hover:!bg-white/10 data-[combobox-selected]:!bg-emerald-500/20 data-[combobox-selected]:!text-emerald-200"
+      >
         {label}
       </Combobox.Option>
     );
   });
 
-  // ✅ Updated: Check for exact match
-  const exactOptionMatch = filteredOptions.some((item) => {
-    if (typeof item === 'string') return item === safeSearch;
-    if (typeof item === 'object' && 'value' in item) return item.value === safeSearch;
-    return false;
-  });
+  const premiumInputStyles = {
+    label: {
+      color: '#d1d5db',
+      fontWeight: 600,
+      marginBottom: '6px',
+    },
+    input: {
+      background: 'rgba(15, 23, 42, 0.65)',
+      color: '#f3f4f6',
+      borderColor: 'rgba(255,255,255,0.14)',
+      transition: 'all 140ms ease',
+    },
+    dropdown: {
+      background: 'rgba(15, 23, 42, 0.96)',
+      borderColor: 'rgba(255,255,255,0.14)',
+      backdropFilter: 'blur(6px)',
+    },
+    option: {
+      color: '#e5e7eb',
+    },
+  };
 
   return (
     <Combobox
       store={combobox}
-      withinPortal={false}
+      withinPortal
+      zIndex={900}
+      styles={{
+        dropdown: {
+          backgroundColor: 'rgba(15, 23, 42, 0.98)',
+          border: '1px solid rgba(255, 255, 255, 0.14)',
+          color: '#e5e7eb',
+          backdropFilter: 'blur(8px)',
+        },
+        options: {
+          backgroundColor: 'transparent',
+        },
+        option: {
+          color: '#e5e7eb',
+          backgroundColor: 'transparent',
+        },
+      }}
+      classNames={{
+        dropdown: 'z-[600] border border-white/10 bg-slate-900/95 backdrop-blur-md',
+        options: 'bg-transparent',
+        option: '!bg-slate-900/95 !text-slate-200 transition-colors hover:!bg-white/10 data-[combobox-selected]:!bg-emerald-500/20 data-[combobox-selected]:!text-emerald-200',
+      }}
       onOptionSubmit={(val) => {
-        if (val === '$create') {
-          setData((current) => [...current, search]);
-          setValue(search);
-          props.form.setFieldValue(props.name, search);
-        } else {
-          setValue(val);
-          setSearch(val);
-          props.form.setFieldValue(props.name, val); // ✅ Updated: save the value, not label
-        }
+        setValue(val);
+        setSearch(val);
+        props.form.setFieldValue(props.name, val);
 
         combobox.closeDropdown();
       }}
     >
       <Combobox.Target>
         <InputBase
-          withAsterisk
+          withAsterisk={props.withAsterisk ?? true}
           label={props.label}
           rightSection={<Combobox.Chevron />}
+          styles={premiumInputStyles}
+          classNames={{
+            section: 'text-slate-300',
+          }}
           {...props.form.getInputProps(props.name)}
           value={search}
           onChange={(event) => {
@@ -102,10 +142,7 @@ const SelectInput = (props: SelectInputProps) => {
       <Combobox.Dropdown>
         <Combobox.Options>
           <ScrollArea.Autosize mah={200} type="scroll">
-            {options}
-            {!exactOptionMatch && search.trim().length > 0 && (
-              <Combobox.Option value="$create">+ Create {search}</Combobox.Option>
-            )}
+            {options.length > 0 ? options : <Combobox.Empty>Nothing found</Combobox.Empty>}
           </ScrollArea.Autosize>
         </Combobox.Options>
       </Combobox.Dropdown>

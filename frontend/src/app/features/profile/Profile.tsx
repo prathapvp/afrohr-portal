@@ -49,14 +49,21 @@ import {
     IconChevronRight,
     IconMapPin,
     IconBriefcase2,
+    IconShieldCheck,
+    IconUsers,
+    IconChartBar,
+    IconClipboardList,
 } from "@tabler/icons-react";
 import { getBase64 } from "../../services/utilities";
 import { secureError } from "../../services/secure-logging-service";
 import { extractErrorMessage, formatErrorForLogging } from "../../services/error-extractor-service";
 import { parseResume } from "../../services/profile-service";
+import { getAdminOverview, type AdminOverview } from "../../services/admin-service";
+import { useNavigate } from "react-router";
 
 const Profile = () => {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
     const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const user = useAppSelector((state) => state.user as { accountType?: string } | null);
     const accountType = user?.accountType;
@@ -72,6 +79,9 @@ const Profile = () => {
     const [downloadingPdf, setDownloadingPdf] = useState(false);
     const [downloadingWord, setDownloadingWord] = useState(false);
     const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+    const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
+    const [adminLoading, setAdminLoading] = useState(false);
+    const [adminError, setAdminError] = useState<string | null>(null);
 
     const completenessChecks = [
         !!profile?.name,
@@ -190,7 +200,24 @@ const Profile = () => {
         profile.certifications?.length,
     ]);
 
-    const profileSections = accountType === "EMPLOYER" ? employerSections : candidateSections;
+    const adminSections = useMemo<ProfileSection[]>(() => [
+        {
+            title: "About",
+            icon: <IconUser className="w-4 h-4" stroke={1.5} />,
+            content: <About />,
+        },
+        {
+            title: "Account Details",
+            icon: <IconInfoCircle className="w-4 h-4" stroke={1.5} />,
+            content: <AccountDetails />,
+        },
+    ], []);
+
+    const profileSections = accountType === "ADMIN"
+        ? adminSections
+        : accountType === "EMPLOYER"
+            ? employerSections
+            : candidateSections;
     const activeSection = profileSections[activeSectionIndex];
     const prevSection = activeSectionIndex > 0 ? profileSections[activeSectionIndex - 1] : null;
     const nextSection = activeSectionIndex < profileSections.length - 1 ? profileSections[activeSectionIndex + 1] : null;
@@ -205,6 +232,37 @@ const Profile = () => {
             return Math.min(current, profileSections.length - 1);
         });
     }, [profileSections.length]);
+
+    useEffect(() => {
+        if (accountType !== "ADMIN") {
+            return;
+        }
+        let alive = true;
+        setAdminLoading(true);
+        setAdminError(null);
+        getAdminOverview()
+            .then((overview) => {
+                if (!alive) {
+                    return;
+                }
+                setAdminOverview(overview);
+            })
+            .catch(() => {
+                if (!alive) {
+                    return;
+                }
+                setAdminError("Admin overview is currently unavailable.");
+            })
+            .finally(() => {
+                if (alive) {
+                    setAdminLoading(false);
+                }
+            });
+
+        return () => {
+            alive = false;
+        };
+    }, [accountType]);
 
     const animateSectionChange = (nextIndex: number) => {
         if (nextIndex === activeSectionIndex || nextIndex < 0 || nextIndex >= profileSections.length) {
@@ -576,7 +634,7 @@ const Profile = () => {
 
             {/* ---------------- Name & Title ---------------- */}
             <div className="mb-3 mt-20 px-5">
-                <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
+                <div className={`grid gap-4 ${accountType === "ADMIN" ? "xl:grid-cols-1" : "xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]"}`}>
                     <div className="rounded-[26px] border border-white/12 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.16),transparent_30%),linear-gradient(180deg,rgba(17,24,39,0.92),rgba(2,6,23,0.96))] px-5 py-5 shadow-[0_18px_48px_rgba(0,0,0,0.32)]">
                         <div className="inline-flex items-center gap-2 rounded-full border border-bright-sun-400/40 bg-bright-sun-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-bright-sun-300">
                             <IconSparkles className="h-3.5 w-3.5" stroke={1.8} />
@@ -608,6 +666,7 @@ const Profile = () => {
                         </p>
                     </div>
 
+                    {accountType !== "ADMIN" && (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-2">
                         <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 px-3 py-3">
                             <p className="text-[10px] uppercase tracking-wider text-amber-100/75">Skills</p>
@@ -630,6 +689,7 @@ const Profile = () => {
                                 <p className="mt-1 text-lg font-semibold text-white">{profile?.resumeViewCount ?? 0}</p>
                             </div>
                     </div>
+                    )}
                 </div>
             </div>
 
@@ -651,6 +711,67 @@ const Profile = () => {
                 </div>
             )}
 
+            {accountType === "ADMIN" && (
+                <div className="mb-4 px-5" data-aos="fade-up">
+                    <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-400/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+                                    <IconShieldCheck size={14} />
+                                    Admin Control Center
+                                </div>
+                                <h2 className="mt-3 text-lg font-bold text-white">Workspace Administration Snapshot</h2>
+                                <p className="mt-1 text-xs text-slate-300">Quick view of platform totals and direct shortcuts to admin dashboard sections.</p>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                                <Button size="xs" variant="light" color="cyan" onClick={() => void navigate("/dashboard?tab=admin&section=overview")}>Overview</Button>
+                                <Button size="xs" variant="light" color="grape" onClick={() => void navigate("/dashboard?tab=admin&section=subscription-requests")}>Subscription Requests</Button>
+                                <Button size="xs" variant="light" color="orange" onClick={() => void navigate("/dashboard?tab=admin&section=subscription-snapshot")}>Subscription Snapshot</Button>
+                            </div>
+                        </div>
+
+                        {adminError && (
+                            <div className="mt-3 rounded-xl border border-red-300/25 bg-red-500/10 px-3 py-2 text-xs text-red-100">{adminError}</div>
+                        )}
+
+                        {adminLoading ? (
+                            <div className="mt-3 flex items-center gap-2 text-sm text-slate-300">
+                                <Loader size={16} /> Loading admin overview...
+                            </div>
+                        ) : adminOverview && (
+                            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Users</p>
+                                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-white"><IconUsers size={13} /> {adminOverview.totalUsers}</p>
+                                </div>
+                                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Profiles</p>
+                                    <p className="mt-1 text-sm font-semibold text-white">{adminOverview.totalProfiles}</p>
+                                </div>
+                                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Jobs</p>
+                                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-white"><IconChartBar size={13} /> {adminOverview.totalJobs}</p>
+                                </div>
+                                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Active Jobs</p>
+                                    <p className="mt-1 text-sm font-semibold text-emerald-200">{adminOverview.activeJobs}</p>
+                                </div>
+                                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Employers</p>
+                                    <p className="mt-1 text-sm font-semibold text-white">{adminOverview.activeEmployers}</p>
+                                </div>
+                                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                    <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Pending Subs</p>
+                                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-amber-200"><IconClipboardList size={13} /> {adminOverview.employerSubscriptionsPending}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {accountType !== "ADMIN" && (
             <div className="mb-4 px-5" data-aos="fade-up">
                 <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                     <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-2">
@@ -675,6 +796,7 @@ const Profile = () => {
                         </div>
                 </div>
             </div>
+            )}
 
             {accountType === "EMPLOYER" && (
                 <div className="px-5 mb-4" data-aos="fade-up">
@@ -724,9 +846,11 @@ const Profile = () => {
                 </div>
             )}
 
+            {accountType !== "ADMIN" && (
             <div className="px-5 mb-4" data-aos="fade-up">
                 <ProfileAssistant />
             </div>
+            )}
 
             {/* ================================================================== */}
             {/* CARD-BASED SECTIONS                                                 */}
@@ -817,7 +941,7 @@ const Profile = () => {
                                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                                     activeSectionIndex === index
                                         ? "border-bright-sun-400/70 bg-bright-sun-400/20 text-bright-sun-200 shadow-[0_0_14px_rgba(251,191,36,0.16)]"
-                                        : "border-white/15 bg-white/5 text-mine-shaft-300 hover:bg-white/10"
+                                        : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
                                 }`}
                             >
                                 <span className={activeSectionIndex === index ? "text-bright-sun-300" : "text-slate-400"}>{section.icon}</span>

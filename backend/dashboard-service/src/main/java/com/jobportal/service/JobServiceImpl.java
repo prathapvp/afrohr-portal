@@ -3,6 +3,8 @@ package com.jobportal.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.nio.file.Files;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.jobportal.dto.ApplicantDTO;
 import com.jobportal.dto.AccountType;
+import com.jobportal.dto.EmployerRole;
 import com.jobportal.dto.Application;
 import com.jobportal.dto.ApplicationStatus;
 import com.jobportal.dto.JobImageUploadResponseDTO;
@@ -27,8 +30,10 @@ import com.jobportal.dto.JobStatus;
 import com.jobportal.dto.NotificationDTO;
 import com.jobportal.entity.Applicant;
 import com.jobportal.entity.Job;
+import com.jobportal.entity.User;
 import com.jobportal.exception.JobPortalException;
 import com.jobportal.repository.JobRepository;
+import com.jobportal.repository.UserRepository;
 
 @Service("jobService")
 public class JobServiceImpl implements JobService {
@@ -40,6 +45,7 @@ public class JobServiceImpl implements JobService {
 			"image/webp",
 			"image/gif");
 	private static final Path JOB_IMAGE_UPLOAD_DIR = Paths.get("uploads", "jobs").toAbsolutePath().normalize();
+	private static final Set<String> BLOCKED_PUBLIC_PLACEHOLDER_NAMES = Set.of("test", "dummy", "sample", "n/a", "na");
 
 	@Autowired
 	private JobRepository jobRepository;
@@ -49,11 +55,15 @@ public class JobServiceImpl implements JobService {
 	private CurrentUserService currentUserService;
 	@Autowired
 	private EmployerSubscriptionService employerSubscriptionService;
+	@Autowired
+	private UserRepository userRepository;
 
 	@Override
+	@SuppressWarnings("null")
 	public JobDTO postJob(JobDTO jobDTO) throws JobPortalException {
 		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
 		ensureEmployerAccess(currentUser);
+		ensureEmployerWriteAccess(currentUser);
 		jobDTO.setPostedBy(currentUser.id());
 
 		if (jobDTO.getId() == null || jobDTO.getId() == 0) {
@@ -64,6 +74,8 @@ public class JobServiceImpl implements JobService {
 			jobDTO.setId(null);
 			jobDTO.setPostTime(LocalDateTime.now());
 			Job savedJob = jobRepository.save(jobDTO.toEntity());
+			savedJob.setJobCode(buildJobCode(savedJob.getCountry(), currentUser.id(), savedJob.getId()));
+			savedJob = jobRepository.save(savedJob);
 			NotificationDTO notiDto = new NotificationDTO();
 			notiDto.setAction("Job Posted");
 			notiDto.setMessage("Job Posted Successfully for " + jobDTO.getJobTitle() + " at " + jobDTO.getCompany());
@@ -72,7 +84,8 @@ public class JobServiceImpl implements JobService {
 			notificationService.sendNotification(notiDto);
 			return savedJob.toDTO();
 		} else {
-			Job job = jobRepository.findById(jobDTO.getId())
+			Long jobId = Objects.requireNonNull(jobDTO.getId(), "Job ID is required");
+			Job job = jobRepository.findById(jobId)
 					.orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
 			ensureJobOwnership(job, currentUser);
 			if (currentUser.accountType() == AccountType.EMPLOYER) {
@@ -81,28 +94,95 @@ public class JobServiceImpl implements JobService {
 			}
 			if (job.getJobStatus().equals(JobStatus.DRAFT) || jobDTO.getJobStatus().equals(JobStatus.CLOSED))
 				jobDTO.setPostTime(LocalDateTime.now());
-			return jobRepository.save(jobDTO.toEntity()).toDTO();
+			Job savedJob = jobRepository.save(jobDTO.toEntity());
+			savedJob.setJobCode(buildJobCode(savedJob.getCountry(), currentUser.id(), savedJob.getId()));
+			savedJob = jobRepository.save(savedJob);
+			return savedJob.toDTO();
 		}
 	}
 
 	@Override
+	public JobDTO closeJob(Long id) throws JobPortalException {
+		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
+		ensureEmployerAccess(currentUser);
+		ensureEmployerWriteAccess(currentUser);
+		Long safeId = Objects.requireNonNull(id, "Job ID is required");
+		Job job = jobRepository.findById(safeId)
+				.orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
+		ensureJobOwnership(job, currentUser);
+
+		if (job.getJobStatus() != JobStatus.CLOSED) {
+			job.setJobStatus(JobStatus.CLOSED);
+			job.setPostTime(LocalDateTime.now());
+			job = jobRepository.save(job);
+		}
+
+		return job.toDTO();
+	}
+
+	private String buildJobCode(String country, Long employerId, Long jobId) {
+		String countryCode = toCountryCode(country);
+		String employerCode = String.format("EMP%04d", employerId == null ? 0L : employerId);
+		String idCode = String.format("%05d", jobId == null ? 0L : jobId);
+		return countryCode + employerCode + idCode;
+	}
+
+	private String toCountryCode(String country) {
+		String raw = country == null ? "" : country.trim();
+		if (raw.isBlank()) {
+			return "GLB";
+		}
+
+		String normalized = raw.replaceAll("[^A-Za-z ]", " ").trim();
+		if (normalized.isBlank()) {
+			return "GLB";
+		}
+
+		String[] words = normalized.split("\\s+");
+		if (words.length >= 2) {
+			StringBuilder initials = new StringBuilder();
+			for (String word : words) {
+				if (!word.isBlank() && initials.length() < 3) {
+					initials.append(Character.toUpperCase(word.charAt(0)));
+				}
+			}
+			while (initials.length() < 3) {
+				initials.append('X');
+			}
+			return initials.toString();
+		}
+
+		String token = words[0].toUpperCase(Locale.ROOT);
+		if (token.length() >= 3) {
+			return token.substring(0, 3);
+		}
+		return String.format("%-3s", token).replace(' ', 'X');
+	}
+
+	@Override
 	public List<JobDTO> getAllJobs() throws JobPortalException {
-		return jobRepository.findAll().stream().map((x) -> x.toDTO()).toList();
+		return jobRepository.findAll().stream()
+				.filter(this::isPublicCandidateSafeJob)
+				.map(Job::toDTO)
+				.toList();
 	}
 
 	@Override
 	public JobDTO getJob(Long id) throws JobPortalException {
-		return jobRepository.findById(id).orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND")).toDTO();
+		Long safeId = Objects.requireNonNull(id, "Job ID is required");
+		return jobRepository.findById(safeId).orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND")).toDTO();
 	}
 
 	@Override
 	public void deleteJob(Long id) throws JobPortalException {
 		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
 		ensureEmployerAccess(currentUser);
-		Job job = jobRepository.findById(id)
+		ensureEmployerWriteAccess(currentUser);
+		Long safeId = Objects.requireNonNull(id, "Job ID is required");
+		Job job = jobRepository.findById(safeId)
 				.orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
 		ensureJobOwnership(job, currentUser);
-		jobRepository.delete(job);
+		jobRepository.delete(Objects.requireNonNull(job));
 	}
 
 	@Override
@@ -122,7 +202,8 @@ public class JobServiceImpl implements JobService {
 	}
 
 	private void applyApplicantToJob(Long id, ApplicantDTO applicantDTO) throws JobPortalException {
-		Job job = jobRepository.findById(id).orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
+		Long safeId = Objects.requireNonNull(id, "Job ID is required");
+		Job job = jobRepository.findById(safeId).orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
 		List<Applicant> applicants = job.getApplicants();
 		if (applicants == null)
 			applicants = new ArrayList<>();
@@ -155,27 +236,87 @@ public class JobServiceImpl implements JobService {
 	public List<JobDTO> getJobsPostedBy(Long id) throws JobPortalException {
 		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
 		ensurePostedByAccess(id, currentUser);
-		return jobRepository.findByPostedBy(id).stream().map((x) -> x.toDTO()).toList();
+		List<Long> portalPosterIds = resolveEmployerPortalUserIdsForPoster(id);
+		return jobRepository.findByPostedByIn(portalPosterIds).stream().map(this::toEmployerSafeJobDTO).toList();
 	}
 
 	@Override
 	public List<JobDTO> getMyPostedJobs() throws JobPortalException {
 		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
 		ensureEmployerAccess(currentUser);
-		return jobRepository.findByPostedBy(currentUser.id()).stream().map((x) -> x.toDTO()).toList();
+		List<Long> portalPosterIds = resolveEmployerPortalUserIds(currentUser);
+		return jobRepository.findByPostedByIn(portalPosterIds).stream().map(this::toEmployerSafeJobDTO).toList();
+	}
+
+	@Override
+	public List<JobDTO> getPublicJobsByPoster(Long id) throws JobPortalException {
+		List<Long> portalPosterIds = resolveEmployerPortalUserIdsForPoster(id);
+		return jobRepository.findByPostedByIn(portalPosterIds).stream()
+				.filter(this::isPublicCandidateSafeJob)
+				.map(this::toEmployerSafeJobDTO)
+				.toList();
+	}
+
+	@Override
+	public String getApplicantResumeForMyJob(Long jobId, Long applicantId, String action) throws JobPortalException {
+		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
+		ensureEmployerAccess(currentUser);
+		Long safeJobId = Objects.requireNonNull(jobId, "Job ID is required");
+		Job job = jobRepository.findById(safeJobId)
+				.orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
+		ensureJobOwnership(job, currentUser);
+
+		Applicant applicant = job.getApplicants() == null
+				? null
+				: job.getApplicants().stream()
+						.filter(x -> x.getApplicantId() != null && x.getApplicantId().equals(applicantId))
+						.findFirst()
+						.orElse(null);
+		if (applicant == null) {
+			throw new JobPortalException("Applicant not found for this job");
+		}
+		if (applicant.getResume() == null || applicant.getResume().length == 0) {
+			throw new JobPortalException("Resume not available");
+		}
+
+		employerSubscriptionService.consumeResumeAccess(currentUser.id(), action);
+		return java.util.Base64.getEncoder().encodeToString(applicant.getResume());
 	}
 
 	@Override
 	public void changeAppStatus(Application application) throws JobPortalException {
 		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
 		ensureEmployerAccess(currentUser);
-		Job job = jobRepository.findById(application.getId())
+		ensureEmployerWriteAccess(currentUser);
+		Long jobId = Objects.requireNonNull(application.getId(), "Job ID is required");
+		Job job = jobRepository.findById(jobId)
 				.orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
 		ensureJobOwnership(job, currentUser);
 		List<Applicant> apps = job.getApplicants().stream().map((x) -> {
 			if (x.getApplicantId() != null && x.getApplicantId().equals(application.getApplicantId())) {
-				x.setApplicationStatus(application.getApplicationStatus());
-				if (application.getApplicationStatus().equals(ApplicationStatus.INTERVIEWING)) {
+				if (application.getApplicationStatus() != null) {
+					x.setApplicationStatus(application.getApplicationStatus());
+				}
+				if (application.getScreeningOwner() != null) {
+					x.setScreeningOwner(application.getScreeningOwner());
+				}
+				if (application.getInterviewStatus() != null) {
+					x.setInterviewStatus(application.getInterviewStatus());
+				}
+				if (application.getOfferSalaryBandConfirmed() != null) {
+					x.setOfferSalaryBandConfirmed(application.getOfferSalaryBandConfirmed());
+				}
+				if (application.getOfferApprovalsDone() != null) {
+					x.setOfferApprovalsDone(application.getOfferApprovalsDone());
+				}
+				if (application.getOfferStartDateConfirmed() != null) {
+					x.setOfferStartDateConfirmed(application.getOfferStartDateConfirmed());
+				}
+				if (application.getRejectionReason() != null) {
+					x.setRejectionReason(application.getRejectionReason());
+				}
+				if (application.getApplicationStatus() != null
+						&& application.getApplicationStatus().equals(ApplicationStatus.INTERVIEWING)) {
 					x.setInterviewTime(application.getInterviewTime());
 					NotificationDTO notiDto = new NotificationDTO();
 					notiDto.setAction("Interview Scheduled");
@@ -201,7 +342,8 @@ public class JobServiceImpl implements JobService {
 			throw new JobPortalException("Image file is required");
 		}
 
-		String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase();
+		String rawContentType = file.getContentType();
+		String contentType = rawContentType == null ? "" : rawContentType.toLowerCase();
 		if (!SUPPORTED_IMAGE_CONTENT_TYPES.contains(contentType)) {
 			throw new JobPortalException("Unsupported image format. Allowed: PNG, JPG, JPEG, WEBP, GIF");
 		}
@@ -243,7 +385,7 @@ public class JobServiceImpl implements JobService {
 				throw new JobPortalException("Image not found");
 			}
 
-			Resource resource = new UrlResource(filePath.toUri());
+			Resource resource = new UrlResource(Objects.requireNonNull(filePath.toUri()));
 			if (!resource.exists() || !resource.isReadable()) {
 				throw new JobPortalException("Image not found");
 			}
@@ -297,6 +439,19 @@ public class JobServiceImpl implements JobService {
 		}
 	}
 
+	private void ensureEmployerWriteAccess(CurrentUserService.CurrentUser currentUser) throws JobPortalException {
+		if (currentUser.accountType() == AccountType.ADMIN) {
+			return;
+		}
+		if (currentUser.accountType() != AccountType.EMPLOYER) {
+			throw new JobPortalException("Employer access required");
+		}
+		EmployerRole role = currentUser.employerRole();
+		if (role == EmployerRole.VIEWER) {
+			throw new JobPortalException("Insufficient permission for this action");
+		}
+	}
+
 	private void ensureApplicantAccess(CurrentUserService.CurrentUser currentUser) throws JobPortalException {
 		if (currentUser.accountType() != AccountType.APPLICANT
 				&& currentUser.accountType() != AccountType.STUDENT
@@ -309,7 +464,8 @@ public class JobServiceImpl implements JobService {
 		if (currentUser.accountType() == AccountType.ADMIN) {
 			return;
 		}
-		if (job.getPostedBy() == null || !job.getPostedBy().equals(currentUser.id())) {
+		List<Long> portalPosterIds = resolveEmployerPortalUserIds(currentUser);
+		if (job.getPostedBy() == null || !portalPosterIds.contains(job.getPostedBy())) {
 			throw new JobPortalException("You are not authorized to modify this job");
 		}
 	}
@@ -319,9 +475,40 @@ public class JobServiceImpl implements JobService {
 			return;
 		}
 		ensureEmployerAccess(currentUser);
-		if (postedBy == null || !postedBy.equals(currentUser.id())) {
+		List<Long> portalPosterIds = resolveEmployerPortalUserIds(currentUser);
+		if (postedBy == null || !portalPosterIds.contains(postedBy)) {
 			throw new JobPortalException("You are not authorized to view these posted jobs");
 		}
+	}
+
+	private List<Long> resolveEmployerPortalUserIds(CurrentUserService.CurrentUser currentUser) {
+		if (currentUser.profileId() == null) {
+			return List.of(currentUser.id());
+		}
+		List<Long> ids = userRepository.findByProfileIdAndAccountType(currentUser.profileId(), AccountType.EMPLOYER)
+				.stream()
+				.map(User::getId)
+				.filter(Objects::nonNull)
+				.distinct()
+				.toList();
+		return ids.isEmpty() ? List.of(currentUser.id()) : ids;
+	}
+
+	private List<Long> resolveEmployerPortalUserIdsForPoster(Long postedBy) {
+		if (postedBy == null) {
+			return List.of();
+		}
+		User owner = userRepository.findById(postedBy).orElse(null);
+		if (owner == null || owner.getProfileId() == null || owner.getAccountType() != AccountType.EMPLOYER) {
+			return List.of(postedBy);
+		}
+		List<Long> ids = userRepository.findByProfileIdAndAccountType(owner.getProfileId(), AccountType.EMPLOYER)
+				.stream()
+				.map(User::getId)
+				.filter(Objects::nonNull)
+				.distinct()
+				.toList();
+		return ids.isEmpty() ? List.of(postedBy) : ids;
 	}
 
 	private void ensureHistoryAccess(Long applicantId, CurrentUserService.CurrentUser currentUser) throws JobPortalException {
@@ -332,5 +519,30 @@ public class JobServiceImpl implements JobService {
 		if (applicantId == null || !applicantId.equals(currentUser.id())) {
 			throw new JobPortalException("You are not authorized to view this job history");
 		}
+	}
+
+	private JobDTO toEmployerSafeJobDTO(Job job) {
+		JobDTO dto = job.toDTO();
+		if (dto.getApplicants() != null) {
+			dto.getApplicants().forEach(applicant -> applicant.setResume(null));
+		}
+		return dto;
+	}
+
+	private boolean isPublicCandidateSafeJob(Job job) {
+		if (job == null || job.getJobStatus() != JobStatus.ACTIVE) {
+			return false;
+		}
+		String title = normalizeName(job.getJobTitle());
+		String company = normalizeName(job.getCompany());
+		return !BLOCKED_PUBLIC_PLACEHOLDER_NAMES.contains(title)
+				&& !BLOCKED_PUBLIC_PLACEHOLDER_NAMES.contains(company);
+	}
+
+	private String normalizeName(String value) {
+		if (value == null) {
+			return "";
+		}
+		return value.trim().toLowerCase(Locale.ROOT);
 	}
 }

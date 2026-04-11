@@ -27,9 +27,10 @@ public class UserDTO {
     private String password;
 
     private AccountType accountType;
+    private EmployerRole employerRole;
     private Long profileId;
 
     public User toEntity() {
-        return new User(this.id, this.name, this.email, this.password, this.accountType, this.profileId);
+        return new User(this.id, this.name, this.email, this.password, this.accountType, this.employerRole, this.profileId);
     }
 }

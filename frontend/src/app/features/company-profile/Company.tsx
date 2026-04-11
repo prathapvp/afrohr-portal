@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { getAllJobs } from "../../services/job-service";
 import { getAllProfiles } from "../../services/profile-service";
 import { CompanyEmployee, CompanyJob } from "./types";
+import { useAppSelector } from "../../store";
 
 const COMPANY_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -28,6 +29,24 @@ let sourceCache: SourceCache | null = null;
 const companyViewCache = new Map<string, CompanyViewCache>();
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
+
+function toProfileImageUri(rawValue?: string | null): string {
+    if (typeof rawValue !== "string") {
+        return "";
+    }
+
+    const cleanValue = rawValue.trim();
+    if (!cleanValue) {
+        return "";
+    }
+
+    if (cleanValue.startsWith("data:image/")) {
+        return cleanValue;
+    }
+
+    const mime = cleanValue.startsWith("/9j/") ? "image/jpeg" : "image/png";
+    return `data:${mime};base64,${cleanValue}`;
+}
 
 const deriveCompanyView = (companyName: string, jobs: CompanyJob[], profiles: CompanyEmployee[]) => {
     const key = normalize(companyName);
@@ -51,7 +70,18 @@ const Company = () => {
     const section = ["About", "Jobs", "Employees"];
     const { name } = useParams();
     const companyName = decodeURIComponent(name || "Google");
-    const companyLogo = `/Icons/${companyName}.png`;
+    const user = useAppSelector((state) => state.user as { accountType?: string } | null);
+    const profile = useAppSelector((state) => state.profile as { company?: string; picture?: string | null; banner?: string | null });
+
+    const profileCompanyName = typeof profile.company === "string" ? profile.company : "";
+    const isEmployerSession = String(user?.accountType ?? localStorage.getItem("accountType") ?? "").toUpperCase() === "EMPLOYER";
+    const isOwnCompanyPage = isEmployerSession && normalize(profileCompanyName) === normalize(companyName);
+
+    const profileLogo = toProfileImageUri(profile.picture);
+    const profileBanner = toProfileImageUri(profile.banner);
+
+    const companyLogo = isOwnCompanyPage && profileLogo ? profileLogo : `/Icons/${companyName}.png`;
+    const companyBanner = isOwnCompanyPage && profileBanner ? profileBanner : "/Profile/banner.svg";
     const [companyJobs, setCompanyJobs] = useState<CompanyJob[]>([]);
     const [companyEmployees, setCompanyEmployees] = useState<CompanyEmployee[]>([]);
     const [location, setLocation] = useState("Location not specified");
@@ -121,7 +151,7 @@ const Company = () => {
     return <div className="w-full">
         <div className="overflow-hidden rounded-3xl border border-white/12 bg-[linear-gradient(180deg,rgba(17,24,39,0.92),rgba(2,6,23,0.96))] shadow-[0_22px_62px_rgba(0,0,0,0.42)]">
             <div className="relative">
-            <img className="h-[200px] w-full object-cover" src="/Profile/banner.svg" alt="Company Banner" />
+            <img className="h-[200px] w-full object-cover" src={companyBanner} alt="Company Banner" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/Profile/banner.svg"; }} />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-black/55 via-transparent to-cyan-500/25" />
                 <div className="absolute right-4 top-4 rounded-full border border-bright-sun-400/35 bg-bright-sun-400/15 px-3 py-1 text-xs font-semibold text-bright-sun-200">
                     Premium Company Profile
@@ -129,7 +159,7 @@ const Company = () => {
 
                 <div className="absolute -bottom-12 left-6">
                     <div className="flex h-28 w-28 items-center justify-center rounded-3xl border-4 border-[#060910] bg-[#060910] p-2 shadow-[0_12px_28px_rgba(0,0,0,0.45)] sm:h-32 sm:w-32">
-                        <img className="h-full w-full rounded-2xl object-contain" src={companyLogo} alt={companyName} onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/Icons/Google.png"; }} />
+                        <img className="h-full w-full rounded-2xl object-contain" src={companyLogo} alt={companyName} onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/Icons/${companyName}.png`; }} />
                     </div>
                 </div>
             </div>

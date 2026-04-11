@@ -1,16 +1,10 @@
-import { Badge, Loader, Table } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { Badge, Loader } from "@mantine/core";
+import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { AlertTriangle, Briefcase, Building2, CheckCircle2, ExternalLink, FileText, GraduationCap, Layers, Sparkles, ThumbsDown, ThumbsUp, Users, XCircle } from "lucide-react";
+import { AlertTriangle, Briefcase, Building2, CheckCircle2, FileText, GraduationCap, Layers, Users, XCircle } from "lucide-react";
 import {
-  getAllSubscriptionRequests,
-  resolveSubscriptionRequest,
-  type AdminEmployerSummary,
   type AdminOverview,
-  type EmployerSubscription,
-  type SubscriptionRequest,
 } from "../services/admin-service";
-import BillingControlModal from "./BillingControlModal";
 
 type StatCardProps = {
   label: string;
@@ -48,51 +42,60 @@ export default function AdminDashboardView({
   loading: boolean;
   error: string | null;
 }) {
-  const [subRequests, setSubRequests] = useState<SubscriptionRequest[]>([]);
-  const [reqLoading, setReqLoading] = useState(false);
-  const [reqResolving, setReqResolving] = useState<Record<number, boolean>>({});
+  const [sortBy, setSortBy] = useState<"company" | "usage" | "status">("usage");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedEmployer, setSelectedEmployer] = useState<AdminEmployerSummary | null>(null);
-  const [employerPlans, setEmployerPlans] = useState<Record<number, string>>({});
-
-  function openModal(employer: AdminEmployerSummary) {
-    setSelectedEmployer(employer);
-    setModalOpen(true);
-  }
-
-  function handleModalSaved(updated: EmployerSubscription) {
-    setEmployerPlans((prev) => ({ ...prev, [updated.employerId]: updated.planName }));
-  }
-
-  function handleModalDeleted(employerId: number) {
-    setEmployerPlans((prev) => {
-      const next = { ...prev };
-      delete next[employerId];
-      return next;
-    });
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-    setReqLoading(true);
-    getAllSubscriptionRequests()
-      .then((data) => { if (!cancelled) setSubRequests(data); })
-      .catch(() => { /* non-blocking */ })
-      .finally(() => { if (!cancelled) setReqLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  async function handleResolve(requestId: number, resolution: "APPROVED" | "REJECTED") {
-    try {
-      setReqResolving((prev) => ({ ...prev, [requestId]: true }));
-      const updated = await resolveSubscriptionRequest(requestId, resolution);
-      setSubRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-    } catch { /* silent */ } finally {
-      setReqResolving((prev) => ({ ...prev, [requestId]: false }));
+  const usageRows = useMemo(() => {
+    if (!overview?.employers?.length) {
+      return [];
     }
-  }
+
+    const rows = overview.employers.map((employer) => {
+      const viewsMax = employer.maxResumeViewsPerMonth > 0 ? employer.maxResumeViewsPerMonth : 0;
+      const downloadsMax = employer.maxResumeDownloadsPerMonth > 0 ? employer.maxResumeDownloadsPerMonth : 0;
+      const viewsRatio = viewsMax > 0 ? employer.monthlyResumeViewsUsed / viewsMax : 0;
+      const downloadsRatio = downloadsMax > 0 ? employer.monthlyResumeDownloadsUsed / downloadsMax : 0;
+      const usageScore = viewsRatio * 0.7 + downloadsRatio * 0.3;
+      return {
+        employer,
+        usageScore,
+        usagePct: Math.min(999, Math.round(usageScore * 100)),
+      };
+    });
+
+    rows.sort((left, right) => {
+      let compare = 0;
+      if (sortBy === "usage") {
+        compare = left.usageScore - right.usageScore;
+      } else if (sortBy === "status") {
+        compare = String(left.employer.subscriptionStatus ?? "").localeCompare(String(right.employer.subscriptionStatus ?? ""));
+      } else {
+        compare = String(left.employer.companyName ?? "").localeCompare(String(right.employer.companyName ?? ""));
+      }
+      return sortDir === "asc" ? compare : -compare;
+    });
+
+    return rows;
+  }, [overview, sortBy, sortDir]);
+
+  const handleSort = (column: "company" | "usage" | "status") => {
+    if (sortBy === column) {
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortBy(column);
+    setSortDir(column === "usage" ? "desc" : "asc");
+  };
+
+  const sortLabel = (column: "company" | "usage" | "status") => (sortBy === column ? (sortDir === "asc" ? "ASC" : "DESC") : "-");
+
+  const statusBadgeClass = (status: string | null | undefined) => {
+    const normalized = String(status ?? "").toUpperCase();
+    if (normalized === "ACTIVE") return "border-emerald-300/25 bg-emerald-400/15 text-emerald-100";
+    if (normalized === "PENDING") return "border-amber-300/25 bg-amber-400/15 text-amber-100";
+    if (normalized === "PAST_DUE" || normalized === "EXPIRED") return "border-red-300/25 bg-red-400/15 text-red-100";
+    return "border-slate-300/20 bg-slate-400/10 text-slate-200";
+  };
 
   if (loading) {
     return (
@@ -120,13 +123,6 @@ export default function AdminDashboardView({
 
   return (
     <section className="space-y-5">
-      <BillingControlModal
-        opened={modalOpen}
-        employer={selectedEmployer}
-        onClose={() => setModalOpen(false)}
-        onSaved={handleModalSaved}
-        onDeleted={handleModalDeleted}
-      />
       <div className="relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-[#0f172a] via-[#0b2342] to-[#1f1b3b] p-5 shadow-[0_18px_50px_rgba(14,116,144,0.24)]">
         <div className="absolute -left-14 -top-14 h-36 w-36 rounded-full bg-cyan-400/10 blur-2xl" />
         <div className="absolute -bottom-16 right-4 h-36 w-36 rounded-full bg-fuchsia-400/10 blur-2xl" />
@@ -171,171 +167,53 @@ export default function AdminDashboardView({
         />
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0f172a]/80 via-[#0d203f]/65 to-[#111827]/80 p-4 shadow-[0_18px_44px_rgba(2,6,23,0.45)] backdrop-blur-sm">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-bold text-white">Employer Subscription Snapshot</h3>
-          <Badge
-            variant="light"
-            color="cyan"
-            className="!rounded-full !border !border-cyan-300/30 !bg-cyan-400/15 !px-3 !py-1 !text-[11px] !font-bold !tracking-[0.08em]"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5" />
-              Live Billing Control
-            </span>
-          </Badge>
-        </div>
-
-        <div className="overflow-x-auto">
-          <Table withTableBorder withColumnBorders className="min-w-[720px] text-slate-100">
-            <Table.Thead>
-              <Table.Tr className="bg-slate-900/95">
-                <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Company</Table.Th>
-                <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Contact</Table.Th>
-                <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Email</Table.Th>
-                <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Location</Table.Th>
-                <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Plan</Table.Th>
-                <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Status</Table.Th>
-                <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em] !text-center">Billing</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {overview.employers.map((employer, index) => (
-                <Table.Tr
-                  key={employer.employerId}
-                  className={index % 2 === 0 ? "bg-white/[0.03] hover:bg-sky-500/10" : "bg-slate-950/45 hover:bg-sky-500/10"}
-                >
-                  <Table.Td className="!text-slate-100 !font-medium">{employer.companyName}</Table.Td>
-                  <Table.Td className="!text-slate-100">{employer.contactName}</Table.Td>
-                  <Table.Td className="!text-sky-200">{employer.email}</Table.Td>
-                  <Table.Td className="!text-slate-200">{employer.location}</Table.Td>
-                  <Table.Td className="!text-slate-200">
-                    {employerPlans[employer.employerId] ?? employer.subscriptionPlan}
-                  </Table.Td>
-                  <Table.Td>
-                    <Badge
-                      color={employer.subscriptionStatus === "Active" ? "green" : "orange"}
-                      variant="filled"
-                    >
-                      {employer.subscriptionStatus}
-                    </Badge>
-                  </Table.Td>
-                  <Table.Td className="!text-center">
-                    <button
-                      type="button"
-                      onClick={() => openModal(employer)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-200 transition-all hover:border-cyan-300/60 hover:bg-cyan-500/20 hover:text-white"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Manage
-                    </button>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0f172a]/80 via-[#0d203f]/65 to-[#111827]/80 p-4 shadow-[0_18px_44px_rgba(2,6,23,0.45)] backdrop-blur-sm">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-bold text-white">Employer Subscription Requests</h3>
-          <Badge
-            variant="light"
-            color="orange"
-            className="!rounded-full !border !border-orange-300/30 !bg-orange-400/15 !px-3 !py-1 !text-[11px] !font-bold !tracking-[0.08em]"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Pending: {subRequests.filter((r) => r.status === "PENDING").length}
-            </span>
-          </Badge>
-        </div>
-
-        {reqLoading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader color="orange" size="sm" />
+      <div className="rounded-2xl border border-violet-300/20 bg-violet-500/10 p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-white">Top Employers by Usage</h3>
+            <p className="text-xs text-slate-300">Based on monthly resume views/download limits consumption.</p>
           </div>
-        )}
+          <span className="rounded-full border border-violet-300/30 bg-violet-400/15 px-2.5 py-1 text-[11px] font-semibold text-violet-100">
+            {usageRows.length} tracked
+          </span>
+        </div>
 
-        {!reqLoading && subRequests.length === 0 && (
-          <p className="py-4 text-center text-sm text-slate-400">No subscription requests yet.</p>
-        )}
+        {usageRows.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-300">No employer usage data available.</div>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-white/10">
+            <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] items-center bg-white/[0.06] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+              <button type="button" onClick={() => handleSort("company")} className="text-left hover:text-white transition-colors">Employer ({sortLabel("company")})</button>
+              <button type="button" onClick={() => handleSort("usage")} className="text-left hover:text-white transition-colors">Usage ({sortLabel("usage")})</button>
+              <button type="button" onClick={() => handleSort("status")} className="text-right hover:text-white transition-colors">Status ({sortLabel("status")})</button>
+            </div>
 
-        {!reqLoading && subRequests.length > 0 && (
-          <div className="overflow-x-auto">
-            <Table withTableBorder withColumnBorders className="min-w-[720px] text-slate-100">
-              <Table.Thead>
-                <Table.Tr className="bg-slate-900/95">
-                  <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Employer ID</Table.Th>
-                  <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Type</Table.Th>
-                  <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Status</Table.Th>
-                  <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Note</Table.Th>
-                  <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Submitted</Table.Th>
-                  <Table.Th className="!text-slate-100 !text-[11px] !font-semibold !uppercase !tracking-[0.12em]">Actions</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {subRequests.map((req, index) => (
-                  <Table.Tr
-                    key={req.id}
-                    className={index % 2 === 0 ? "bg-white/[0.03] hover:bg-sky-500/10" : "bg-slate-950/45 hover:bg-sky-500/10"}
-                  >
-                    <Table.Td className="!text-slate-300">{req.employerId}</Table.Td>
-                    <Table.Td>
-                      <Badge color={req.requestType === "RENEWAL" ? "cyan" : "violet"} variant="light">
-                        {req.requestType}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        color={req.status === "APPROVED" ? "green" : req.status === "REJECTED" ? "red" : "orange"}
-                        variant="filled"
-                      >
-                        {req.status}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td className="!text-slate-300 !text-xs">{req.note ?? "—"}</Table.Td>
-                    <Table.Td className="!text-slate-400 !text-xs">{new Date(req.createdAt).toLocaleDateString()}</Table.Td>
-                    <Table.Td>
-                      {req.status === "PENDING" ? (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={Boolean(reqResolving[req.id])}
-                            onClick={() => void handleResolve(req.id, "APPROVED")}
-                            className="inline-flex items-center gap-1 rounded bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-                          >
-                            <ThumbsUp className="h-3 w-3" />
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            disabled={Boolean(reqResolving[req.id])}
-                            onClick={() => void handleResolve(req.id, "REJECTED")}
-                            className="inline-flex items-center gap-1 rounded bg-rose-700 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-600 disabled:opacity-50"
-                          >
-                            <ThumbsDown className="h-3 w-3" />
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-                          {req.status === "APPROVED" ? (
-                            <><CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Approved</>
-                          ) : (
-                            <><XCircle className="h-3.5 w-3.5 text-rose-400" /> Rejected</>
-                          )}
-                        </span>
-                      )}
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+            {usageRows.map(({ employer, usagePct }) => (
+              <div key={employer.employerId} className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] items-center gap-2 border-t border-white/10 px-3 py-2 text-xs text-slate-200">
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-white">{employer.companyName || "Employer"}</div>
+                  <div className="truncate text-[11px] text-slate-400">{employer.email}</div>
+                </div>
+
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-slate-300">
+                    <span>{usagePct}%</span>
+                    <span>{employer.monthlyResumeViewsUsed}/{employer.maxResumeViewsPerMonth} views</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-800/90">
+                    <div className="h-1.5 rounded-full bg-gradient-to-r from-violet-400 to-cyan-400" style={{ width: `${Math.min(100, usagePct)}%` }} />
+                  </div>
+                </div>
+
+                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(employer.subscriptionStatus)}`}>
+                  {employer.subscriptionStatus}
+                </span>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
     </section>
   );
 }

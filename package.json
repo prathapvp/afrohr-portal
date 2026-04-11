@@ -7,6 +7,8 @@
     "build": "vite build --config frontend/vite.config.ts",
     "dev": "vite --config frontend/vite.config.ts",
     "dev:client": "vite --config frontend/vite.config.ts",
+    "test": "vitest --config vitest.config.ts run",
+    "test:watch": "vitest --config vitest.config.ts",
     "map:api": "node scripts/generate-endpoint-map.mjs",
     "testjobs:seed": "powershell -ExecutionPolicy Bypass -File scripts/manage-seeded-jobs.ps1 -Action seed",
     "testjobs:list": "powershell -ExecutionPolicy Bypass -File scripts/manage-seeded-jobs.ps1 -Action list",
@@ -102,9 +104,13 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@vitejs/plugin-react": "4.7.0",
+    "jsdom": "^29.0.2",
     "tailwindcss": "4.1.12",
-    "vite": "6.3.5"
+    "vite": "6.3.5",
+    "vitest": "^4.1.4"
   },
   "peerDependencies": {
     "react": "18.3.1",
