@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "JWT signing secret for token creation and validation."
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "JWT expiration time in milliseconds."
+    },
+    {
+      "name": "app.pii.secret",
+      "type": "java.lang.String",
+      "description": "Secret used by the PII crypto service for encrypting sensitive profile fields."
+    },
+    {
+      "name": "openai.api.key",
+      "type": "java.lang.String",
+      "description": "API key used by the AI assistant backend integration."
+    },
+    {
+      "name": "openai.base-url",
+      "type": "java.lang.String",
+      "description": "Base URL for the AI assistant completion endpoint."
+    },
+    {
+      "name": "openai.model",
+      "type": "java.lang.String",
+      "description": "Model name used by the AI assistant backend integration."
+    },
+    {
+      "name": "openai.max-tokens",
+      "type": "java.lang.Integer",
+      "description": "Maximum tokens requested from the AI assistant backend integration."
+    }
+  ]
+}

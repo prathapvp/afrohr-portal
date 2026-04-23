@@ -100,6 +100,11 @@ public class JobDTO {
     @NotNull(message = "{job.postedBy.required}")
     private Long postedBy;
 
+    private LocalDateTime createdAt;
+    private Long createdBy;
+    private LocalDateTime updatedAt;
+    private Long updatedBy;
+
     @AssertTrue(message = "{job.salary.range.invalid}")
     public boolean isSalaryRangeValid() {
         if (packageOffered == null || maxPackageOffered == null) {
@@ -109,14 +114,34 @@ public class JobDTO {
     }
 
     public Job toEntity() {
-        return new Job(
-            this.id, this.jobCode, this.jobTitle, this.department, this.role, this.company,
-            this.applicants != null ? this.applicants.stream().map(ApplicantDTO::toEntity).toList() : null,
-            this.about, this.experience, this.freshersAllowed, this.jobType,
-            this.location, this.country, this.currency, this.packageOffered, this.maxPackageOffered, this.variableComponent,
-            this.hideSalary, this.workMode, this.willingToRelocate, this.industry,
-            this.vacancies, this.postTime, this.description, this.skillsRequired,
-            this.jobStatus, this.postedBy
-        );
+        Job job = new Job();
+        job.setId(this.id);
+        job.setJobCode(this.jobCode);
+        job.setJobTitle(this.jobTitle);
+        job.setDepartment(this.department);
+        job.setRole(this.role);
+        job.setCompany(this.company);
+        job.setApplicants(this.applicants != null ? this.applicants.stream().map(ApplicantDTO::toEntity).toList() : null);
+        job.setAbout(this.about);
+        job.setExperience(this.experience);
+        job.setFreshersAllowed(this.freshersAllowed);
+        job.setJobType(this.jobType);
+        job.setLocation(this.location);
+        job.setCountry(this.country);
+        job.setCurrency(this.currency);
+        job.setPackageOffered(this.packageOffered);
+        job.setMaxPackageOffered(this.maxPackageOffered);
+        job.setVariableComponent(this.variableComponent);
+        job.setHideSalary(this.hideSalary);
+        job.setWorkMode(this.workMode);
+        job.setWillingToRelocate(this.willingToRelocate);
+        job.setIndustry(this.industry);
+        job.setVacancies(this.vacancies);
+        job.setPostTime(this.postTime);
+        job.setDescription(this.description);
+        job.setSkillsRequired(this.skillsRequired);
+        job.setJobStatus(this.jobStatus);
+        job.setPostedBy(this.postedBy);
+        return job;
     }
 }

@@ -30,7 +30,44 @@ public class Notification {
 
     private LocalDateTime timestamp;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    private Long createdBy;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    private Long updatedBy;
+
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (this.timestamp == null) {
+            this.timestamp = now;
+        }
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public NotificationDTO toDTO() {
-        return new NotificationDTO(this.id, this.userId, this.message, this.action, this.route, this.status, this.timestamp);
+        NotificationDTO dto = new NotificationDTO();
+        dto.setId(this.id);
+        dto.setUserId(this.userId);
+        dto.setMessage(this.message);
+        dto.setAction(this.action);
+        dto.setRoute(this.route);
+        dto.setStatus(this.status);
+        dto.setTimestamp(this.timestamp);
+        dto.setCreatedAt(this.createdAt);
+        dto.setCreatedBy(this.createdBy);
+        dto.setUpdatedAt(this.updatedAt);
+        dto.setUpdatedBy(this.updatedBy);
+        return dto;
     }
 }

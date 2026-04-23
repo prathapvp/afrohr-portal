@@ -1,5 +1,26 @@
 import axiosInstance from "../interceptor/AxiosInterceptor";
 
+const isTransientSuggestionError = (error: unknown) => {
+  const candidate = error as {
+    code?: string;
+    message?: string;
+    response?: { status?: number };
+  };
+
+  const code = candidate?.code ?? "";
+  const message = (candidate?.message ?? "").toLowerCase();
+  const status = candidate?.response?.status;
+
+  return (
+    code === "ECONNABORTED" ||
+    code === "ERR_NETWORK" ||
+    code === "ERR_CANCELED" ||
+    message.includes("aborted") ||
+    message.includes("network") ||
+    (typeof status === "number" && status >= 500)
+  );
+};
+
 export interface ProfilePayload {
   id: number;
   userId: number;
@@ -22,8 +43,10 @@ export async function getProfileByUserId(userId: number) {
   return response.data;
 }
 
-export async function getMyProfile() {
-	const response = await axiosInstance.get("/profiles/me");
+export async function getMyProfile(options?: { suppressAuthRedirect?: boolean }) {
+  const response = await axiosInstance.get("/profiles/me", {
+    headers: options?.suppressAuthRedirect ? { "X-Skip-Auth-Redirect": "true" } : undefined,
+  });
 	return response.data;
 }
 
@@ -81,6 +104,32 @@ export async function chatWithProfileAssistant(message: string, accountType?: st
     profileContext,
   });
   return response.data?.reply;
+}
+
+export async function getProfileSkillSuggestions(accountType?: string, profileContext?: string, existingSkills?: string[]) {
+  const payload = {
+    accountType,
+    profileContext,
+    existingSkills,
+  };
+
+  const request = () => axiosInstance.post(`/profiles/skillSuggestions`, payload, {
+    // Ollama inference can take 2+ minutes for complex skill suggestions
+    timeout: 180000,
+  });
+
+  let response;
+  try {
+    response = await request();
+  } catch (error) {
+    if (!isTransientSuggestionError(error)) {
+      throw error;
+    }
+
+    response = await request();
+  }
+
+  return Array.isArray(response.data?.suggestions) ? response.data.suggestions as string[] : [];
 }
 
   export async function recordResumeView(profileId: number): Promise<{ resumeViewCount: number }> {

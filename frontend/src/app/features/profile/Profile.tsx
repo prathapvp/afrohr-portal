@@ -5,7 +5,7 @@ import {
     Loader,
     Overlay,
 } from "@mantine/core";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { changeProfile, persistProfile } from "../../store/slices/ProfileSlice";
 import Info from "./Info";
@@ -23,7 +23,6 @@ import AccountDetails from "./AccountDetails";
 import CompanyDetails from "./CompanyDetails";
 import AddressDetails from "./AddressDetails";
 import ProfileCard from "./ProfileCard";
-import ProfileAssistant from "./ProfileAssistant";
 import { useHover } from "@mantine/hooks";
 import { successNotification, errorNotification } from "../../services/NotificationService";
 import {
@@ -59,6 +58,7 @@ import { secureError } from "../../services/secure-logging-service";
 import { extractErrorMessage, formatErrorForLogging } from "../../services/error-extractor-service";
 import { parseResume } from "../../services/profile-service";
 import { getAdminOverview, type AdminOverview } from "../../services/admin-service";
+import { moderateImageForProfileUpload } from "../../services/image-moderation-service";
 import { useNavigate } from "react-router";
 
 const Profile = () => {
@@ -67,6 +67,12 @@ const Profile = () => {
     const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
     const user = useAppSelector((state) => state.user as { accountType?: string } | null);
     const accountType = user?.accountType;
+    const displayName = String(profile?.username || profile?.name || (user as { name?: string } | null)?.name || "Your Name");
+    const profilePreviewText = String(profile.about || profile.profileSummary || "Shape a sharper profile with stronger sections, better positioning, and a complete hiring-ready presence.")
+        .replace(/\r\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]+/g, " ")
+        .trim();
     const skillsCount = Array.isArray(profile?.skills) ? profile.skills.length : 0;
     const experienceCount = Array.isArray(profile?.experiences) ? profile.experiences.length : 0;
     const certificationCount = Array.isArray(profile?.certifications) ? profile.certifications.length : 0;
@@ -79,6 +85,8 @@ const Profile = () => {
     const [downloadingPdf, setDownloadingPdf] = useState(false);
     const [downloadingWord, setDownloadingWord] = useState(false);
     const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+    const [isSectionFadingOut, setIsSectionFadingOut] = useState(false);
+    const sectionTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
     const [adminLoading, setAdminLoading] = useState(false);
     const [adminError, setAdminError] = useState<string | null>(null);
@@ -97,6 +105,59 @@ const Profile = () => {
     ];
     const completenessFilled = completenessChecks.filter(Boolean).length;
     const completenessPct = Math.round((completenessFilled / completenessChecks.length) * 100);
+
+    const desiredJob = (profile?.desiredJob ?? {}) as Record<string, unknown>;
+    const preferredDesignations = Array.isArray(desiredJob.preferredDesignations)
+        ? desiredJob.preferredDesignations.map((item) => String(item ?? "").trim()).filter(Boolean)
+        : [];
+    const preferredLocations = Array.isArray(desiredJob.preferredLocations)
+        ? desiredJob.preferredLocations.map((item) => String(item ?? "").trim()).filter(Boolean)
+        : [];
+    const targetRole = preferredDesignations[0] || "Not set";
+    const targetLocation = preferredLocations[0] || "Not set";
+
+    const educationCount = Array.isArray(profile?.education) ? profile.education.length : 0;
+    const totalExp = Number(profile?.totalExp ?? 0);
+    const currentYear = new Date().getFullYear();
+    const latestPassingYear = Array.isArray(profile?.education)
+        ? profile.education
+            .map((entry) => Number(((entry ?? {}) as Record<string, unknown>).yearOfPassing ?? 0))
+            .filter((year) => Number.isFinite(year) && year > 0)
+            .sort((a, b) => b - a)[0]
+        : undefined;
+
+    const studentStage = totalExp > 0
+        ? "Early Professional"
+        : latestPassingYear && latestPassingYear >= currentYear
+            ? "Final Year / Fresher"
+            : educationCount > 0
+                ? "Student"
+                : "Not set";
+
+    const studentRoadmapChecks = [
+        preferredDesignations.length > 0,
+        preferredLocations.length > 0,
+        educationCount > 0,
+        skillsCount >= 8,
+        experienceCount > 0 || totalExp > 0,
+        hasCv,
+    ];
+    const studentRoadmapPct = Math.round((studentRoadmapChecks.filter(Boolean).length / studentRoadmapChecks.length) * 100);
+
+    const studentMissingItems: Array<{ label: string; section: string }> = [
+        ...(preferredDesignations.length === 0 ? [{ label: "Set target role", section: "Desired Job" }] : []),
+        ...(preferredLocations.length === 0 ? [{ label: "Set target location", section: "Desired Job" }] : []),
+        ...(skillsCount < 8 ? [{ label: "Add at least 8 skills", section: "Key Skills" }] : []),
+        ...(educationCount === 0 ? [{ label: "Add education details", section: "Education" }] : []),
+        ...(experienceCount === 0 && totalExp <= 0 ? [{ label: "Add internship/project experience", section: "Experience" }] : []),
+        ...(!Array.isArray(profile?.certifications) || profile.certifications.length === 0
+            ? [{ label: "Add one certification", section: "Certifications" }]
+            : []),
+        ...(!Array.isArray(profile?.workSamples) || profile.workSamples.length === 0
+            ? [{ label: "Add project/work sample link", section: "Work Samples" }]
+            : []),
+        ...(!hasCv ? [{ label: "Upload CV", section: "Update CV" }] : []),
+    ];
 
     type ProfileSection = {
         title: string;
@@ -234,6 +295,14 @@ const Profile = () => {
     }, [profileSections.length]);
 
     useEffect(() => {
+        return () => {
+            if (sectionTransitionTimerRef.current) {
+                clearTimeout(sectionTransitionTimerRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
         if (accountType !== "ADMIN") {
             return;
         }
@@ -265,11 +334,23 @@ const Profile = () => {
     }, [accountType]);
 
     const animateSectionChange = (nextIndex: number) => {
-        if (nextIndex === activeSectionIndex || nextIndex < 0 || nextIndex >= profileSections.length) {
+        if (
+            isSectionFadingOut ||
+            nextIndex === activeSectionIndex ||
+            nextIndex < 0 ||
+            nextIndex >= profileSections.length
+        ) {
             return;
         }
 
-        setActiveSectionIndex(nextIndex);
+        setIsSectionFadingOut(true);
+        if (sectionTransitionTimerRef.current) {
+            clearTimeout(sectionTransitionTimerRef.current);
+        }
+        sectionTransitionTimerRef.current = setTimeout(() => {
+            setActiveSectionIndex(nextIndex);
+            setIsSectionFadingOut(false);
+        }, 140);
     };
 
     const handlePrevSection = () => {
@@ -280,9 +361,28 @@ const Profile = () => {
         animateSectionChange(activeSectionIndex + 1);
     };
 
+    const jumpToSection = (title: string) => {
+        const targetIndex = profileSections.findIndex((section) => section.title === title);
+        if (targetIndex >= 0) {
+            animateSectionChange(targetIndex);
+        }
+    };
+
     /* ---------------- Image Handlers ---------------- */
     const handleProfilePicChange = async (file: File | null) => {
         if (!file) return;
+
+        try {
+            const moderation = await moderateImageForProfileUpload(file);
+            if (!moderation.isAllowed) {
+                errorNotification("Upload Blocked", moderation.blockedReason || "This image is not allowed.");
+                return;
+            }
+        } catch (moderationError) {
+            secureError("Image moderation failed", moderationError, "Profile");
+            errorNotification("Upload Blocked", "We could not verify image safety. Please try another image.");
+            return;
+        }
         
         console.log('Profile picture upload started:', {
             fileName: file.name,
@@ -355,6 +455,18 @@ const Profile = () => {
 
     const handleBannerChange = async (file: File | null) => {
         if (!file) return;
+
+        try {
+            const moderation = await moderateImageForProfileUpload(file);
+            if (!moderation.isAllowed) {
+                errorNotification("Upload Blocked", moderation.blockedReason || "This image is not allowed.");
+                return;
+            }
+        } catch (moderationError) {
+            secureError("Image moderation failed", moderationError, "Profile");
+            errorNotification("Upload Blocked", "We could not verify image safety. Please try another image.");
+            return;
+        }
         
         console.log('Banner upload started:', {
             fileName: file.name,
@@ -578,7 +690,7 @@ const Profile = () => {
                                 ? `data:image/jpeg;base64,${profile.banner}`
                                 : "/Profile/banner.svg"
                         }
-                        alt={`${profile.name || "User"} profile banner`}
+                        alt={`${displayName} profile banner`}
                     />
                     <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-tr from-black/45 via-transparent to-cyan-500/20" />
                     {hoveredBanner && (
@@ -640,7 +752,7 @@ const Profile = () => {
                             <IconSparkles className="h-3.5 w-3.5" stroke={1.8} />
                             Profile Studio
                         </div>
-                        <h1 className="mt-3 text-3xl font-black tracking-tight text-white xs-mx:text-2xl">{profile.name || user?.name || "Your Name"}</h1>
+                        <h1 className="mt-3 text-3xl font-black tracking-tight text-white xs-mx:text-2xl">{displayName}</h1>
                         <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
                             {(profile.jobTitle || profile.company) && (
                                 <div className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.05] px-3 py-1.5">
@@ -661,8 +773,8 @@ const Profile = () => {
                                 </div>
                             )}
                         </div>
-                        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-                            {profile.about || profile.profileSummary || "Shape a sharper profile with stronger sections, better positioning, and a complete hiring-ready presence."}
+                        <p className="mt-4 max-w-2xl whitespace-pre-line break-words text-sm leading-7 text-slate-300">
+                            {profilePreviewText}
                         </p>
                     </div>
 
@@ -706,6 +818,73 @@ const Profile = () => {
                                 className="h-2 rounded-full bg-gradient-to-r from-bright-sun-400 via-yellow-300 to-orange-300 shadow-[0_0_14px_rgba(251,191,36,0.45)] transition-all duration-500"
                                 style={{ width: `${completenessPct}%` }}
                             />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {accountType === "STUDENT" && (
+                <div className="mb-4 px-5" data-aos="fade-up">
+                    <div className="rounded-2xl border border-violet-300/25 bg-violet-500/10 p-4">
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-violet-300/35 bg-violet-400/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-100">
+                                    <IconTarget size={14} />
+                                    Student Career Goal
+                                </div>
+                                <p className="mt-2 text-sm text-slate-200">Set your target role and complete the roadmap to improve guidance and matching.</p>
+                            </div>
+                            <div className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 text-right">
+                                <div className="text-[10px] uppercase tracking-[0.12em] text-emerald-100/80">Roadmap Score</div>
+                                <div className="text-base font-semibold text-emerald-50">{studentRoadmapPct}%</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Target Role</p>
+                                <p className="mt-1 text-sm font-semibold text-white">{targetRole}</p>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Target Location</p>
+                                <p className="mt-1 text-sm font-semibold text-white">{targetLocation}</p>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Current Stage</p>
+                                <p className="mt-1 text-sm font-semibold text-white">{studentStage}</p>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Recommended Timeline</p>
+                                <p className="mt-1 text-sm font-semibold text-white">{totalExp > 0 ? "6-12 months" : "12-24 months"}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <Button size="xs" variant="light" color="violet" onClick={() => jumpToSection("Desired Job")}>Set Career Goal</Button>
+                            <Button size="xs" variant="light" color="cyan" onClick={() => jumpToSection("Key Skills")}>Align Skills</Button>
+                            <Button size="xs" variant="light" color="blue" onClick={() => jumpToSection("Education")}>Update Education</Button>
+                            <Button size="xs" variant="light" color="grape" onClick={() => jumpToSection("Update CV")}>Upload CV</Button>
+                        </div>
+
+                        <div className="mt-3 rounded-xl border border-amber-300/25 bg-amber-500/10 p-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-100/90">Missing Items Checklist</p>
+                            {studentMissingItems.length === 0 ? (
+                                <p className="mt-2 text-sm text-emerald-100">All core student profile items are complete. Great work.</p>
+                            ) : (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {studentMissingItems.map((item) => (
+                                        <Button
+                                            key={`${item.label}-${item.section}`}
+                                            size="xs"
+                                            variant="light"
+                                            color="yellow"
+                                            onClick={() => jumpToSection(item.section)}
+                                        >
+                                            {item.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -773,7 +952,7 @@ const Profile = () => {
 
             {accountType !== "ADMIN" && (
             <div className="mb-4 px-5" data-aos="fade-up">
-                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
                     <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-2">
                         <p className="text-[10px] uppercase tracking-[0.12em] text-cyan-100/80">Profile Tier</p>
                         <p className="text-sm font-semibold text-cyan-50">Premium</p>
@@ -846,12 +1025,6 @@ const Profile = () => {
                 </div>
             )}
 
-            {accountType !== "ADMIN" && (
-            <div className="px-5 mb-4" data-aos="fade-up">
-                <ProfileAssistant />
-            </div>
-            )}
-
             {/* ================================================================== */}
             {/* CARD-BASED SECTIONS                                                 */}
             {/* ================================================================== */}
@@ -895,7 +1068,37 @@ const Profile = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-2 md:hidden">
+                        <div className="rounded-2xl border border-bright-sun-400/30 bg-bright-sun-400/10 px-3 py-3 shadow-[0_0_18px_rgba(251,191,36,0.12)]">
+                            <div className="mb-2 text-[10px] uppercase tracking-[0.12em] text-bright-sun-100/80">Current</div>
+                            <div className="flex items-center justify-between gap-2">
+                                <Button
+                                    variant="subtle"
+                                    size="compact-sm"
+                                    onClick={handlePrevSection}
+                                    disabled={activeSectionIndex === 0}
+                                    className="!text-slate-200 disabled:!text-slate-500"
+                                >
+                                    <IconChevronLeft size={14} />
+                                </Button>
+                                <div className="flex min-w-0 items-center justify-center gap-2">
+                                    <span className="text-bright-sun-300">{activeSection?.icon}</span>
+                                    <span className="truncate text-xs font-semibold text-bright-sun-100">{activeSection?.title}</span>
+                                </div>
+                                <Button
+                                    variant="subtle"
+                                    size="compact-sm"
+                                    onClick={handleNextSection}
+                                    disabled={activeSectionIndex >= profileSections.length - 1}
+                                    className="!text-slate-200 disabled:!text-slate-500"
+                                >
+                                    <IconChevronRight size={14} />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="hidden gap-2 md:grid md:grid-cols-3">
                         <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
                             <div className="mb-2 text-[10px] uppercase tracking-[0.12em] text-slate-400">Previous</div>
                             <div className="flex items-center gap-2">
@@ -933,39 +1136,36 @@ const Profile = () => {
                         </div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {profileSections.map((section, index) => (
-                            <button
-                                key={section.title}
-                                onClick={() => animateSectionChange(index)}
-                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                    activeSectionIndex === index
-                                        ? "border-bright-sun-400/70 bg-bright-sun-400/20 text-bright-sun-200 shadow-[0_0_14px_rgba(251,191,36,0.16)]"
-                                        : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
-                                }`}
-                            >
-                                <span className={activeSectionIndex === index ? "text-bright-sun-300" : "text-slate-400"}>{section.icon}</span>
-                                {section.title}
-                            </button>
-                        ))}
+                    <div className="mt-4 -mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <div className="flex min-w-max flex-nowrap gap-2 md:min-w-0 md:flex-wrap">
+                            {profileSections.map((section, index) => (
+                                <button
+                                    key={section.title}
+                                    onClick={() => animateSectionChange(index)}
+                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                        activeSectionIndex === index
+                                            ? "border-bright-sun-400/70 bg-bright-sun-400/20 text-bright-sun-200 shadow-[0_0_14px_rgba(251,191,36,0.16)]"
+                                            : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
+                                    }`}
+                                >
+                                    <span className={activeSectionIndex === index ? "text-bright-sun-300" : "text-slate-400"}>{section.icon}</span>
+                                    {section.title}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="mt-4 overflow-hidden rounded-3xl">
-                        <div
-                            style={{ transform: `translateX(-${activeSectionIndex * 100}%)` }}
-                            className="flex transition-transform duration-500 ease-out"
-                        >
-                            {profileSections.map((section) => (
-                                <div key={section.title} className="min-w-full">
-                                    <ProfileCard
-                                        title={section.title}
-                                        icon={section.icon}
-                                        defaultOpen={section.defaultOpen ?? true}
-                                    >
-                                        {section.content}
-                                    </ProfileCard>
-                                </div>
-                            ))}
+                        <div className={`transition-opacity duration-150 ${isSectionFadingOut ? "opacity-0" : "opacity-100"}`}>
+                            {activeSection && (
+                                <ProfileCard
+                                    title={activeSection.title}
+                                    icon={activeSection.icon}
+                                    defaultOpen={activeSection.defaultOpen ?? true}
+                                >
+                                    {activeSection.content}
+                                </ProfileCard>
+                            )}
                         </div>
                     </div>
                 </div>

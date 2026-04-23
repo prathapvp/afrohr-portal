@@ -8,6 +8,38 @@ import { extractErrorMessage } from "../../services/error-extractor-service";
 import { useMediaQuery } from "@mantine/hooks";
 import { SkillsSchema } from "../../validators/ValidationSchemas";
 import { validateData } from "../../validators/ValidationUtils";
+import { getProfileSkillSuggestions } from "../../services/profile-service";
+
+const toUniqueSkills = (skills: string[]) =>
+    Array.from(new Set(skills.map((skill) => skill.trim()).filter(Boolean)));
+
+const asString = (value: unknown) => String(value ?? "").trim();
+
+const asStringArray = (value: unknown) => {
+    if (!Array.isArray(value)) {
+        return [] as string[];
+    }
+    return value.map((item) => asString(item)).filter(Boolean);
+};
+
+const buildSkillSuggestionContext = (profile: Record<string, unknown>, accountType: string) => {
+    const desiredJob = (profile.desiredJob ?? {}) as Record<string, unknown>;
+    const preferredDesignations = asStringArray(desiredJob.preferredDesignations).join(", ");
+    const preferredIndustries = asStringArray(desiredJob.preferredIndustries).join(", ");
+    const preferredLocations = asStringArray(desiredJob.preferredLocations).join(", ");
+
+    return [
+        `Account Type: ${accountType || "UNKNOWN"}`,
+        `Job Title: ${asString(profile.jobTitle) || "Not provided"}`,
+        `Industry: ${asString(profile.industryType) || "Not provided"}`,
+        `Summary: ${asString(profile.profileSummary || profile.about) || "Not provided"}`,
+        `Company Type: ${asString(profile.companyType) || "Not provided"}`,
+        `Student Goal: ${asString(profile.targetRole) || "Not provided"}`,
+        `Preferred Designations: ${preferredDesignations || "Not provided"}`,
+        `Preferred Industries: ${preferredIndustries || "Not provided"}`,
+        `Preferred Locations: ${preferredLocations || "Not provided"}`,
+    ].join("\n");
+};
 
 const skillToneClasses = [
     "border-amber-300/30 bg-[linear-gradient(135deg,rgba(251,191,36,0.18),rgba(120,53,15,0.18))] text-amber-100 shadow-[0_8px_20px_rgba(251,191,36,0.14)]",
@@ -20,10 +52,15 @@ const skillToneClasses = [
 const Skills = () => {
     const dispatch = useAppDispatch();
     const profile = useAppSelector((state) => state.profile as Record<string, unknown>);
+    const user = useAppSelector((state) => state.user as { accountType?: string } | null);
+    const accountType = user?.accountType || "";
     const [skills, setSkills] = useState<string[]>(profile.skills || []);
     const [editOpen, setEditOpen] = useState(false);
     const matches = useMediaQuery('(max-width: 475px)');
     const [validationError, setValidationError] = useState<string>("");
+    const [profileAwareSuggestions, setProfileAwareSuggestions] = useState<string[]>([]);
+    const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+    const [suggestionsError, setSuggestionsError] = useState<string>("");
 
     const premiumInputStyles = {
         label: {
@@ -53,13 +90,59 @@ const Skills = () => {
     const handleOpenEdit = () => {
         setSkills(profile.skills || []);
         setValidationError("");
+        setSuggestionsError("");
         setEditOpen(true);
     };
 
     const handleCloseEdit = () => {
         setValidationError("");
+        setSuggestionsError("");
         setEditOpen(false);
     };
+
+    useEffect(() => {
+        if (!editOpen) {
+            return;
+        }
+
+        const existingSkills = toUniqueSkills([
+            ...asStringArray(profile.skills),
+            ...asStringArray(profile.itSkills),
+        ]);
+
+        const profileContext = buildSkillSuggestionContext(profile, accountType);
+        let active = true;
+
+        setSuggestionsLoading(true);
+        setSuggestionsError("");
+
+        void getProfileSkillSuggestions(accountType, profileContext, existingSkills)
+            .then((suggestions) => {
+                if (!active) {
+                    return;
+                }
+                const next = toUniqueSkills(suggestions)
+                    .filter((item) => !existingSkills.some((existing) => existing.toLowerCase() === item.toLowerCase()))
+                    .slice(0, 40);
+                setProfileAwareSuggestions(next);
+            })
+            .catch((error: unknown) => {
+                if (!active) {
+                    return;
+                }
+                setProfileAwareSuggestions([]);
+                setSuggestionsError(extractErrorMessage(error));
+            })
+            .finally(() => {
+                if (active) {
+                    setSuggestionsLoading(false);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [accountType, editOpen, profile]);
 
     const handleSave = async () => {
         const validation = validateData({ skills }, SkillsSchema);
@@ -152,6 +235,15 @@ const Skills = () => {
                         data-aos="zoom-out"
                         label="Key Skills"
                         placeholder="Add skill and press Enter or comma"
+                        description={suggestionsLoading
+                            ? "Loading AI suggestions from Spring AI (Ollama)..."
+                            : suggestionsError
+                                ? "Could not load AI suggestions right now. You can still add skills manually."
+                                : accountType === "STUDENT"
+                            ? "Suggestions use your student goal/target role and profile context for better roadmap alignment."
+                            : "Suggestions are personalized from your profile (job title, industry, summary, and existing skills)."}
+                        data={profileAwareSuggestions}
+                        searchable
                         value={skills}
                         onChange={setSkills}
                         splitChars={[',', '|']}

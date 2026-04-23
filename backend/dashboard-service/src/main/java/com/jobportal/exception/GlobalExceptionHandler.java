@@ -13,6 +13,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import jakarta.validation.ConstraintViolationException;
@@ -71,6 +72,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleNotFound(NoHandlerFoundException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("errorMessage", "Endpoint not found: " + ex.getRequestURL() + ". Please check the URL.");
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("errorMessage", "Endpoint not found: " + ex.getResourcePath() + ". Please check the URL.");
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 

@@ -44,7 +44,70 @@ ALTER TABLE IF EXISTS jobs
 ALTER TABLE IF EXISTS users
         ADD COLUMN IF NOT EXISTS employer_role VARCHAR(20);
 
+ALTER TABLE IF EXISTS users
+    DROP CONSTRAINT IF EXISTS users_account_type_check;
+
+ALTER TABLE IF EXISTS users
+    ADD CONSTRAINT users_account_type_check
+    CHECK (account_type IN ('APPLICANT', 'EMPLOYER', 'STUDENT', 'ADMIN'));
+
 UPDATE users
 SET employer_role = 'OWNER'
 WHERE account_type = 'EMPLOYER'
     AND (employer_role IS NULL OR employer_role = '');
+
+-- Audit column migrations for users table
+ALTER TABLE IF EXISTS users
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS users
+    ADD COLUMN IF NOT EXISTS created_by BIGINT;
+ALTER TABLE IF EXISTS users
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS users
+    ADD COLUMN IF NOT EXISTS updated_by BIGINT;
+
+-- Backfill audit columns with current timestamp
+UPDATE users SET created_at = NOW() WHERE created_at IS NULL;
+UPDATE users SET updated_at = NOW() WHERE updated_at IS NULL;
+
+-- Audit column migrations for profiles table
+ALTER TABLE IF EXISTS profiles
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS profiles
+    ADD COLUMN IF NOT EXISTS created_by BIGINT;
+ALTER TABLE IF EXISTS profiles
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS profiles
+    ADD COLUMN IF NOT EXISTS updated_by BIGINT;
+
+-- Backfill audit columns with current timestamp
+UPDATE profiles SET created_at = NOW() WHERE created_at IS NULL;
+UPDATE profiles SET updated_at = NOW() WHERE updated_at IS NULL;
+
+-- Audit column migrations for jobs table
+ALTER TABLE IF EXISTS jobs
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS jobs
+    ADD COLUMN IF NOT EXISTS created_by BIGINT;
+ALTER TABLE IF EXISTS jobs
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS jobs
+    ADD COLUMN IF NOT EXISTS updated_by BIGINT;
+
+-- Backfill audit columns with current timestamp
+UPDATE jobs SET created_at = NOW() WHERE created_at IS NULL;
+UPDATE jobs SET updated_at = NOW() WHERE updated_at IS NULL;
+
+-- Audit column migrations for notifications table
+ALTER TABLE IF EXISTS notifications
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS notifications
+    ADD COLUMN IF NOT EXISTS created_by BIGINT;
+ALTER TABLE IF EXISTS notifications
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP(6) WITHOUT TIME ZONE;
+ALTER TABLE IF EXISTS notifications
+    ADD COLUMN IF NOT EXISTS updated_by BIGINT;
+
+-- Backfill audit columns with current timestamp
+UPDATE notifications SET created_at = NOW() WHERE created_at IS NULL;
+UPDATE notifications SET updated_at = NOW() WHERE updated_at IS NULL;

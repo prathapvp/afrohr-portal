@@ -70,7 +70,7 @@ function AppBootstrap() {
         <Route path="/posted-jobs/:id" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><PostedJobPage /></ProtectedRoute>} />
         <Route path="/post-job/:id" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><PostJobPage /></ProtectedRoute>} />
         <Route path="/departments" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><DepartmentPage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN", "EMPLOYER"]}><ProfilePage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute allowedRoles={["APPLICANT", "STUDENT", "ADMIN", "EMPLOYER"]}><ProfilePage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

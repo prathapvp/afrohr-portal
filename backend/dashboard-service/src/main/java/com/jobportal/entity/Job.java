@@ -68,15 +68,64 @@ public class Job {
 
     private Long postedBy;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    private Long createdBy;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    private Long updatedBy;
+
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (this.postTime == null) {
+            this.postTime = now;
+        }
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public JobDTO toDTO() {
-        return new JobDTO(
-            this.id, this.jobCode, this.jobTitle, this.department, this.role, this.company,
-            this.applicants != null ? this.applicants.stream().map(Applicant::toDTO).toList() : null,
-            this.about, this.experience, this.freshersAllowed, this.jobType,
-            this.location, this.country, this.currency, this.packageOffered, this.maxPackageOffered, this.variableComponent,
-            this.hideSalary, this.workMode, this.willingToRelocate, this.industry,
-            this.vacancies, this.postTime, this.description, this.skillsRequired,
-            this.jobStatus, this.postedBy
-        );
+        JobDTO dto = new JobDTO();
+        dto.setId(this.id);
+        dto.setJobCode(this.jobCode);
+        dto.setJobTitle(this.jobTitle);
+        dto.setDepartment(this.department);
+        dto.setRole(this.role);
+        dto.setCompany(this.company);
+        dto.setApplicants(this.applicants != null ? this.applicants.stream().map(Applicant::toDTO).toList() : null);
+        dto.setAbout(this.about);
+        dto.setExperience(this.experience);
+        dto.setFreshersAllowed(this.freshersAllowed);
+        dto.setJobType(this.jobType);
+        dto.setLocation(this.location);
+        dto.setCountry(this.country);
+        dto.setCurrency(this.currency);
+        dto.setPackageOffered(this.packageOffered);
+        dto.setMaxPackageOffered(this.maxPackageOffered);
+        dto.setVariableComponent(this.variableComponent);
+        dto.setHideSalary(this.hideSalary);
+        dto.setWorkMode(this.workMode);
+        dto.setWillingToRelocate(this.willingToRelocate);
+        dto.setIndustry(this.industry);
+        dto.setVacancies(this.vacancies);
+        dto.setPostTime(this.postTime);
+        dto.setDescription(this.description);
+        dto.setSkillsRequired(this.skillsRequired);
+        dto.setJobStatus(this.jobStatus);
+        dto.setPostedBy(this.postedBy);
+        dto.setCreatedAt(this.createdAt);
+        dto.setCreatedBy(this.createdBy);
+        dto.setUpdatedAt(this.updatedAt);
+        dto.setUpdatedBy(this.updatedBy);
+        return dto;
     }
 }

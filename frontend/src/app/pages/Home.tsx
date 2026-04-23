@@ -602,7 +602,7 @@ export default function Home() {
           </h1>
           <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-white/60 sm:text-xl">{home.hero.description}</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            {home.hero.primaryActions.map((action) => (
+            {home.hero.primaryActions.filter((action) => action.tab !== "students").map((action) => (
               <button
                 key={action.tab}
                 onClick={() => handlePrimaryActionClick(action.tab)}
@@ -781,7 +781,6 @@ export default function Home() {
           <div className="flex items-center gap-6 text-sm text-white/40">
             <button onClick={() => navigateWithRoleGate("candidates")} className="transition-colors hover:text-white/70">Candidates</button>
             <button onClick={() => navigateWithRoleGate("employers")} className="transition-colors hover:text-white/70">Employers</button>
-            <button onClick={() => navigateWithRoleGate("students")} className="transition-colors hover:text-white/70">Students</button>
           </div>
           <p className="text-xs text-white/30">© {currentYear} {branding.name} · {branding.subtitle}</p>
         </div>

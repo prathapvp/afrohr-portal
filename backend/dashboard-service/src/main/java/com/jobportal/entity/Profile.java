@@ -1,5 +1,6 @@
 package com.jobportal.entity;
 
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 
@@ -98,6 +99,28 @@ public class Profile {
     // Account/Employee Details
     private String reportingManager;
     private String mobileNumber;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    private Long createdBy;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    private Long updatedBy;
+
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
     private String username;
     @Column(name = "user_group")
     private String group;
@@ -144,20 +167,57 @@ public class Profile {
             }
         }
 
-        return new ProfileDTO(
-                this.id, this.name, this.email, this.jobTitle, this.company,
-                this.location, this.about, pictureBase64, bannerBase64,
-                this.totalExp, this.cvHeadline, this.skills, this.experiences,
-                this.certifications, this.itSkills, this.onlineProfiles,
-                this.workSamples, this.education, this.profileSummary,
-                this.personalDetails, this.desiredJob, this.savedJobs,
-                this.cvFileName, this.cvLastUpdated, this.reportingManager,
-                this.mobileNumber, this.username, this.group, this.role,
-                this.companyType, this.industryType, this.contactPerson,
-                this.alias, this.contactDesignation, this.websiteUrl,
-                this.profileHotVacancies, this.profileClassifieds,
-                this.phone1, this.phone2, this.fax,
-                this.addressLabel, this.address, this.country, this.city, this.pincode,
-                this.resumeViewCount);
+        ProfileDTO dto = new ProfileDTO();
+        dto.setId(this.id);
+        dto.setName(this.name);
+        dto.setEmail(this.email);
+        dto.setJobTitle(this.jobTitle);
+        dto.setCompany(this.company);
+        dto.setLocation(this.location);
+        dto.setAbout(this.about);
+        dto.setPicture(pictureBase64);
+        dto.setBanner(bannerBase64);
+        dto.setTotalExp(this.totalExp);
+        dto.setCvHeadline(this.cvHeadline);
+        dto.setSkills(this.skills);
+        dto.setExperiences(this.experiences);
+        dto.setCertifications(this.certifications);
+        dto.setItSkills(this.itSkills);
+        dto.setOnlineProfiles(this.onlineProfiles);
+        dto.setWorkSamples(this.workSamples);
+        dto.setEducation(this.education);
+        dto.setProfileSummary(this.profileSummary);
+        dto.setPersonalDetails(this.personalDetails);
+        dto.setDesiredJob(this.desiredJob);
+        dto.setSavedJobs(this.savedJobs);
+        dto.setCvFileName(this.cvFileName);
+        dto.setCvLastUpdated(this.cvLastUpdated);
+        dto.setReportingManager(this.reportingManager);
+        dto.setMobileNumber(this.mobileNumber);
+        dto.setUsername(this.username);
+        dto.setGroup(this.group);
+        dto.setRole(this.role);
+        dto.setCompanyType(this.companyType);
+        dto.setIndustryType(this.industryType);
+        dto.setContactPerson(this.contactPerson);
+        dto.setAlias(this.alias);
+        dto.setContactDesignation(this.contactDesignation);
+        dto.setWebsiteUrl(this.websiteUrl);
+        dto.setProfileHotVacancies(this.profileHotVacancies);
+        dto.setProfileClassifieds(this.profileClassifieds);
+        dto.setPhone1(this.phone1);
+        dto.setPhone2(this.phone2);
+        dto.setFax(this.fax);
+        dto.setAddressLabel(this.addressLabel);
+        dto.setAddress(this.address);
+        dto.setCountry(this.country);
+        dto.setCity(this.city);
+        dto.setPincode(this.pincode);
+        dto.setResumeViewCount(this.resumeViewCount);
+        dto.setCreatedAt(this.createdAt);
+        dto.setCreatedBy(this.createdBy);
+        dto.setUpdatedAt(this.updatedAt);
+        dto.setUpdatedBy(this.updatedBy);
+        return dto;
     }
 }

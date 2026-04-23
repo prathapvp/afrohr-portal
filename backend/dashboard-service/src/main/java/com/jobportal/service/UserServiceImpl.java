@@ -8,6 +8,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,6 +31,7 @@ import com.jobportal.repository.UserRepository;
 import com.jobportal.utility.Data;
 import com.jobportal.utility.Utilities;
 
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
 @Service("userService")
@@ -46,6 +50,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private JavaMailSender mailSender;
+
+	@Value("${spring.mail.username:}")
+	private String mailUsername;
 
 	@Autowired
 	private NotificationService notificationService;
@@ -267,13 +274,24 @@ public class UserServiceImpl implements UserService {
 		MimeMessage mm = mailSender.createMimeMessage();
 		MimeMessageHelper message = new MimeMessageHelper(mm, true);
 		message.setTo(Objects.requireNonNull(safeEmail));
+		if (mailUsername != null && !mailUsername.isBlank()) {
+			String senderAddress = Objects.requireNonNull(mailUsername).trim();
+			message.setFrom(new InternetAddress(senderAddress));
+		}
 		message.setSubject("Your OTP Code");
 		String generatedOtp = Utilities.generateOTP();
 		OTP otp = new OTP(safeEmail, generatedOtp, LocalDateTime.now());
 		otpRepository.save(otp);
 		String mailBody = Data.getMessageBody(generatedOtp, recipientName);
 		message.setText(mailBody != null ? mailBody : "", true);
-		mailSender.send(mm);
+		try {
+			mailSender.send(mm);
+		} catch (MailAuthenticationException ex) {
+			throw new JobPortalException(
+					"Email service authentication failed. Configure valid EMAIL_USERNAME and EMAIL_PASSWORD for SMTP.");
+		} catch (MailException ex) {
+			throw new JobPortalException("Unable to send OTP email at the moment. Please try again later.");
+		}
 		return true;
 	}
 

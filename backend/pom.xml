@@ -13,9 +13,7 @@
     <description>Spring Boot microservices backend for AfroHR</description>
 
     <modules>
-        <module>api-gateway</module>
         <module>dashboard-service</module>
-        <module>search-service</module>
     </modules>
 
     <parent>

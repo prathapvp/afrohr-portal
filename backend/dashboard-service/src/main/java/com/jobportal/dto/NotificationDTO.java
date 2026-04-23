@@ -20,7 +20,20 @@ public class NotificationDTO {
     private NotificationStatus status;
     private LocalDateTime timestamp;
 
+    private LocalDateTime createdAt;
+    private Long createdBy;
+    private LocalDateTime updatedAt;
+    private Long updatedBy;
+
     public Notification toEntity() {
-        return new Notification(this.id, this.userId, this.message, this.action, this.route, this.status, this.timestamp);
+        Notification notification = new Notification();
+        notification.setId(this.id);
+        notification.setUserId(this.userId);
+        notification.setMessage(this.message);
+        notification.setAction(this.action);
+        notification.setRoute(this.route);
+        notification.setStatus(this.status);
+        notification.setTimestamp(this.timestamp);
+        return notification;
     }
 }

@@ -14,11 +14,7 @@ const JobHistory = () => {
     };
 
     return <div className="space-y-5 text-white">
-        <div className="premium-enter flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.03] to-transparent px-4 py-4 sm:px-5">
-            <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">Career Moves</div>
-                <div className="mt-1 text-2xl font-black tracking-tight text-white">Job History</div>
-            </div>
+        <div className="premium-enter flex flex-wrap items-end justify-end gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.03] to-transparent px-4 py-4 sm:px-5">
             <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">
                 {showList.length} item{showList.length === 1 ? "" : "s"} in {tabMeta[activeTab]?.label ?? "tab"}
             </div>

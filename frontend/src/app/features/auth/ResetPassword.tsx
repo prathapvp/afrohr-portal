@@ -76,8 +76,32 @@ const ResetPassword = (props: ResetPasswordProps) => {
     }
     return <Modal opened={props.opened} onClose={props.close} overlayProps={{ backgroundOpacity: 0.55, blur: 3, }} title="Reset Password" centered>
         <div className="flex flex-col gap-6">
-            <TextInput disabled={otpSent} readOnly={otpSent} value={email} size="md" name="email" onChange={(e) => setEmail(e.target.value)} leftSection={<IconAt size={16} />} label="Email" withAsterisk placeholder="Your email" rightSection={<Button loading={otpSending && !otpSent} onClick={handleSendOtp} disabled={email == "" || otpSent} className="mr-1" size="xs" autoContrast >Send OTP</Button>} rightSectionWidth="xl" />
-            {otpSent && <PinInput onComplete={handleVerifyOTP} className="mx-auto" gap="lg" size="md" length={6} type="number" />}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <TextInput
+                    className="w-full sm:flex-1"
+                    disabled={otpSent}
+                    readOnly={otpSent}
+                    value={email}
+                    size="md"
+                    name="email"
+                    onChange={(e) => setEmail(e.target.value)}
+                    leftSection={<IconAt size={16} />}
+                    label="Email"
+                    withAsterisk
+                    placeholder="Your email"
+                />
+                <Button
+                    loading={otpSending && !otpSent}
+                    onClick={handleSendOtp}
+                    disabled={email == "" || otpSent}
+                    className="w-full sm:w-auto sm:min-w-[110px]"
+                    size="sm"
+                    autoContrast
+                >
+                    Send OTP
+                </Button>
+            </div>
+            {otpSent && <PinInput onComplete={handleVerifyOTP} className="mx-auto w-full" gap="xs" size="sm" length={6} type="number" />}
             {otpSent && !verified && <div className="flex gap-2">
                 <Button loading={otpSending} onClick={resendOtp} fullWidth color="orange" variant="light">{resendLoader ? time : "Resend"}</Button>
                 <Button fullWidth onClick={changeEmail} variant="gradient" gradient={{ from: 'orange', to: 'pink', deg: 90 }}>Change Email</Button>

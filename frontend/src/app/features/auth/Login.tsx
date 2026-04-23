@@ -154,7 +154,7 @@ const Login = () => {
     overlayProps={{ radius: 'sm', blur: 2 }}
     loaderProps={{ color: 'orange', type: 'bars' }}
     /><form
-        className="auth-form-panel w-1/2 sm-mx:w-full px-20 bs-mx:px-10 md-mx:px-5 flex flex-col gap-3 justify-center py-10 sm-mx:py-8"
+        className="auth-form-panel w-full sm:w-1/2 px-5 sm:px-10 lg:px-20 flex flex-col gap-3 justify-center py-8 sm:py-10"
         onSubmit={(event) => {
             event.preventDefault();
             if (!isSubmitDisabled) {

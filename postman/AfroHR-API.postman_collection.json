@@ -1,0 +1,346 @@
+{
+  "info": {
+    "_postman_id": "2c9d760e-6af1-4f62-8c9d-2ce6566b9de0",
+    "name": "AfroHR API",
+    "description": "Core AfroHR backend endpoints for Auth, Users, Jobs, Profiles, Metadata and Dashboard.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "apiBasePath", "value": "/api/ahrm/v3" },
+    { "key": "jwt", "value": "" },
+    { "key": "email", "value": "user@example.com" },
+    { "key": "password", "value": "P@ssw0rd123" },
+    { "key": "name", "value": "AfroHR User" },
+    { "key": "otp", "value": "123456" },
+    { "key": "userId", "value": "1" },
+    { "key": "jobId", "value": "1" },
+    { "key": "profileId", "value": "1" },
+    { "key": "applicantId", "value": "1" },
+    { "key": "fileName", "value": "sample.png" },
+    { "key": "accountType", "value": "APPLICANT" },
+    { "key": "applicationStatus", "value": "APPLIED" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (JWT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}{{apiBasePath}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.jwt) { pm.collectionVariables.set('jwt', json.jwt); }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}{{apiBasePath}}/users/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"accountType\": \"APPLICANT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Send OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiBasePath}}/users/sendOtp/{{email}}"
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/users/verifyOtp/{{email}}/{{otp}}"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}{{apiBasePath}}/users/changePass",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/users/me"
+          }
+        },
+        {
+          "name": "Employer Members",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/users/employer/members"
+          }
+        },
+        {
+          "name": "Update Employer Member Role",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiBasePath}}/users/employer/members/{{userId}}/role/RECRUITER"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "Get All Jobs (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/getAll"
+          }
+        },
+        {
+          "name": "Get Job By Id (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/get/{{jobId}}"
+          }
+        },
+        {
+          "name": "Get Job Image (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/image/{{fileName}}"
+          }
+        },
+        {
+          "name": "Post Job (My Workspace)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Senior Java Developer\",\n  \"department\": \"Engineering\",\n  \"role\": \"Backend Engineer\",\n  \"company\": \"AfroHR\",\n  \"about\": \"Build scalable backend services\",\n  \"experience\": \"3-5 years\",\n  \"jobType\": \"FULL_TIME\",\n  \"location\": \"Bangalore\",\n  \"country\": \"India\",\n  \"currency\": \"INR\",\n  \"packageOffered\": 1200000,\n  \"maxPackageOffered\": 1800000,\n  \"workMode\": \"HYBRID\",\n  \"industry\": \"Technology\",\n  \"vacancies\": 2,\n  \"description\": \"<p>Looking for experienced Java developers</p>\",\n  \"skillsRequired\": [\"Java\", \"Spring Boot\", \"PostgreSQL\"],\n  \"jobStatus\": \"ACTIVE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Posted Jobs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/me/posted"
+          }
+        },
+        {
+          "name": "Close My Job",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/me/{{jobId}}/close"
+          }
+        },
+        {
+          "name": "Apply Current User to Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/me/applications/{{jobId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicantName\": \"{{name}}\",\n  \"applicantEmail\": \"{{email}}\",\n  \"applicantPhone\": \"+919876543210\",\n  \"website\": \"https://example.com\",\n  \"resumeUrl\": \"resume.pdf\",\n  \"coverLetter\": \"I am interested in this role.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Application Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}{{apiBasePath}}/jobs/changeAppStatus",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{jobId}},\n  \"applicantId\": {{applicantId}},\n  \"applicationStatus\": \"INTERVIEWING\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profiles",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/profiles/me"
+          }
+        },
+        {
+          "name": "Get Profile By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/profiles/get/{{profileId}}"
+          }
+        },
+        {
+          "name": "Get Profiles (All / Filter)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiBasePath}}/profiles/getAll?accountType={{accountType}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiBasePath}}", "profiles", "getAll"],
+              "query": [
+                { "key": "accountType", "value": "{{accountType}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Patch My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}{{apiBasePath}}/profiles/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Software Engineer\",\n  \"location\": \"Bangalore\",\n  \"skills\": [\"Java\", \"Spring\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Record Resume View",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}{{apiBasePath}}/profiles/{{profileId}}/resume/view"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Metadata",
+      "item": [
+        {
+          "name": "Get Departments (Public GET)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/departments"
+          }
+        },
+        {
+          "name": "Get Industries (Public GET)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/industries"
+          }
+        },
+        {
+          "name": "Get Employment Types (Public GET)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/employment-types"
+          }
+        },
+        {
+          "name": "Get Work Modes (Public GET)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiBasePath}}/work-modes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public Core",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dashboard"
+          }
+        },
+        {
+          "name": "Audiences",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/audiences"
+          }
+        },
+        {
+          "name": "Search",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/search?audience=candidates&q=java"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -85,6 +85,7 @@ export function useDashboardController() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
   const hasRedirectedUnauthorizedEmployer = useRef(false);
+  const searchRequestIdRef = useRef(0);
   const unauthorizedEmployerRedirectKey = "afrohr:unauthorized-employer-redirect";
 
   useEffect(() => {
@@ -98,13 +99,17 @@ export function useDashboardController() {
       try {
         setLoading(true);
         setError(null);
-        const dashboardResponse = await fetch("/api/dashboard");
-        if (!dashboardResponse.ok) {
-          throw new Error("Failed to load dashboard payload");
-        }
-        const dashboardPayload = (await dashboardResponse.json()) as Partial<DashboardPayload>;
-        if (!cancelled) {
-          setPayload(mergeDashboardPayload(dashboardPayload));
+        try {
+          const dashboardResponse = await fetch("/api/dashboard");
+          if (dashboardResponse.ok) {
+            const dashboardPayload = (await dashboardResponse.json()) as Partial<DashboardPayload>;
+            if (!cancelled) {
+              setPayload(mergeDashboardPayload(dashboardPayload));
+            }
+          }
+          // If /api/dashboard fails, use empty payload (it's optional)
+        } catch {
+          // /api/dashboard is optional; if it fails, use empty payload
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -164,6 +169,26 @@ export function useDashboardController() {
     setSearchQuery("");
     setSearchResults(null);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "employers" || activeTab === "admin") {
+      return;
+    }
+
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void handleSearch();
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeTab, searchQuery]);
 
   useEffect(() => {
     if (activeTab !== "candidates") {
@@ -330,6 +355,9 @@ export function useDashboardController() {
       return;
     }
 
+    const requestId = searchRequestIdRef.current + 1;
+    searchRequestIdRef.current = requestId;
+
     try {
       setSearchLoading(true);
       setError(null);
@@ -338,11 +366,17 @@ export function useDashboardController() {
         throw new Error("Search failed");
       }
       const data = (await response.json()) as { results: Array<CandidateJob | CareerItem> };
-      setSearchResults(data.results);
+      if (searchRequestIdRef.current === requestId) {
+        setSearchResults(data.results);
+      }
     } catch (searchError) {
-      setError(searchError instanceof Error ? searchError.message : "Search failed");
+      if (searchRequestIdRef.current === requestId) {
+        setError(searchError instanceof Error ? searchError.message : "Search failed");
+      }
     } finally {
-      setSearchLoading(false);
+      if (searchRequestIdRef.current === requestId) {
+        setSearchLoading(false);
+      }
     }
   }
 
@@ -472,6 +506,84 @@ export function useDashboardController() {
       return;
     }
 
+    if (label === "Career Roadmap") {
+      setActiveTab("students");
+      setSearchParams({ tab: "students", section: "roadmap" }, { replace: true });
+      return;
+    }
+    if (label === "Saved Goals") {
+      setActiveTab("students");
+      setSearchParams({ tab: "students", section: "saved-goals" }, { replace: true });
+      return;
+    }
+    if (label === "Country Compare") {
+      setActiveTab("students");
+      setSearchParams({ tab: "students", section: "country-snapshot" }, { replace: true });
+      return;
+    }
+    if (label === "Action Plan") {
+      setActiveTab("students");
+      setSearchParams({ tab: "students", section: "action-plan" }, { replace: true });
+      return;
+    }
+    if (label === "Career Paths") {
+      setActiveTab("students");
+      setSearchParams({ tab: "students", section: "career-paths" }, { replace: true });
+      return;
+    }
+    if (label === "AI Advisor") {
+      setActiveTab("students");
+
+      const nextParams = new URLSearchParams();
+      nextParams.set("tab", "students");
+      nextParams.set("section", "advisor");
+
+      // Preserve roadmap deep-link context when present.
+      const ri = searchParams.get("ri");
+      const rc = searchParams.get("rc");
+      const rs = searchParams.get("rs");
+      if (ri) nextParams.set("ri", ri);
+      if (rc) nextParams.set("rc", rc);
+      if (rs) nextParams.set("rs", rs);
+
+      if (!ri || !rs) {
+        try {
+          const rawWizardState = localStorage.getItem("student-wizard-state");
+          if (rawWizardState) {
+            const parsed = JSON.parse(rawWizardState) as { interest?: string; career?: string; subfield?: string };
+            if (!ri && parsed.interest) {
+              nextParams.set("ri", parsed.interest);
+            }
+            if (!rc && parsed.career) {
+              nextParams.set("rc", parsed.career);
+            }
+            if (!rs && parsed.subfield) {
+              nextParams.set("rs", parsed.subfield);
+            }
+          }
+        } catch {
+          // Ignore malformed local storage payload and continue.
+        }
+      }
+
+      window.location.assign(`/dashboard?${nextParams.toString()}`);
+      return;
+    }
+    if (label === "Pathway") {
+      setActiveTab("students");
+      setSearchParams({ tab: "students", section: "pathway" }, { replace: true });
+      return;
+    }
+    if (label === "Resources") {
+      setActiveTab("students");
+      setSearchParams({ tab: "students", section: "resources" }, { replace: true });
+      return;
+    }
+    if (label === "My Profile") {
+      navigate("/profile");
+      return;
+    }
+
     let tab: AudienceId = "candidates";
     if (label === "Employer") tab = "employers";
     else if (label === "Student") tab = "students";
@@ -534,6 +646,22 @@ export function useDashboardController() {
       ? "Billing Control"
       : activeTab === "admin" && adminSection === "subscription-requests"
       ? "Requests"
+      : activeTab === "students" && querySection === "roadmap"
+      ? "Career Roadmap"
+      : activeTab === "students" && querySection === "saved-goals"
+      ? "Saved Goals"
+      : activeTab === "students" && querySection === "country-snapshot"
+      ? "Country Compare"
+      : activeTab === "students" && querySection === "action-plan"
+      ? "Action Plan"
+      : activeTab === "students" && querySection === "career-paths"
+      ? "Career Paths"
+      : activeTab === "students" && querySection === "advisor"
+      ? "AI Advisor"
+      : activeTab === "students" && querySection === "pathway"
+      ? "Pathway"
+      : activeTab === "students" && querySection === "resources"
+      ? "Resources"
       : activeTab === "employers"
       ? "Employer"
       : activeTab === "students"

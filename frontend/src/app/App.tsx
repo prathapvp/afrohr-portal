@@ -44,7 +44,6 @@ export default function App() {
     empTypeModalOpen,
     employerSection,
     error,
-    handleApplyToJob,
     handleSearch,
     handleSidebarNav,
     handleViewAllJobs,
@@ -98,7 +97,6 @@ export default function App() {
                   onSearch={handleSearch}
                   onViewAllJobs={handleViewAllJobs}
                   onViewJob={handleViewJob}
-                  onApplyToJob={handleApplyToJob}
                   viewedJobIds={viewedJobIds}
                   searchLoading={searchLoading}
                   searchResults={searchResults as CandidateJob[] | null}

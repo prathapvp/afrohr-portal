@@ -13,6 +13,28 @@ const axiosInstance = axios.create({
     }
 });
 
+const publicEndpointPatterns = [
+    /^\/dashboard(?:\/|$)/,
+    /^\/search(?:\/|$)/,
+    /^\/audiences(?:\/|$)/,
+];
+
+function isPublicEndpoint(url?: string) {
+    if (!url) {
+        return false;
+    }
+
+    return publicEndpointPatterns.some((pattern) => pattern.test(url));
+}
+
+function shouldSkipAuthRedirect(config?: InternalAxiosRequestConfig | any) {
+    const headerValue = config?.headers?.['X-Skip-Auth-Redirect'] ?? config?.headers?.['x-skip-auth-redirect'];
+    if (typeof headerValue === 'string') {
+        return headerValue.toLowerCase() === 'true';
+    }
+    return Boolean(headerValue);
+}
+
 // Initialize CSRF token on app start
 initializeCsrfToken();
 
@@ -30,8 +52,14 @@ axiosInstance.interceptors.request.use(
 
         // Get JWT token from localStorage (will migrate to httpOnly cookies with backend support)
         const token = localStorage.getItem('token');
-        if (token) {
+        if (token && !isPublicEndpoint(config.url)) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        // Internal client-side control header, should never be sent to the backend.
+        if (config.headers && (config.headers['X-Skip-Auth-Redirect'] || config.headers['x-skip-auth-redirect'])) {
+            delete (config.headers as any)['X-Skip-Auth-Redirect'];
+            delete (config.headers as any)['x-skip-auth-redirect'];
         }
 
         // Add CSRF token for state-changing requests
@@ -66,13 +94,17 @@ export const setupResponseInterceptor = (navigate: any, dispatch: any) => {
         },
         async (error: AxiosError) => {
             const status = error.response?.status;
+            const skipAuthRedirect = shouldSkipAuthRedirect(error.config as any);
 
             // Handle unauthorized - clear auth and redirect
             if (status === 401) {
-                dispatch(removeUser());
-                dispatch(removeJwt());
-                navigate('/login');
-                return Promise.reject(new Error('Session expired. Please log in again.'));
+                if (!skipAuthRedirect) {
+                    dispatch(removeUser());
+                    dispatch(removeJwt());
+                    navigate('/login');
+                    return Promise.reject(new Error('Session expired. Please log in again.'));
+                }
+                return Promise.reject(error);
             }
 
             // Handle forbidden

@@ -29,9 +29,9 @@ const SignUpPage = () => {
             </div>
           </div>
           <div
-            className={`relative flex [&>*]:flex-shrink-0 transition-all ease-in-out duration-700 ${
+            className={`relative flex [&>*]:flex-shrink-0 [&>*]:w-full sm:[&>*]:w-1/2 transition-all ease-in-out duration-700 ${
               isSignupRoute
-                ? "-translate-x-1/2 sm-mx:-translate-x-full"
+                ? "-translate-x-full sm:-translate-x-1/2"
                 : "translate-x-0"
             }`}
           >

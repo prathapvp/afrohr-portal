@@ -1,5 +1,6 @@
 package com.jobportal.dto;
 
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -153,6 +154,11 @@ public class ProfileDTO {
 
     private Integer resumeViewCount;
 
+    private LocalDateTime createdAt;
+    private Long createdBy;
+    private LocalDateTime updatedAt;
+    private Long updatedBy;
+
     public Profile toEntity() {
         byte[] pictureBytes = null;
         if (this.picture != null && !this.picture.isEmpty()) {
@@ -172,27 +178,54 @@ public class ProfileDTO {
             }
         }
 
-        return new Profile(
-                this.id, this.name, this.email, this.jobTitle, this.company,
-                this.location, this.about, pictureBytes, bannerBytes,
-                this.totalExp != null ? this.totalExp : 0L,
-                this.cvHeadline,
-                this.skills != null ? this.skills : Collections.emptyList(),
-                this.experiences != null ? this.experiences : Collections.emptyList(),
-                this.certifications != null ? this.certifications : Collections.emptyList(),
-                this.itSkills != null ? this.itSkills : Collections.emptyList(),
-                this.onlineProfiles != null ? this.onlineProfiles : Collections.emptyList(),
-                this.workSamples != null ? this.workSamples : Collections.emptyList(),
-                this.education != null ? this.education : Collections.emptyList(),
-                this.profileSummary, this.personalDetails, this.desiredJob,
-                this.savedJobs != null ? this.savedJobs : Collections.emptyList(),
-                this.cvFileName, this.cvLastUpdated,
-                this.reportingManager, this.mobileNumber, this.username, this.group, this.role,
-                this.companyType, this.industryType, this.contactPerson, this.alias,
-                this.contactDesignation, this.websiteUrl, this.profileHotVacancies,
-                this.profileClassifieds, this.phone1, this.phone2, this.fax,
-                    this.addressLabel, this.address, this.country, this.city, this.pincode,
-                    this.resumeViewCount != null ? this.resumeViewCount : 0);
+        Profile profile = new Profile();
+        profile.setId(this.id);
+        profile.setName(this.name);
+        profile.setEmail(this.email);
+        profile.setJobTitle(this.jobTitle);
+        profile.setCompany(this.company);
+        profile.setLocation(this.location);
+        profile.setAbout(this.about);
+        profile.setPicture(pictureBytes);
+        profile.setBanner(bannerBytes);
+        profile.setTotalExp(this.totalExp != null ? this.totalExp : 0L);
+        profile.setCvHeadline(this.cvHeadline);
+        profile.setSkills(this.skills != null ? this.skills : Collections.emptyList());
+        profile.setExperiences(this.experiences != null ? this.experiences : Collections.emptyList());
+        profile.setCertifications(this.certifications != null ? this.certifications : Collections.emptyList());
+        profile.setItSkills(this.itSkills != null ? this.itSkills : Collections.emptyList());
+        profile.setOnlineProfiles(this.onlineProfiles != null ? this.onlineProfiles : Collections.emptyList());
+        profile.setWorkSamples(this.workSamples != null ? this.workSamples : Collections.emptyList());
+        profile.setEducation(this.education != null ? this.education : Collections.emptyList());
+        profile.setProfileSummary(this.profileSummary);
+        profile.setPersonalDetails(this.personalDetails);
+        profile.setDesiredJob(this.desiredJob);
+        profile.setSavedJobs(this.savedJobs != null ? this.savedJobs : Collections.emptyList());
+        profile.setCvFileName(this.cvFileName);
+        profile.setCvLastUpdated(this.cvLastUpdated);
+        profile.setReportingManager(this.reportingManager);
+        profile.setMobileNumber(this.mobileNumber);
+        profile.setUsername(this.username);
+        profile.setGroup(this.group);
+        profile.setRole(this.role);
+        profile.setCompanyType(this.companyType);
+        profile.setIndustryType(this.industryType);
+        profile.setContactPerson(this.contactPerson);
+        profile.setAlias(this.alias);
+        profile.setContactDesignation(this.contactDesignation);
+        profile.setWebsiteUrl(this.websiteUrl);
+        profile.setProfileHotVacancies(this.profileHotVacancies);
+        profile.setProfileClassifieds(this.profileClassifieds);
+        profile.setPhone1(this.phone1);
+        profile.setPhone2(this.phone2);
+        profile.setFax(this.fax);
+        profile.setAddressLabel(this.addressLabel);
+        profile.setAddress(this.address);
+        profile.setCountry(this.country);
+        profile.setCity(this.city);
+        profile.setPincode(this.pincode);
+        profile.setResumeViewCount(this.resumeViewCount != null ? this.resumeViewCount : 0);
+        return profile;
     }
 
     @Data

@@ -76,6 +76,14 @@ public class ProfileAPI {
 			String profileContext
 	) {}
 
+	public record ProfileSkillSuggestionRequest(
+			@Size(max = 40, message = "{assistant.accountType.tooLong}")
+			String accountType,
+			@Size(max = 6000, message = "{assistant.profileContext.tooLong}")
+			String profileContext,
+			List<@Size(max = 60, message = "Skill must be at most 60 characters") String> existingSkills
+	) {}
+
 	@GetMapping("/get/{id}")
 	public ResponseEntity<ProfileDTO> getProfile(@PathVariable Long id) throws JobPortalException {
 		logger.info("Fetching profile with ID: {}", id);
@@ -255,6 +263,17 @@ public class ProfileAPI {
 				request.profileContext()
 		);
 		return ResponseEntity.ok(Map.of("reply", reply));
+	}
+
+	@PostMapping("/skillSuggestions")
+	public ResponseEntity<Map<String, Object>> skillSuggestions(@RequestBody @Valid ProfileSkillSuggestionRequest request)
+			throws JobPortalException {
+		List<String> suggestions = aiAssistantService.getProfileSkillSuggestions(
+				request.accountType(),
+				request.profileContext(),
+				request.existingSkills()
+		);
+		return ResponseEntity.ok(Map.of("suggestions", suggestions));
 	}
 
 	private Long requireCurrentProfileId() {

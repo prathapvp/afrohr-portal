@@ -18,10 +18,12 @@ const AccountDetails = () => {
     const matches = useMediaQuery("(max-width: 475px)");
 
     const [editOpen, setEditOpen] = useState(false);
+    const [username, setUsername] = useState(profile?.username || user?.name || "");
     const [reportingManager, setReportingManager] = useState(profile?.reportingManager || "");
     const [mobileNumber, setMobileNumber] = useState(profile?.mobileNumber || "");
 
     const handleOpenEdit = () => {
+        setUsername(profile?.username || user?.name || "");
         setReportingManager(profile?.reportingManager || "");
         setMobileNumber(profile?.mobileNumber || "");
         setEditOpen(true);
@@ -34,6 +36,7 @@ const AccountDetails = () => {
     const handleSave = async () => {
         const updatedProfile = {
             ...profile,
+            username,
             reportingManager,
             mobileNumber,
         };
@@ -71,7 +74,7 @@ const AccountDetails = () => {
                 <div className="grid grid-cols-1 divide-y divide-white/10">
                     <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
                         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Username</p>
-                        <p className="text-sm font-medium text-slate-100">{String(user?.name || profile?.username || "-")}</p>
+                        <p className="text-sm font-medium text-slate-100">{String(profile?.username || user?.name || "-")}</p>
                     </div>
 
                     <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(170px,0.9fr)_minmax(0,2fr)] sm:items-center">
@@ -115,6 +118,16 @@ const AccountDetails = () => {
                 size="lg"
             >
                 <div className="flex flex-col gap-4">
+                    <TextInput
+                        label="Username"
+                        value={String(username)}
+                        onChange={(e) => setUsername(e.currentTarget.value)}
+                        className={inputClassName}
+                        autoComplete="off"
+                        placeholder="Enter username"
+                        maxLength={80}
+                        styles={premiumProfileInputStyles}
+                    />
                     <TextInput
                         label="Reporting Manager"
                         value={String(reportingManager)}

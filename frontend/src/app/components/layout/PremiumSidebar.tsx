@@ -29,7 +29,22 @@ const navItems = [
       { label: "Work Mode", icon: Network, gradient: "from-purple-400 via-pink-500 to-rose-500" }
     ]
   },
-  { label: "Student", icon: GraduationCap, gradient: "from-cyan-400 via-sky-500 to-blue-500" },
+  {
+    label: "Student",
+    icon: GraduationCap,
+    gradient: "from-cyan-400 via-sky-500 to-blue-500",
+    submenu: [
+      { label: "Career Roadmap", icon: Sparkles, gradient: "from-violet-400 via-purple-500 to-fuchsia-500" },
+      { label: "Saved Goals", icon: FileText, gradient: "from-fuchsia-400 via-pink-500 to-rose-500" },
+      { label: "Country Compare", icon: BookOpen, gradient: "from-cyan-400 via-blue-500 to-indigo-500" },
+      { label: "Action Plan", icon: Search, gradient: "from-amber-400 via-orange-500 to-red-500" },
+      { label: "Career Paths", icon: Users, gradient: "from-emerald-400 via-teal-500 to-cyan-500" },
+      { label: "AI Advisor", icon: GraduationCap, gradient: "from-purple-400 via-pink-500 to-rose-500" },
+      { label: "Pathway", icon: BriefcaseIcon, gradient: "from-blue-400 via-cyan-500 to-teal-500" },
+      { label: "Resources", icon: CreditCard, gradient: "from-indigo-400 via-violet-500 to-purple-500" },
+      { label: "My Profile", icon: UserPlus, gradient: "from-green-400 via-blue-500 to-purple-500" },
+    ],
+  },
   {
     label: "Admin",
     icon: ShieldCheck,

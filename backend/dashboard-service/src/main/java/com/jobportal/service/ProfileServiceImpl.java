@@ -216,7 +216,7 @@ public class ProfileServiceImpl implements ProfileService {
 					.map(User::getProfileId)
 					.toList();
 
-			List<Profile> profiles = profileRepository.findAllById(profileIds);
+			List<Profile> profiles = profileRepository.findAllById(Objects.requireNonNull(profileIds));
 			logger.info("Found {} profiles for accountType: {}", profiles.size(), accountType);
 
 			return profiles.stream().map(profile -> {

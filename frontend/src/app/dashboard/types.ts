@@ -36,6 +36,16 @@ export interface PathwayStep {
   description: string;
 }
 
+export interface StudentCareerRoadmap {
+  career: string;
+  subfields: string[];
+  collegesIndia: string[];
+  collegesGlobal: string[];
+  salaryRange: string;
+  entryRoles: string[];
+  topCountries: string[];
+}
+
 export interface TrendItem {
   title: string;
   description: string;
@@ -87,6 +97,9 @@ export interface StudentDashboard {
     title: string;
     description?: string;
     items: VideoItem[];
+  };
+  roadmap?: {
+    byInterest: Record<string, StudentCareerRoadmap[]>;
   };
 }
 

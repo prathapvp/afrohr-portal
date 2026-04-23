@@ -28,12 +28,6 @@ const SwipeJobsPage = ({ embedded = false }: SwipeJobsPageProps) => {
                         shortcutsClassName="mb-3"
                     />
                 )}
-                {embedded && (
-                    <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-bright-sun-200/70">Candidate Section</div>
-                        <h2 className="mt-1 text-xl font-bold text-white">Swipe Mode</h2>
-                    </div>
-                )}
                 <div className="rounded-3xl border border-white/10 bg-white/[0.03] shadow-[0_24px_60px_rgba(0,0,0,0.4)] backdrop-blur-sm">
                     <SwipeJobs embedded={embedded} />
                 </div>

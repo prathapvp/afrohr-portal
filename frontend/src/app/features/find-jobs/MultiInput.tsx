@@ -62,8 +62,8 @@ const MultiInput = (props: MultiInputProps) => {
     const options = data
         .filter((item) => item.toLowerCase().includes(search.trim().toLowerCase())).map((item, index) => (
             <Combobox.Option value={item} key={item} active={value.includes(item)}
-                className="animate-option-animation opacity-0" 
-                style={{ animationDelay: `${index * 30}ms` }}
+                className='text-mine-shaft-300'
+                style={{ transitionDelay: `${index * 30}ms` }}
             >
                 <Group gap="sm">
                     <Checkbox
@@ -78,7 +78,7 @@ const MultiInput = (props: MultiInputProps) => {
                         tabIndex={-1}
                         style={{ pointerEvents: 'none' }}
                     />
-                    <span className='text-mine-shaft-300'>{item}</span>
+                    <span>{item}</span>
                 </Group>
             </Combobox.Option>
         ));
@@ -125,8 +125,12 @@ const MultiInput = (props: MultiInputProps) => {
                             <Combobox.Option value="$create">+ {search}</Combobox.Option>
                         )}
 
-                        {exactOptionMatch && search.trim().length > 0 && options.length === 0 && (
+                        {options.length === 0 && search.trim().length > 0 && (
                             <Combobox.Empty>Nothing found</Combobox.Empty>
+                        )}
+
+                        {options.length === 0 && search.trim().length === 0 && (
+                            <Combobox.Empty>No options available</Combobox.Empty>
                         )}
                     </ScrollArea.Autosize>
                 </Combobox.Options>

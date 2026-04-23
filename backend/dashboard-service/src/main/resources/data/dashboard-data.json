@@ -31,7 +31,6 @@
       "hero": {
         "badge": "AI-Powered",
         "title": "Find Your Dream Job",
-        "description": "Access top opportunities with leading employers. Get AI-driven career insights and personalized job recommendations.",
         "actionLabel": "Search",
         "searchPlaceholder": "e.g., Operations Manager in Food Industry",
         "chips": [
@@ -424,6 +423,85 @@
             "alt": "Student learning technology"
           }
         ]
+      },
+      "roadmap": {
+        "byInterest": {
+          "🚀 Space": [
+            {
+              "career": "Aeronautical Engineer",
+              "subfields": ["Aircraft Design", "Propulsion", "Avionics", "Space Systems"],
+              "collegesIndia": ["IIT Bombay", "IIT Madras", "IIT Kanpur", "IISc Bangalore", "IIST"],
+              "collegesGlobal": ["MIT", "Stanford", "Caltech", "Georgia Tech", "TU Delft"],
+              "salaryRange": "$75k-$170k",
+              "entryRoles": ["Graduate Engineer Trainee", "Design Engineer", "Propulsion Analyst"],
+              "topCountries": ["USA", "Germany", "France", "Canada"]
+            }
+          ],
+          "💻 Technology": [
+            {
+              "career": "Software Engineer",
+              "subfields": ["Frontend", "Backend", "Cloud", "AI Engineering"],
+              "collegesIndia": ["IIT Bombay", "IIT Delhi", "NIT Trichy", "BITS Pilani", "IIIT Hyderabad"],
+              "collegesGlobal": ["MIT", "Carnegie Mellon", "Stanford", "Oxford", "ETH Zurich"],
+              "salaryRange": "$60k-$220k",
+              "entryRoles": ["Software Developer", "Cloud Engineer", "AI Engineer"],
+              "topCountries": ["USA", "Canada", "UK", "UAE"]
+            },
+            {
+              "career": "Data Scientist",
+              "subfields": ["ML", "Analytics", "NLP", "MLOps"],
+              "collegesIndia": ["IIT Madras", "IIT Kharagpur", "IISc Bangalore", "IIIT Bangalore", "IIM Bangalore"],
+              "collegesGlobal": ["MIT", "Stanford", "Berkeley", "CMU", "Imperial College"],
+              "salaryRange": "$70k-$200k",
+              "entryRoles": ["Data Analyst", "ML Engineer", "Research Associate"],
+              "topCountries": ["USA", "Canada", "Germany", "Singapore"]
+            }
+          ],
+          "🎨 Arts": [
+            {
+              "career": "UX Designer",
+              "subfields": ["Product Design", "Interaction Design", "Design Systems", "User Research"],
+              "collegesIndia": ["NID Ahmedabad", "IIT Bombay IDC", "Srishti", "MIT Institute of Design", "Pearl Academy"],
+              "collegesGlobal": ["RISD", "Parsons", "Pratt", "RCA", "Carnegie Mellon"],
+              "salaryRange": "$45k-$140k",
+              "entryRoles": ["Junior UX Designer", "UI Designer", "Product Design Intern"],
+              "topCountries": ["USA", "UK", "Netherlands", "Australia"]
+            }
+          ],
+          "🏥 Healthcare": [
+            {
+              "career": "Doctor",
+              "subfields": ["General Medicine", "Cardiology", "Pediatrics", "Surgery"],
+              "collegesIndia": ["AIIMS Delhi", "CMC Vellore", "JIPMER", "KMC Manipal", "AFMC Pune"],
+              "collegesGlobal": ["Harvard", "Johns Hopkins", "Oxford", "Cambridge", "UCL"],
+              "salaryRange": "$80k-$300k",
+              "entryRoles": ["Resident Doctor", "Clinical Associate", "Medical Officer"],
+              "topCountries": ["USA", "UK", "Australia", "UAE"]
+            }
+          ],
+          "💼 Business": [
+            {
+              "career": "Business Analyst",
+              "subfields": ["Strategy", "Operations", "Finance", "Consulting"],
+              "collegesIndia": ["IIM Ahmedabad", "IIM Bangalore", "IIM Calcutta", "XLRI", "ISB"],
+              "collegesGlobal": ["Wharton", "INSEAD", "LBS", "Harvard", "HEC Paris"],
+              "salaryRange": "$55k-$190k",
+              "entryRoles": ["Analyst", "Management Trainee", "Consulting Associate"],
+              "topCountries": ["USA", "UK", "UAE", "Singapore"]
+            }
+          ],
+          "🔬 Science": [
+            {
+              "career": "Research Scientist",
+              "subfields": ["Biotech", "Materials", "Chemistry", "Environmental Science"],
+              "collegesIndia": ["IISc Bangalore", "IISER Pune", "IIT Bombay", "JNCASR", "TIFR"],
+              "collegesGlobal": ["MIT", "Stanford", "ETH Zurich", "Cambridge", "Tokyo University"],
+              "salaryRange": "$50k-$170k",
+              "entryRoles": ["Research Associate", "Lab Scientist", "R&D Engineer"],
+              "topCountries": ["Germany", "USA", "Japan", "Canada"]
+            }
+          ]
+        }
       }
     }
   },

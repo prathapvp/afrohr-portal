@@ -48,13 +48,6 @@ const FindJobsPage = ({ embedded = false }: FindJobsPageProps) => {
             <div className={`relative mx-auto w-full max-w-[1400px] px-3 sm:px-4 ${embedded ? "pb-2 pt-1" : "pb-10 pt-6"}`}>
 
                 {!embedded && <CandidateFlowNav breadcrumbs={breadcrumbs} shortcuts={shortcuts} breadcrumbsClassName="mb-4" shortcutsClassName="mb-4" />}
-                {embedded && (
-                    <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-cyan-200/70">Candidate Section</div>
-                        <h2 className="mt-1 text-xl font-bold text-white">Find Jobs</h2>
-                    </div>
-                )}
-
                 {/* ── Hero Banner ── */}
                 <div className={`mb-5 overflow-hidden rounded-3xl border border-white/10 p-6 shadow-[0_28px_72px_rgba(0,0,0,0.5)] sm:p-8 ${embedded ? "bg-[linear-gradient(130deg,rgba(15,26,51,0.92),rgba(12,33,66,0.9)_45%,rgba(10,54,85,0.86))]" : "bg-[linear-gradient(130deg,rgba(17,28,62,0.95),rgba(10,38,80,0.92)_45%,rgba(8,62,100,0.88))]"}`}>
                     <div className="pointer-events-none absolute -right-20 -top-16 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
@@ -70,9 +63,6 @@ const FindJobsPage = ({ embedded = false }: FindJobsPageProps) => {
                             <h1 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-[2.4rem]">
                                 Find Your Next Great Role
                             </h1>
-                            <p className="mt-1.5 max-w-xl text-sm text-slate-300/80">
-                                Thousands of curated opportunities across Africa, the Middle East and beyond — matched to your skills.
-                            </p>
                         </div>
                         {!embedded && (
                             <Link
