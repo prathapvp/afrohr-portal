@@ -614,6 +614,14 @@ export default function Home() {
     },
   ];
 
+  const brandLinks = [
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
+    { label: "Team", href: "/team" },
+    { label: "What is AfroHR", href: "/what-is-afrohr" },
+    { label: "For Employers/Candidates", href: "/afrohr-for-employers-candidates" },
+  ];
+
   const candidateChart = (
     <ResponsiveContainer width="100%" height={130}>
       <BarChart data={candidateCard.chart} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
@@ -887,9 +895,14 @@ export default function Home() {
               <span className="text-orange-400">{branding.name.slice(-2)}</span>
             </span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-white/40">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-white/40 sm:gap-6">
             <button onClick={() => navigateWithRoleGate("candidates")} className="transition-colors hover:text-white/70">Candidates</button>
             <button onClick={() => navigateWithRoleGate("employers")} className="transition-colors hover:text-white/70">Employers</button>
+            {brandLinks.map((link) => (
+              <button key={link.href} onClick={() => navigate(link.href)} className="transition-colors hover:text-white/70">
+                {link.label}
+              </button>
+            ))}
           </div>
           <div className="flex items-center gap-3 text-white/60">
             {socialLinks.map((link) => (

@@ -29,6 +29,11 @@ import ProfilePage from "./app/pages/ProfilePage.tsx";
 import NotFoundPage from "./app/pages/NotFoundPage.tsx";
 import Unauthorized from "./app/pages/UnauthroizedPage.tsx";
 import DepartmentPage from "./app/pages/DepartmentPage.tsx";
+import AboutPage from "./app/pages/AboutPage.tsx";
+import ContactPage from "./app/pages/ContactPage.tsx";
+import TeamPage from "./app/pages/TeamPage.tsx";
+import WhatIsAfroHRPage from "./app/pages/WhatIsAfroHRPage.tsx";
+import AfroHRForEmployersCandidatesPage from "./app/pages/AfroHRForEmployersCandidatesPage.tsx";
 import ProtectedRoute from "./app/services/protected-route.tsx";
 import PublicRoute from "./app/services/public-route.tsx";
 
@@ -71,6 +76,31 @@ const SEO_META: Array<{ pattern: RegExp; title: string; description: string }> =
     title: "Profile | AfroHR",
     description: "Manage your AfroHR profile, skills, and account details.",
   },
+  {
+    pattern: /^\/about$/,
+    title: "About AfroHR | Mission, Trust, and Timeline",
+    description: "Learn about AfroHR's mission, trust principles, timeline, and approach to modern hiring and careers.",
+  },
+  {
+    pattern: /^\/contact$/,
+    title: "Contact AfroHR | Support and Partnerships",
+    description: "Contact AfroHR for support, employer partnerships, and career guidance with clear response expectations.",
+  },
+  {
+    pattern: /^\/team$/,
+    title: "Team AfroHR | Leadership and Platform Operations",
+    description: "Meet the AfroHR team behind platform strategy, talent advisory, and product operations.",
+  },
+  {
+    pattern: /^\/what-is-afrohr$/,
+    title: "What Is AfroHR | Brand and Platform Overview",
+    description: "Understand what AfroHR is, who it serves, and how it supports hiring and career outcomes.",
+  },
+  {
+    pattern: /^\/afrohr-for-employers-candidates$/,
+    title: "AfroHR for Employers and Candidates",
+    description: "Explore how AfroHR helps employers hire faster and helps candidates grow their careers.",
+  },
 ];
 
 function upsertMeta(name: string, content: string, isProperty = false) {
@@ -103,12 +133,23 @@ function normalizeCanonicalPath(pathname: string) {
     return "/";
   }
 
+  if (pathname === "/home") {
+    return "/";
+  }
+
   return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
 }
 
-function isPrivateRoute(pathname: string) {
+function isNoIndexRoute(pathname: string) {
   return [
+    /^\/login$/,
+    /^\/signup$/,
+    /^\/unauthorized$/,
     /^\/dashboard/,
+    /^\/find-jobs$/,
+    /^\/jobs\//,
+    /^\/find-talent$/,
+    /^\/company(?:\/|$)/,
     /^\/profile$/,
     /^\/swipe$/,
     /^\/job-history$/,
@@ -128,7 +169,7 @@ function SeoRouteMeta() {
     const title = matched?.title ?? "AfroHR";
     const description = matched?.description ?? "AfroHR Talent Network helps candidates, employers, students, and admins discover opportunities, hire talent, and manage hiring workflows.";
     const canonical = `https://afrohr.in${normalizeCanonicalPath(location.pathname)}`;
-    const robots = isPrivateRoute(location.pathname) ? "noindex, nofollow" : "index, follow";
+    const robots = isNoIndexRoute(location.pathname) ? "noindex, nofollow" : "index, follow";
 
     document.title = title;
     upsertMeta("description", description);
@@ -155,6 +196,11 @@ function AppBootstrap() {
       {/* Modern routes */}
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/team" element={<TeamPage />} />
+      <Route path="/what-is-afrohr" element={<WhatIsAfroHRPage />} />
+      <Route path="/afrohr-for-employers-candidates" element={<AfroHRForEmployersCandidatesPage />} />
       <Route path="/dashboard" element={<App />} />
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Navigate to="/dashboard?tab=admin" replace /></ProtectedRoute>} />
       <Route path="/admin/*" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Navigate to="/dashboard?tab=admin" replace /></ProtectedRoute>} />

@@ -31,6 +31,7 @@
             "@id": "https://afrohr.in/#organization",
             "name": "AfroHR",
             "url": "https://afrohr.in/",
+            "image": "https://afrohr.in/afrohr-logo.svg",
             "description": "AfroHR Talent Network helps candidates, employers, students, and admins discover opportunities, hire talent, and manage hiring workflows.",
             "logo": {
               "@type": "ImageObject",
@@ -55,17 +56,28 @@
             "@id": "https://afrohr.in/#website",
             "url": "https://afrohr.in/",
             "name": "AfroHR",
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": {
-                "@type": "EntryPoint",
-                "urlTemplate": "https://afrohr.in/find-jobs?query={search_term_string}"
-              },
-              "query-input": "required name=search_term_string"
-            },
+            "inLanguage": "en",
             "publisher": {
               "@id": "https://afrohr.in/#organization"
             }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://afrohr.in/#webpage",
+            "url": "https://afrohr.in/",
+            "name": "AfroHR | Talent Network for Hiring and Careers",
+            "description": "Discover your next career move with AfroHR. Curated jobs, hiring insights, and employer tools for modern recruitment.",
+            "isPartOf": {
+              "@id": "https://afrohr.in/#website"
+            },
+            "about": {
+              "@id": "https://afrohr.in/#organization"
+            },
+            "primaryImageOfPage": {
+              "@type": "ImageObject",
+              "url": "https://afrohr.in/afrohr-logo.svg"
+            },
+            "inLanguage": "en"
           }
         ]
       }

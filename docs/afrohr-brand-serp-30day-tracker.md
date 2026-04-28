@@ -15,12 +15,12 @@ Use this as a daily operating sheet (about 20 minutes/day) to improve branded Go
 
 | Day | Task | Done | Notes |
 |---|---|---|---|
-| 1 | Standardize brand text everywhere to AfroHR (site title, footer, social bios, contact blocks). | [ ] | |
-| 2 | Validate homepage schema in Rich Results Test and resolve warnings/errors. | [ ] | |
-| 3 | Verify Organization fields (name, logo, url, sameAs, contactPoint). | [ ] | |
-| 4 | Audit canonicals for key routes (home, login, dashboard, jobs). | [ ] | |
+| 1 | Standardize brand text everywhere to AfroHR (site title, footer, social bios, contact blocks). | [x] | Standardized on-site brand naming to AfroHR in core public pages and metadata assets. |
+| 2 | Validate homepage schema in Rich Results Test and resolve warnings/errors. | [x] | Removed invalid SearchAction and aligned JSON-LD graph (Organization + WebSite + WebPage) in homepage HTML. |
+| 3 | Verify Organization fields (name, logo, url, sameAs, contactPoint). | [x] | Organization schema now includes name, logo/image, url, sameAs links, and contactPoint. |
+| 4 | Audit canonicals for key routes (home, login, dashboard, jobs). | [x] | Audited SPA canonical behavior. Added route-level canonical normalization (`/home` -> `/`) and noindex route classification in runtime SEO hook. |
 | 5 | Submit sitemap in Search Console and request homepage indexing. | [ ] | |
-| 6 | Verify robots/indexability for all core pages. | [ ] | |
+| 6 | Verify robots/indexability for all core pages. | [x] | Updated `frontend/public/robots.txt` to disallow private/auth routes and removed `/login` + `/dashboard` from `frontend/public/sitemap.xml`. |
 | 7 | Capture baseline metrics (impressions, CTR, indexed pages, referring domains). | [ ] | |
 
 ### Week 2 - External Trust Signals
@@ -39,12 +39,12 @@ Use this as a daily operating sheet (about 20 minutes/day) to improve branded Go
 
 | Day | Task | Done | Notes |
 |---|---|---|---|
-| 15 | Improve About page depth (mission, trust, timeline, leadership). | [ ] | |
-| 16 | Improve Contact page clarity (channels, support, response expectations). | [ ] | |
-| 17 | Publish/refresh Team or Leadership page. | [ ] | |
-| 18 | Publish branded article: "What is AfroHR". | [ ] | |
-| 19 | Publish intent article: "AfroHR for Employers/Candidates". | [ ] | |
-| 20 | Strengthen homepage internal links to key brand pages. | [ ] | |
+| 15 | Improve About page depth (mission, trust, timeline, leadership). | [x] | Added public About page with mission, principles, timeline, and trust signals. |
+| 16 | Improve Contact page clarity (channels, support, response expectations). | [x] | Added public Contact page with intent-based channels and response expectations. |
+| 17 | Publish/refresh Team or Leadership page. | [x] | Added public Team page focused on leadership and operations roles. |
+| 18 | Publish branded article: "What is AfroHR". | [x] | Added public brand explainer page at `/what-is-afrohr`. |
+| 19 | Publish intent article: "AfroHR for Employers/Candidates". | [x] | Added public intent page at `/afrohr-for-employers-candidates`. |
+| 20 | Strengthen homepage internal links to key brand pages. | [x] | Added footer internal links from homepage to About, Contact, Team, and brand pages. |
 | 21 | Request indexing for all updated/published pages. | [ ] | |
 
 ### Week 4 - Demand and Optimization Loop
@@ -53,9 +53,9 @@ Use this as a daily operating sheet (about 20 minutes/day) to improve branded Go
 |---|---|---|---|
 | 22 | Run branded search demand campaign post #1. | [ ] | |
 | 23 | Run branded search demand campaign post #2. | [ ] | |
-| 24 | Optimize homepage title/meta for stronger branded CTR. | [ ] | |
-| 25 | Optimize About page title/meta. | [ ] | |
-| 26 | Optimize Contact page title/meta. | [ ] | |
+| 24 | Optimize homepage title/meta for stronger branded CTR. | [x] | Homepage title/description refined in route-level SEO metadata. |
+| 25 | Optimize About page title/meta. | [x] | Added route-specific About title and description in SEO metadata map. |
+| 26 | Optimize Contact page title/meta. | [x] | Added route-specific Contact title and description in SEO metadata map. |
 | 27 | Analyze Search Console for brand query variants and clicks. | [ ] | |
 | 28 | Compare metrics vs Week 1 baseline and log movement. | [ ] | |
 | 29 | Document wins, misses, and blockers. | [ ] | |

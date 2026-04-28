@@ -1,4 +1,21 @@
 User-agent: *
 Allow: /
+Disallow: /login
+Disallow: /signup
+Disallow: /unauthorized
+Disallow: /dashboard
+Disallow: /find-jobs
+Disallow: /jobs/
+Disallow: /apply-job/
+Disallow: /job-history
+Disallow: /swipe
+Disallow: /find-talent
+Disallow: /talent-profile/
+Disallow: /company
+Disallow: /departments
+Disallow: /posted-jobs/
+Disallow: /post-job/
+Disallow: /profile
+Disallow: /admin
 
 Sitemap: https://afrohr.in/sitemap.xml
