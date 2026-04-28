@@ -1,4 +1,5 @@
 import { Badge, Loader, Pagination, Select, Table, TextInput } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { AlertTriangle, ExternalLink, Sparkles } from "lucide-react";
@@ -137,6 +138,7 @@ export default function AdminSubscriptionSnapshotPage({
   const [sortBy, setSortBy] = useState<"company" | "risk" | "status" | "plan" | "resumeViews" | "downloads">("risk");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [subscriptionRequests, setSubscriptionRequests] = useState<SubscriptionRequest[]>([]);
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
   const pageSize = 8;
 
@@ -430,6 +432,65 @@ export default function AdminSubscriptionSnapshotPage({
             setHealthFilter("ALL");
           }}
         />
+        {isMobile ? (
+          <div className="space-y-3">
+            {paginatedEmployers.map((employer) => {
+              const viewHealth = getQuotaHealth(employer.monthlyResumeViewsUsed, employer.maxResumeViewsPerMonth);
+              const downloadHealth = getQuotaHealth(employer.monthlyResumeDownloadsUsed, employer.maxResumeDownloadsPerMonth);
+              const subscriptionStatusTone = getSubscriptionStatusTone(employer.subscriptionStatus);
+              const operationalRisk = getOperationalRisk(employer);
+              return (
+                <div key={employer.employerId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-bold text-white">{displayValue(employer.companyName, "Employer")}</p>
+                      <p className="text-[11px] text-slate-400">#{employer.employerId} • {displayValue(employer.location, "No location")}</p>
+                    </div>
+                    <Badge color={subscriptionStatusTone.color} variant="filled" className="!font-bold">{subscriptionStatusTone.label}</Badge>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                    <span className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${operationalRisk.badgeClass}`}>{operationalRisk.label}</span>
+                    <span className="rounded-full border border-white/20 px-2 py-0.5 text-slate-300">
+                      {displayValue(employerPlans[employer.employerId] ?? employer.subscriptionPlan, "No plan configured")}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-1 gap-2 text-xs">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+                      <p className="text-slate-400">Resume Views</p>
+                      <p className={`font-semibold ${viewHealth.labelClass}`}>{employer.monthlyResumeViewsUsed ?? 0} / {employer.maxResumeViewsPerMonth ?? 0}</p>
+                      <p className="text-[11px] text-slate-500">{formatUsagePeriod(employer.usageWindowStartAt)}</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+                      <p className="text-slate-400">Resume Downloads</p>
+                      <p className={`font-semibold ${downloadHealth.labelClass}`}>{employer.monthlyResumeDownloadsUsed ?? 0} / {employer.maxResumeDownloadsPerMonth ?? 0}</p>
+                      <p className="text-[11px] text-slate-500">{formatUsagePeriod(employer.usageWindowStartAt)}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard?tab=admin&section=subscription-requests&employerId=${employer.employerId}`)}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg border border-orange-300/30 bg-orange-600/15 px-3 py-2 text-[11px] font-semibold text-orange-100 transition hover:border-orange-300/60 hover:bg-orange-500/25"
+                    >
+                      Requests ({requestCountByEmployer[employer.employerId] ?? 0})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard?tab=admin&section=billing-control&employerId=${employer.employerId}`)}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg border border-cyan-300/30 bg-cyan-600/20 px-3 py-2 text-[11px] font-semibold text-cyan-200 transition hover:border-cyan-300/60 hover:bg-cyan-500/30 hover:text-white"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Manage
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
           <Table withTableBorder withColumnBorders className="min-w-[760px] text-slate-100">
             <Table.Thead>
@@ -515,6 +576,7 @@ export default function AdminSubscriptionSnapshotPage({
             </Table.Tbody>
           </Table>
         </div>
+        )}
         {totalPages > 1 && (
           <div className="mt-4 flex justify-end">
             <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} color="cyan" />

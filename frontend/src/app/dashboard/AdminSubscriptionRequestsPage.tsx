@@ -1,4 +1,5 @@
 import { Badge, Button, Loader, Modal, Pagination, Select, Table, TextInput, Textarea } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -29,6 +30,7 @@ export default function AdminSubscriptionRequestsPage() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
   const [rejectTarget, setRejectTarget] = useState<SubscriptionRequest | null>(null);
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
   const pageSize = 8;
 
@@ -439,6 +441,73 @@ export default function AdminSubscriptionRequestsPage() {
 
         {!reqLoading && filteredRequests.length > 0 && (
           <>
+            {isMobile ? (
+              <div className="space-y-3">
+                {paginatedRequests.map((request) => (
+                  <div key={request.id} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-bold text-white">Employer #{request.employerId}</p>
+                        <p className="text-[11px] text-slate-400">Request #{request.id} • {new Date(request.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <Badge
+                        color={request.status === "APPROVED" ? "green" : request.status === "REJECTED" ? "red" : "orange"}
+                        variant="filled"
+                        className="!font-bold"
+                      >
+                        {request.status}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Badge color={request.requestType === "RENEWAL" ? "cyan" : "violet"} variant="light" className="!font-bold">
+                        {request.requestType}
+                      </Badge>
+                      {request.hasPaymentStatement ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleViewStatement(request.id)}
+                          disabled={viewingStatementId === request.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-300/30 bg-cyan-600/20 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 transition hover:bg-cyan-600/30"
+                          title={request.paymentStatementName ?? "View payment statement"}
+                        >
+                          <Paperclip className="h-3 w-3" />
+                          {viewingStatementId === request.id ? "Opening..." : "View Statement"}
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-rose-400/70">
+                          <AlertCircle className="h-3 w-3" /> No statement
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-xs text-slate-300">{request.note ?? "No note provided"}</p>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        disabled={Boolean(reqResolving[request.id]) || !request.hasPaymentStatement || request.status === "APPROVED"}
+                        onClick={() => openApproveModal(request)}
+                        title={!request.hasPaymentStatement ? "Cannot approve: no payment statement attached" : undefined}
+                        className="inline-flex items-center justify-center gap-1 rounded-lg border border-emerald-300/25 bg-emerald-600 px-2.5 py-2 text-[11px] font-semibold text-white shadow-[0_10px_20px_rgba(5,150,105,0.25)] hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {request.status === "APPROVED" ? <CheckCircle2 className="h-3 w-3" /> : <ThumbsUp className="h-3 w-3" />}
+                        {request.status === "APPROVED" ? "Approved" : "Approve"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={Boolean(reqResolving[request.id]) || request.status === "REJECTED"}
+                        onClick={() => openRejectModal(request)}
+                        className="inline-flex items-center justify-center gap-1 rounded-lg border border-rose-300/25 bg-rose-700 px-2.5 py-2 text-[11px] font-semibold text-white shadow-[0_10px_20px_rgba(190,24,93,0.25)] hover:bg-rose-600 disabled:opacity-50"
+                      >
+                        {request.status === "REJECTED" ? <XCircle className="h-3 w-3" /> : <ThumbsDown className="h-3 w-3" />}
+                        {request.status === "REJECTED" ? "Rejected" : "Reject"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
               <Table withTableBorder withColumnBorders className="min-w-[760px] text-slate-100">
                 <Table.Thead>
@@ -525,6 +594,7 @@ export default function AdminSubscriptionRequestsPage() {
                 </Table.Tbody>
               </Table>
             </div>
+            )}
             {totalPages > 1 && (
               <div className="mt-4 flex justify-end">
                 <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} color="orange" />

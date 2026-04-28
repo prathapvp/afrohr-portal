@@ -125,6 +125,7 @@ export default function CandidateDashboardView({
   searchResults,
 }: CandidateDashboardViewProps) {
   const isCompactSalaryMode = useMediaQuery("(max-width: 430px)");
+  const isMobile = useMediaQuery("(max-width: 767px)");
   const [queryParams, setQueryParams] = useSearchParams();
   const jobs = searchResults ?? dashboard.jobs.items;
   const [activeJobFilter, setActiveJobFilter] = useState<"all" | "remote" | "hybrid" | "onsite">("all");
@@ -412,10 +413,10 @@ export default function CandidateDashboardView({
   const pagedJobs = filteredJobs.slice(pageStart, pageStart + jobsPerPage);
 
   return (
-    <div className="space-y-4 px-4 py-5 sm:px-6">
+    <div className="space-y-3 px-2 py-3 sm:space-y-4 sm:px-4 sm:py-5 lg:px-6">
 
       {/* â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0c1e3d] via-[#102756] to-[#0b1f4a] px-5 py-6 shadow-[0_24px_72px_rgba(3,8,24,0.55)] sm:px-7 sm:py-7">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#0c1e3d] via-[#102756] to-[#0b1f4a] px-4 py-5 shadow-[0_24px_72px_rgba(3,8,24,0.55)] sm:rounded-3xl sm:px-7 sm:py-7">
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-cyan-300/15 blur-3xl" />
         <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-blue-400/15 blur-3xl" />
         <div className="relative">
@@ -425,7 +426,7 @@ export default function CandidateDashboardView({
               {dashboard.hero.badge}
             </span>
           </div>
-          <h1 className="mb-2 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
+          <h1 className="mb-2 text-xl font-black leading-tight tracking-tight text-white sm:text-3xl">
             {dashboard.hero.title}
           </h1>
           <p className="mb-5 max-w-xl text-sm text-cyan-100/80 sm:text-base">{dashboard.hero.description}</p>
@@ -444,7 +445,7 @@ export default function CandidateDashboardView({
             <button
               onClick={onSearch}
               disabled={searchLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-indigo-700 shadow-[0_8px_20px_rgba(15,23,42,0.2)] transition-colors hover:bg-indigo-50 disabled:opacity-60 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-indigo-700 shadow-[0_8px_20px_rgba(15,23,42,0.2)] transition-colors hover:bg-indigo-50 disabled:opacity-60 sm:w-auto"
             >
               {searchLoading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-300 border-t-indigo-700" />
@@ -468,7 +469,7 @@ export default function CandidateDashboardView({
       </div>
 
       {/* â”€â”€ Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
         {dashboard.stats.map((item) => {
           const Icon = iconMap[item.icon];
           return (
@@ -480,7 +481,7 @@ export default function CandidateDashboardView({
                 <Icon className={`h-5 w-5 ${toneClasses[item.tone].text}`} />
               </div>
               <div>
-                <p className={`text-xl font-black leading-none ${toneClasses[item.tone].text}`}>{item.value}</p>
+                <p className={`text-lg font-black leading-none sm:text-xl ${toneClasses[item.tone].text}`}>{item.value}</p>
                 <p className="mt-0.5 text-xs text-slate-400">{item.label}</p>
               </div>
             </div>
@@ -489,10 +490,10 @@ export default function CandidateDashboardView({
       </div>
 
       {/* â”€â”€ Jobs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] shadow-xl backdrop-blur-sm">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-xl backdrop-blur-sm sm:rounded-3xl">
         {/* Header */}
         <div className="border-b border-white/[0.06] px-5 pt-5 pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-cyan-400" />
               <h2 className="text-base font-bold tracking-tight text-white">{dashboard.jobs.title}</h2>
@@ -582,7 +583,7 @@ export default function CandidateDashboardView({
               >
                 <ChevronLeft className="h-3.5 w-3.5" /> Prev
               </button>
-              <span className="text-xs text-slate-400">Page {safeJobsPage} of {totalJobPages}</span>
+              <span className="text-[11px] text-slate-400">Page {safeJobsPage} of {totalJobPages}</span>
               <button
                 onClick={() => setJobsPage((prev) => Math.min(totalJobPages, prev + 1))}
                 disabled={safeJobsPage === totalJobPages}
@@ -599,7 +600,7 @@ export default function CandidateDashboardView({
       </div>
 
       {/* Salary Insights */}
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-5 shadow-xl backdrop-blur-sm">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-xl backdrop-blur-sm sm:rounded-3xl sm:p-5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="mb-1 flex items-center gap-2">
@@ -631,7 +632,7 @@ export default function CandidateDashboardView({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-xs text-slate-400">
             Industry
             <select
@@ -744,7 +745,7 @@ export default function CandidateDashboardView({
           </div>
         )}
 
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
             <p className="text-[11px] text-slate-400">Median Salary</p>
             <p className="mt-1 text-lg font-black text-white">{formatMoney(salaryMetrics.median)}</p>
@@ -804,7 +805,7 @@ export default function CandidateDashboardView({
               ))}
             </div>
           ) : (
-            <div className="h-72 w-full sm:h-80">
+            <div className={`w-full ${isMobile ? "h-64" : "h-80"}`}>
               <RechartsResponsiveContainer width="100%" height="100%">
                 <RechartsComposedChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
                   <RechartsCartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" />

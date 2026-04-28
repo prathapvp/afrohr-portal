@@ -58,7 +58,7 @@ const navItems = [
 ];
 
 export default function PremiumSidebar({ active, onNav }: { active: string; onNav: (label: string) => void }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [collapsedDesktop, setCollapsedDesktop] = useState(false);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
   const accountType = useAppSelector(selectAccountType);
@@ -82,6 +82,13 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
       submenu: isEmployerOwner ? item.submenu : item.submenu.filter((subItem) => subItem.label !== "Team Access"),
     };
   });
+
+  const closeOnMobile = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setOpen(false);
+    }
+  };
+
   return (
     <>
       {/* Hamburger menu for mobile/desktop */}
@@ -149,6 +156,7 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
                   }
                   // Always navigate to main menu item
                   onNav(label);
+                  closeOnMobile();
                 }}
               >
                 {/* Animated gradient icon */}
@@ -181,7 +189,10 @@ export default function PremiumSidebar({ active, onNav }: { active: string; onNa
                           ? "bg-gradient-to-r from-green-700/40 via-green-500/30 to-teal-600/30 text-white shadow-md ring-1 ring-green-400/30"
                           : "text-white/80 hover:bg-white/10 hover:text-white"
                       }`}
-                      onClick={() => onNav(subLabel)}
+                      onClick={() => {
+                        onNav(subLabel);
+                        closeOnMobile();
+                      }}
                     >
                       <span className={`inline-flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-tr ${subGradient} shadow-md transition-transform duration-300 group-hover:scale-110 flex-shrink-0`}>
                         <SubIcon className="h-4 w-4 text-white drop-shadow" />

@@ -1,5 +1,5 @@
 
-  import { useEffect } from "react";
+  import { lazy, Suspense, useEffect } from "react";
   import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { MantineProvider } from "@mantine/core";
@@ -23,16 +23,17 @@ import ApplyJobPage from "./app/pages/ApplyJobPage.tsx";
 import FindTalentPage from "./app/pages/FindTalentPage.tsx";
 import TalentProfilePage from "./app/pages/TalentProfilePage.tsx";
 import CompanyPage from "./app/pages/CompanyPage.tsx";
-import JobHistoryPage from "./app/pages/JobHistoryPage.tsx";
 import PostedJobPage from "./app/pages/PostedJobPage.tsx";
 import PostJobPage from "./app/pages/PostJobPage.tsx";
 import ProfilePage from "./app/pages/ProfilePage.tsx";
 import NotFoundPage from "./app/pages/NotFoundPage.tsx";
-import SwipeJobsPage from "./app/pages/SwipeJobsPage.tsx";
 import Unauthorized from "./app/pages/UnauthroizedPage.tsx";
 import DepartmentPage from "./app/pages/DepartmentPage.tsx";
 import ProtectedRoute from "./app/services/protected-route.tsx";
 import PublicRoute from "./app/services/public-route.tsx";
+
+const JobHistoryPage = lazy(() => import("./app/pages/JobHistoryPage.tsx"));
+const SwipeJobsPage = lazy(() => import("./app/pages/SwipeJobsPage.tsx"));
 
 function AppBootstrap() {
   useEffect(() => {
@@ -59,14 +60,14 @@ function AppBootstrap() {
       <Route element={<LegacyLayout />}>
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/find-jobs" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><Navigate to="/dashboard?tab=candidates&section=job-history" replace /></ProtectedRoute>} />
-        <Route path="/swipe" element={<ProtectedRoute allowedRoles={["APPLICANT"]}><SwipeJobsPage /></ProtectedRoute>} />
+        <Route path="/swipe" element={<ProtectedRoute allowedRoles={["APPLICANT"]}><Suspense fallback={<div className="p-4 text-sm text-slate-300">Loading swipe...</div>}><SwipeJobsPage /></Suspense></ProtectedRoute>} />
         <Route path="/jobs/:id" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><JobPage /></ProtectedRoute>} />
         <Route path="/apply-job/:id" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><ApplyJobPage /></ProtectedRoute>} />
         <Route path="/find-talent" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><FindTalentPage /></ProtectedRoute>} />
         <Route path="/talent-profile/:id" element={<ProtectedRoute allowedRoles={["APPLICANT", "EMPLOYER", "ADMIN"]}><TalentProfilePage /></ProtectedRoute>} />
         <Route path="/company" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><Navigate to="/find-jobs" replace /></ProtectedRoute>} />
         <Route path="/company/:name" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><CompanyPage /></ProtectedRoute>} />
-        <Route path="/job-history" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><JobHistoryPage /></ProtectedRoute>} />
+        <Route path="/job-history" element={<ProtectedRoute allowedRoles={["APPLICANT", "ADMIN"]}><Suspense fallback={<div className="p-4 text-sm text-slate-300">Loading history...</div>}><JobHistoryPage /></Suspense></ProtectedRoute>} />
         <Route path="/posted-jobs/:id" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><PostedJobPage /></ProtectedRoute>} />
         <Route path="/post-job/:id" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><PostJobPage /></ProtectedRoute>} />
         <Route path="/departments" element={<ProtectedRoute allowedRoles={["EMPLOYER", "ADMIN"]}><DepartmentPage /></ProtectedRoute>} />

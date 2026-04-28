@@ -3,54 +3,105 @@
 # =========================
 .env
 .env.*
+!.env.example
 
 # =========================
 # NODE / FRONTEND
 # =========================
 node_modules/
 frontend/node_modules/
+
+# Build outputs (React / Vite / Webpack)
+frontend/build/
 frontend/dist/
+build/
 dist/
-package-lock.json
+
+coverage/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # =========================
 # JAVA / SPRING BOOT
 # =========================
 target/
-*.log
+.gradle/
+out/
+
 *.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+nohup.out
+hs_err_pid*
+replay_pid*
+
+# Local Spring configs (never commit)
 **/application-local.properties
+**/application-local.yml
+**/application-local.yaml
 
 # =========================
 # IDE / EDITORS
 # =========================
 .vscode/
-.metadata/
-.sonarlint/
 .idea/
 *.iml
+.metadata/
+.sonarlint/
+.project
+.classpath
+.factorypath
+.settings/
 
 # =========================
-# LOGS
+# LOGS & TEMP FILES
 # =========================
 logs/
-*.log
+tmp/
+temp/
+*.tmp
+
+# Uploaded / local test files
+uploads/
+temp-upload.*
+test-resume.*
+*.pdf
+*.png
+*.jpg
+*.jpeg
 
 # =========================
 # OS FILES
 # =========================
 .DS_Store
 Thumbs.db
-
-# =========================
-# TEMP / UPLOADS
-# =========================
-*.png
-*.jpg
-*.jpeg
-*.pdf
+Desktop.ini
 
 # =========================
 # DOCKER
 # =========================
 docker-data/
+*.pid
+
+# =========================
+# TEST REPORTS
+# =========================
+reports/
+test-output/
+allure-results/
+allure-report/
+
+# =========================
+# CACHE
+# =========================
+.cache/
+.eslintcache
+.parcel-cache/
