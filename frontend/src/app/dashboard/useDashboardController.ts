@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { getAdminOverview, type AdminOverview } from "../services/admin-service";
+import axiosInstance from "../interceptor/AxiosInterceptor";
 import { useAppSelector } from "../store";
 import { selectAccountType, selectIsAuthenticated, selectIsEmployer, selectIsEmployerOwner } from "../store/selectors/authSelectors";
 import { emptyPayload, getTabFromAccountType, mapApiJobToCandidateJob, mergeDashboardPayload } from "./data";
@@ -100,16 +101,12 @@ export function useDashboardController() {
         setLoading(true);
         setError(null);
         try {
-          const dashboardResponse = await fetch("/api/dashboard");
-          if (dashboardResponse.ok) {
-            const dashboardPayload = (await dashboardResponse.json()) as Partial<DashboardPayload>;
-            if (!cancelled) {
-              setPayload(mergeDashboardPayload(dashboardPayload));
-            }
+          const dashboardResponse = await axiosInstance.get<Partial<DashboardPayload>>("/dashboard");
+          if (!cancelled) {
+            setPayload(mergeDashboardPayload(dashboardResponse.data));
           }
-          // If /api/dashboard fails, use empty payload (it's optional)
         } catch {
-          // /api/dashboard is optional; if it fails, use empty payload
+          // Dashboard payload is optional; if it fails, keep defaults.
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -361,11 +358,13 @@ export function useDashboardController() {
     try {
       setSearchLoading(true);
       setError(null);
-      const response = await fetch(`/api/search?audience=${activeTab}&q=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) {
-        throw new Error("Search failed");
-      }
-      const data = (await response.json()) as { results: Array<CandidateJob | CareerItem> };
+      const response = await axiosInstance.get<{ results: Array<CandidateJob | CareerItem> }>("/search", {
+        params: {
+          audience: activeTab,
+          q: searchQuery,
+        },
+      });
+      const data = response.data;
       if (searchRequestIdRef.current === requestId) {
         setSearchResults(data.results);
       }

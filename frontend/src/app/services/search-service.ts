@@ -1,11 +1,11 @@
-export async function searchContent(audience: string, query: string) {
-  const url = new URL("/api/search", window.location.origin);
-  url.searchParams.set("audience", audience);
-  url.searchParams.set("q", query);
+import axiosInstance from "../interceptor/AxiosInterceptor";
 
-  const response = await fetch(url.pathname + url.search);
-  if (!response.ok) {
-    throw new Error("Failed to search");
-  }
-  return response.json();
+export async function searchContent(audience: string, query: string) {
+  const response = await axiosInstance.get("/search", {
+    params: {
+      audience,
+      q: query,
+    },
+  });
+  return response.data;
 }
