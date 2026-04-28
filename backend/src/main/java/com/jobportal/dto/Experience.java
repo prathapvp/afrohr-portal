@@ -2,6 +2,9 @@ package com.jobportal.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Experience {
     @NotBlank(message = "{experience.title.required}")
     @Size(max = 120, message = "{experience.title.max}")
@@ -32,6 +36,7 @@ public class Experience {
     @Size(max = 2000, message = "{experience.description.max}")
     private String description;
 
+    @JsonIgnore
     @AssertTrue(message = "{experience.endDate.invalid}")
     public boolean isEndDateValid() {
         if (Boolean.TRUE.equals(working) || endDate == null || startDate == null) {

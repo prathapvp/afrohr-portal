@@ -8,24 +8,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.jobportal.dto.UserDTO;
-import com.jobportal.exception.JobPortalException;
-import com.jobportal.service.UserService;
+import com.jobportal.entity.User;
+import com.jobportal.repository.UserRepository;
 
 @Service
 public class MyUserDetailsService implements UserDetailsService {
 
 	@Autowired
-	private UserService userService;
+	private UserRepository userRepository;
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		try {
-			UserDTO dto = userService.getUserByEmail(email);
-			return new CustomUserDetails(dto.getId(), email, dto.getName(), dto.getPassword(), dto.getProfileId(),
-					dto.getAccountType(), dto.getEmployerRole(), new ArrayList<>());
-		} catch (JobPortalException e) {
-			throw new UsernameNotFoundException("User not found: " + email, e);
-		}
+		User user = userRepository.findByEmailIgnoreCase(email)
+				.orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+		return new CustomUserDetails(user.getId(), email, user.getName(), user.getPassword(), user.getProfileId(),
+				user.getAccountType(), user.getEmployerRole(), new ArrayList<>());
 	}
 }

@@ -72,7 +72,6 @@ public class UserServiceImpl implements UserService {
 		}
 		userDTO.setProfileId(profileService.createProfile(userDTO));
 		User user = userRepository.save(userDTO.toEntity());
-		user.setPassword(null);
 		return user.toDTO();
 	}
 
@@ -82,7 +81,6 @@ public class UserServiceImpl implements UserService {
 				.orElseThrow(() -> new JobPortalException("User not found with email: " + loginDTO.getEmail()));
 		if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword()))
 			throw new JobPortalException("Invalid email or password");
-		user.setPassword(null);
 		return user.toDTO();
 	}
 

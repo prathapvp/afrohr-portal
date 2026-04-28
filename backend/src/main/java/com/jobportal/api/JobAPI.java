@@ -66,14 +66,11 @@ public class JobAPI {
 
 	@PostMapping("/postAll")
 	public ResponseEntity<List<JobDTO>> postAllJob(@RequestBody @Valid List<JobDTO> jobDTOs) throws JobPortalException {
-		return new ResponseEntity<>(jobDTOs.stream().map((x) -> {
-			try {
-				return jobService.postJob(x);
-			} catch (JobPortalException e) {
-				e.printStackTrace();
-			}
-			return x;
-		}).toList(), HttpStatus.CREATED);
+		List<JobDTO> results = new java.util.ArrayList<>();
+		for (JobDTO x : jobDTOs) {
+			results.add(jobService.postJob(x));
+		}
+		return new ResponseEntity<>(results, HttpStatus.CREATED);
 	}
 
 	@GetMapping("/getAll")

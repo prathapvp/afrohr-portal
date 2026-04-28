@@ -63,7 +63,7 @@ public class User {
         dto.setId(this.id);
         dto.setName(this.name);
         dto.setEmail(this.email);
-        dto.setPassword(this.password);
+        dto.setPassword(null);
         dto.setAccountType(this.accountType);
         dto.setEmployerRole(this.employerRole);
         dto.setProfileId(this.profileId);
