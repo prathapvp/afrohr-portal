@@ -31,16 +31,38 @@
             "@id": "https://afrohr.in/#organization",
             "name": "AfroHR",
             "url": "https://afrohr.in/",
+            "description": "AfroHR Talent Network helps candidates, employers, students, and admins discover opportunities, hire talent, and manage hiring workflows.",
             "logo": {
               "@type": "ImageObject",
               "url": "https://afrohr.in/afrohr-logo.svg"
-            }
+            },
+            "contactPoint": [
+              {
+                "@type": "ContactPoint",
+                "contactType": "customer support",
+                "availableLanguage": ["en"]
+              }
+            ],
+            "sameAs": [
+              "https://www.instagram.com/afro_hr_?igsh=MXYxMDhrMWFlYzZ4bQ==",
+              "https://www.facebook.com/profile.php?id=61569347338452",
+              "https://www.youtube.com/@afrofinancialconsultantsaf1591",
+              "https://chat.whatsapp.com/DBx7w0bIl5e8KQ4KqOnfS8?mode=gi_t"
+            ]
           },
           {
             "@type": "WebSite",
             "@id": "https://afrohr.in/#website",
             "url": "https://afrohr.in/",
             "name": "AfroHR",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://afrohr.in/find-jobs?query={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            },
             "publisher": {
               "@id": "https://afrohr.in/#organization"
             }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Award, Building2, ChevronRight, Globe, GraduationCap, Play, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, Award, Building2, ChevronRight, ExternalLink, Facebook, Globe, GraduationCap, Instagram, MessageCircle, Play, Sparkles, TrendingUp, X, Youtube, Zap } from "lucide-react";
 import PremiumNavbar from "../components/layout/PremiumNavbar";
 import { getLandingTabForAccountType } from "../store/selectors/authSelectors";
 import { errorNotification } from "../services/NotificationService";
@@ -87,7 +87,7 @@ interface VideosSection {
   eyebrow: string;
   title: string;
   actionLabel?: string;
-  items: Array<{ title: string; speaker: string; duration: string; imageUrl: string; alt: string }>;
+  items: Array<{ title: string; speaker: string; duration: string; youtubeEmbedUrl: string; youtubeWatchUrl: string }>;
 }
 
 interface CtaSection {
@@ -235,8 +235,20 @@ function buildHomePayloadFromJobs(jobs: ApiJobItem[]): DashboardResponse {
         title: "Learn from top mentors",
         actionLabel: "View all",
         items: [
-          { title: "Resume Secrets", speaker: "Talent Lead", duration: "08:12", imageUrl: "", alt: "Resume video" },
-          { title: "Interview Prep", speaker: "Hiring Manager", duration: "10:34", imageUrl: "", alt: "Interview video" },
+          {
+            title: "Resume Secrets",
+            speaker: "Talent Lead",
+            duration: "08:12",
+            youtubeEmbedUrl: "https://www.youtube-nocookie.com/embed?listType=search&list=afrohr%20resume%20secrets",
+            youtubeWatchUrl: "https://www.youtube.com/results?search_query=afrohr+resume+secrets",
+          },
+          {
+            title: "Interview Prep",
+            speaker: "Hiring Manager",
+            duration: "10:34",
+            youtubeEmbedUrl: "https://www.youtube-nocookie.com/embed?listType=search&list=afrohr%20interview%20prep",
+            youtubeWatchUrl: "https://www.youtube.com/results?search_query=afrohr+interview+prep",
+          },
         ],
       },
       cta: {
@@ -473,6 +485,7 @@ export default function Home() {
   const [payload, setPayload] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
 
   const tabActionLabel: Record<AudienceTab, string> = {
     candidates: "Explore Jobs",
@@ -534,6 +547,36 @@ export default function Home() {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    if (activeVideoIndex === null) {
+      return;
+    }
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveVideoIndex(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEsc);
+
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [activeVideoIndex]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+
+    if (activeVideoIndex !== null) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [activeVideoIndex]);
+
   if (loading) {
     return <LoadingState />;
   }
@@ -547,6 +590,29 @@ export default function Home() {
   const employerCard = home.cards.employers;
   const studentCard = home.cards.students;
   const currentYear = new Date().getFullYear();
+  const activeVideo = activeVideoIndex !== null ? home.videos.items[activeVideoIndex] : null;
+  const socialLinks = [
+    {
+      label: "Instagram",
+      href: "https://www.instagram.com/afro_hr_?igsh=MXYxMDhrMWFlYzZ4bQ==",
+      icon: <Instagram className="h-4 w-4" />,
+    },
+    {
+      label: "Facebook",
+      href: "https://www.facebook.com/profile.php?id=61569347338452",
+      icon: <Facebook className="h-4 w-4" />,
+    },
+    {
+      label: "YouTube",
+      href: "https://www.youtube.com/@afrofinancialconsultantsaf1591",
+      icon: <Youtube className="h-4 w-4" />,
+    },
+    {
+      label: "WhatsApp",
+      href: "https://chat.whatsapp.com/DBx7w0bIl5e8KQ4KqOnfS8?mode=gi_t",
+      icon: <MessageCircle className="h-4 w-4" />,
+    },
+  ];
 
   const candidateChart = (
     <ResponsiveContainer width="100%" height={130}>
@@ -720,27 +786,70 @@ export default function Home() {
             </button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {home.videos.items.map((video) => (
-              <div key={video.title} className="group relative cursor-pointer overflow-hidden rounded-2xl" style={{ aspectRatio: "16/9" }}>
-                <img src={video.imageUrl} alt={video.alt} className="absolute inset-0 h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
-                  <div className="flex h-12 w-12 scale-50 items-center justify-center rounded-full bg-white/90 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
-                    <Play className="ml-1 h-5 w-5 text-slate-900" />
-                  </div>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 p-4">
+            {home.videos.items.map((video, index) => (
+              <div key={video.title} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveVideoIndex(index)}
+                  className="group flex w-full items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-orange-500/20 via-pink-500/10 to-slate-900 p-8 text-white transition-colors hover:border-white/30"
+                  style={{ aspectRatio: "16/9" }}
+                  aria-label={`Play ${video.title}`}
+                >
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-slate-900 transition-transform group-hover:scale-105">
+                    <Play className="ml-1 h-6 w-6" />
+                  </span>
+                </button>
+                <div className="mt-4">
                   <p className="text-sm font-bold leading-tight text-white">{video.title}</p>
                   <div className="mt-1 flex items-center justify-between">
                     <p className="text-xs text-white/60">{video.speaker}</p>
                     <span className="text-xs text-white/60">{video.duration}</span>
                   </div>
+                  <a
+                    href={video.youtubeWatchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-300 transition-colors hover:text-orange-200"
+                  >
+                    Watch on YouTube <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </section>
+
+      {activeVideo ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setActiveVideoIndex(null)}>
+          <div className="w-full max-w-5xl rounded-2xl border border-white/15 bg-slate-950 p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-white">{activeVideo.title}</p>
+                <p className="text-xs text-white/60">{activeVideo.speaker}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveVideoIndex(null)}
+                className="rounded-full border border-white/20 p-2 text-white/80 transition-colors hover:text-white"
+                aria-label="Close video"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="overflow-hidden rounded-xl" style={{ aspectRatio: "16/9" }}>
+              <iframe
+                className="h-full w-full"
+                src={`${activeVideo.youtubeEmbedUrl}${activeVideo.youtubeEmbedUrl.includes("?") ? "&" : "?"}autoplay=1`}
+                title={activeVideo.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <section className="relative overflow-hidden px-4 py-20">
         <div className="pointer-events-none absolute inset-0">
@@ -781,6 +890,21 @@ export default function Home() {
           <div className="flex items-center gap-6 text-sm text-white/40">
             <button onClick={() => navigateWithRoleGate("candidates")} className="transition-colors hover:text-white/70">Candidates</button>
             <button onClick={() => navigateWithRoleGate("employers")} className="transition-colors hover:text-white/70">Employers</button>
+          </div>
+          <div className="flex items-center gap-3 text-white/60">
+            {socialLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                title={link.label}
+                className="rounded-full border border-white/15 p-2 transition-colors hover:border-white/35 hover:text-white"
+              >
+                {link.icon}
+              </a>
+            ))}
           </div>
           <p className="text-xs text-white/30">© {currentYear} {branding.name} · {branding.subtitle}</p>
         </div>

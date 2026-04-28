@@ -129,7 +129,8 @@ export const CSP_DIRECTIVES = {
   'style-src': ["'self'", "'unsafe-inline'"],
   'img-src': ["'self'", 'data:', 'https:'],
   'font-src': ["'self'", 'data:'],
-  'connect-src': ["'self'", 'http://localhost:7000', 'http://127.0.0.1:7000', 'http://localhost:8080'],
+  'connect-src': ["'self'", 'http://localhost:7000', 'http://127.0.0.1:7000', 'http://localhost:8080', 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
+  'frame-src': ["'self'", 'blob:', 'https://www.youtube-nocookie.com', 'https://www.youtube.com'],
   'frame-ancestors': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
@@ -180,7 +181,7 @@ export const sanitizeErrorMessage = (error: any): string => {
  * Checks if app is running in production
  */
 export const isProduction = (): boolean => {
-  return process.env.NODE_ENV === 'production';
+  return Boolean(import.meta.env.PROD);
 };
 
 /**

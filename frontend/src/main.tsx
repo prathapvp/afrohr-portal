@@ -1,7 +1,7 @@
 
   import { lazy, Suspense, useEffect } from "react";
   import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
 import { MantineProvider } from "@mantine/core";
 import { Provider } from "react-redux";
   import AOS from "aos";
@@ -34,6 +34,115 @@ import PublicRoute from "./app/services/public-route.tsx";
 
 const JobHistoryPage = lazy(() => import("./app/pages/JobHistoryPage.tsx"));
 const SwipeJobsPage = lazy(() => import("./app/pages/SwipeJobsPage.tsx"));
+
+const SEO_META: Array<{ pattern: RegExp; title: string; description: string }> = [
+  {
+    pattern: /^\/$|^\/home$/,
+    title: "AfroHR | Talent Network for Hiring and Careers",
+    description: "Discover your next career move with AfroHR. Curated jobs, hiring insights, and employer tools for modern recruitment.",
+  },
+  {
+    pattern: /^\/dashboard/,
+    title: "Dashboard | AfroHR",
+    description: "Access your AfroHR dashboard for jobs, hiring workflows, student guidance, and admin insights.",
+  },
+  {
+    pattern: /^\/login$/,
+    title: "Login | AfroHR",
+    description: "Securely sign in to AfroHR to access your dashboard and hiring or career tools.",
+  },
+  {
+    pattern: /^\/signup$/,
+    title: "Sign Up | AfroHR",
+    description: "Create your AfroHR account to discover jobs, manage applications, and hire top talent.",
+  },
+  {
+    pattern: /^\/find-jobs$/,
+    title: "Find Jobs | AfroHR",
+    description: "Explore curated job opportunities and discover your next role with AfroHR.",
+  },
+  {
+    pattern: /^\/find-talent$/,
+    title: "Find Talent | AfroHR",
+    description: "Discover qualified candidates and streamline your recruitment process with AfroHR.",
+  },
+  {
+    pattern: /^\/profile$/,
+    title: "Profile | AfroHR",
+    description: "Manage your AfroHR profile, skills, and account details.",
+  },
+];
+
+function upsertMeta(name: string, content: string, isProperty = false) {
+  const selector = isProperty ? `meta[property=\"${name}\"]` : `meta[name=\"${name}\"]`;
+  let element = document.querySelector(selector) as HTMLMetaElement | null;
+  if (!element) {
+    element = document.createElement("meta");
+    if (isProperty) {
+      element.setAttribute("property", name);
+    } else {
+      element.setAttribute("name", name);
+    }
+    document.head.appendChild(element);
+  }
+  element.setAttribute("content", content);
+}
+
+function upsertCanonical(href: string) {
+  let element = document.querySelector("link[rel=\"canonical\"]") as HTMLLinkElement | null;
+  if (!element) {
+    element = document.createElement("link");
+    element.setAttribute("rel", "canonical");
+    document.head.appendChild(element);
+  }
+  element.setAttribute("href", href);
+}
+
+function normalizeCanonicalPath(pathname: string) {
+  if (!pathname || pathname === "/") {
+    return "/";
+  }
+
+  return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+}
+
+function isPrivateRoute(pathname: string) {
+  return [
+    /^\/dashboard/,
+    /^\/profile$/,
+    /^\/swipe$/,
+    /^\/job-history$/,
+    /^\/apply-job\//,
+    /^\/posted-jobs\//,
+    /^\/post-job\//,
+    /^\/talent-profile\//,
+    /^\/departments$/,
+  ].some((pattern) => pattern.test(pathname));
+}
+
+function SeoRouteMeta() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const matched = SEO_META.find((entry) => entry.pattern.test(location.pathname));
+    const title = matched?.title ?? "AfroHR";
+    const description = matched?.description ?? "AfroHR Talent Network helps candidates, employers, students, and admins discover opportunities, hire talent, and manage hiring workflows.";
+    const canonical = `https://afrohr.in${normalizeCanonicalPath(location.pathname)}`;
+    const robots = isPrivateRoute(location.pathname) ? "noindex, nofollow" : "index, follow";
+
+    document.title = title;
+    upsertMeta("description", description);
+    upsertMeta("robots", robots);
+    upsertMeta("og:title", title, true);
+    upsertMeta("og:description", description, true);
+    upsertMeta("og:url", canonical, true);
+    upsertMeta("twitter:title", title);
+    upsertMeta("twitter:description", description);
+    upsertCanonical(canonical);
+  }, [location.pathname]);
+
+  return null;
+}
 
 function AppBootstrap() {
   useEffect(() => {
@@ -82,6 +191,7 @@ createRoot(document.getElementById("root")!).render(
   <Provider store={Store}>
     <MantineProvider theme={afroTheme} defaultColorScheme="light">
       <BrowserRouter>
+        <SeoRouteMeta />
         <AppBootstrap />
       </BrowserRouter>
     </MantineProvider>

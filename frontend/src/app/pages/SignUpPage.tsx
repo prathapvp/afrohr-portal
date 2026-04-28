@@ -20,7 +20,7 @@ const SignUpPage = () => {
                 <p className="truncate text-sm font-bold text-white">{isSignupRoute ? "Create your AfroHR account" : "Welcome back to AfroHR"}</p>
                 <p className="mt-0.5 text-[11px] text-slate-300">{isSignupRoute ? "Quick signup and email verification" : "Sign in and continue your journey"}</p>
               </div>
-              <img src="/afro-hr-light.png" alt="Afro HR" className="h-7 w-auto opacity-90" />
+              <img src="/afro-hr-light.png" alt="AfroHR" className="h-7 w-auto opacity-90" />
             </div>
             <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-300">
               <span className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5">5K+ Jobs</span>
@@ -50,14 +50,14 @@ const SignUpPage = () => {
 
               <img
                 src="/afro-hr-light.png"
-                alt="Afro HR"
+                alt="AfroHR"
                 className="auth-brand-logo h-20 w-auto drop-shadow-lg brightness-0 invert relative z-10"
               />
               <div className="auth-brand-title text-2xl bs-mx:text-xl md-mx:text-lg font-bold text-white text-center px-8 relative z-10">
                 Find the job made for you
               </div>
               <p className="auth-brand-copy text-sm text-white/80 px-10 text-center relative z-10 max-w-xs">
-                Join thousands of professionals building their careers with AFRO HR
+                Join thousands of professionals building their careers with AfroHR
               </p>
               <div className="auth-brand-stats flex gap-6 mt-2 relative z-10">
                 <div className="text-center">

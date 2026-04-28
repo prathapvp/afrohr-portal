@@ -1,0 +1,41 @@
+Day,Week,Task,Done,Owner,Date Completed,Notes,Observed Impact
+1,1,"Standardize brand text everywhere to AfroHR (site title, footer, social bios, contact blocks).",,,, ,
+2,1,"Validate homepage schema in Rich Results Test and resolve warnings/errors.",,,, ,
+3,1,"Verify Organization fields (name, logo, url, sameAs, contactPoint).",,,, ,
+4,1,"Audit canonicals for key routes (home, login, dashboard, jobs).",,,, ,
+5,1,"Submit sitemap in Search Console and request homepage indexing.",,,, ,
+6,1,"Verify robots/indexability for all core pages.",,,, ,
+7,1,"Capture baseline metrics (impressions, CTR, indexed pages, referring domains).",,,, ,
+8,2,"Optimize Instagram profile identity and website link consistency.",,,, ,
+9,2,"Optimize Facebook profile identity and website link consistency.",,,, ,
+10,2,"Optimize YouTube channel branding/About and website link.",,,, ,
+11,2,"Add AfroHR in 3 high-quality business directories.",,,, ,
+12,2,"Add AfroHR in 3 more high-quality directories.",,,, ,
+13,2,"Secure 1 external mention/backlink from relevant source.",,,, ,
+14,2,"Audit all citations for exact identity consistency (name/logo/url/contact).",,,, ,
+15,3,"Improve About page depth (mission, trust, timeline, leadership).",,,, ,
+16,3,"Improve Contact page clarity (channels, support, response expectations).",,,, ,
+17,3,"Publish/refresh Team or Leadership page.",,,, ,
+18,3,"Publish branded article: What is AfroHR.",,,, ,
+19,3,"Publish intent article: AfroHR for Employers/Candidates.",,,, ,
+20,3,"Strengthen homepage internal links to key brand pages.",,,, ,
+21,3,"Request indexing for all updated/published pages.",,,, ,
+22,4,"Run branded search demand campaign post #1.",,,, ,
+23,4,"Run branded search demand campaign post #2.",,,, ,
+24,4,"Optimize homepage title/meta for stronger branded CTR.",,,, ,
+25,4,"Optimize About page title/meta.",,,, ,
+26,4,"Optimize Contact page title/meta.",,,, ,
+27,4,"Analyze Search Console for brand query variants and clicks.",,,, ,
+28,4,"Compare metrics vs Week 1 baseline and log movement.",,,, ,
+29,4,"Document wins, misses, and blockers.",,,, ,
+30,4,"Define next 30-day sprint using top-performing actions.",,,, ,
+
+KPI,Baseline (W1D7),Week 2,Week 3,Week 4,Target Trend
+"Branded Impressions (Search Console)",,,,,Up
+"Branded CTR (%)",,,,,Up
+"Branded Clicks",,,,,Up
+"Indexed Core Pages (count)",,,,,Up
+"Referring Domains (count)",,,,,Up
+"Structured Data Errors (count)",,,,,Down
+"Structured Data Warnings (count)",,,,,Down
+"Sitelinks present on branded query (Y/N)",,,,,Yes

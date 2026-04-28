@@ -102,7 +102,7 @@ const Header = ({
             <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400/20 via-orange-500/20 to-pink-500/20 blur-sm" />
             <img
               src="/afro-hr-light.png"
-              alt="Afro HR"
+              alt="AfroHR"
               className="relative h-11 w-auto drop-shadow-md brightness-0 invert"
             />
           </div>
