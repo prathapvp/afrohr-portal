@@ -294,6 +294,19 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public Boolean sendOTPForExistingUser(String email) throws Exception {
+		if (email == null || email.isBlank()) {
+			throw new JobPortalException("Email is required");
+		}
+
+		String safeEmail = Objects.requireNonNull(email).trim();
+		userRepository.findByEmailIgnoreCase(safeEmail)
+				.orElseThrow(() -> new JobPortalException("User does not exist. Please sign up first."));
+
+		return sendOTP(safeEmail);
+	}
+
+	@Override
 	public Boolean verifyOtp(String email, String otp) throws JobPortalException {
 		String safeEmail = Objects.requireNonNull(email, "Email is required");
 		OTP otpEntity = otpRepository.findById(safeEmail)

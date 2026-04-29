@@ -2,7 +2,7 @@ import { Button, Checkbox, LoadingOverlay, Modal, PasswordInput, PinInput, TextI
 import { IconAt, IconBriefcase, IconCircleCheck, IconLock, IconUser, IconUserSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { registerUser, sendOtp, verifyOtp } from "../../services/user-service";
+import { registerUser, sendSignupOtp, verifyOtp } from "../../services/user-service";
 import { signupValidation } from "../../services/form-validation";
 import { errorNotification, successNotification } from "../../services/NotificationService";
 import { useInterval } from "@mantine/hooks";
@@ -89,7 +89,7 @@ const SignUp = () => {
 
     const handleSendOtp = () => {
         setOtpSending(true);
-        sendOtp(data.email).then(() => {
+        sendSignupOtp(data.email).then(() => {
             successNotification("OTP Sent", "Check your email for the verification code.");
             setOtpSending(false);
             setResendLoader(true);
@@ -101,7 +101,7 @@ const SignUp = () => {
             }, 650);
         }).catch((err) => {
             setOtpSending(false);
-            errorNotification("OTP Sending Failed", err.response?.data?.errorMessage || "Could not send OTP.");
+            errorNotification("OTP Sending Failed", err.message || "Could not send OTP.");
         });
     }
 
@@ -140,7 +140,7 @@ const SignUp = () => {
             });
         }).catch((err) => {
             setLoading(false);
-            errorNotification("Verification Failed", err.response?.data?.errorMessage || "Invalid OTP.");
+            errorNotification("Verification Failed", err.message || "Invalid OTP.");
         });
     }
 

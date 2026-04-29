@@ -12,6 +12,7 @@ import NotiMenu from "./NotiMenu";
 import { setUser } from "../../../store/slices/UserSlice";
 import { setupResponseInterceptor } from "../../../interceptor/AxiosInterceptor";
 import { useDisclosure } from "@mantine/hooks";
+import { getBrandLogoSrc } from "../../../utils/brandLogo";
 
 const allLinks = [
   { name: "Find Jobs", url: "find-jobs" },
@@ -35,6 +36,7 @@ const Header = ({
   const token = useSelector((state: any) => state.jwt);
   const location = useLocation();
   const navigate = useNavigate();
+  const logoSrc = getBrandLogoSrc();
   const profileFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -101,9 +103,9 @@ const Header = ({
           <div className="relative">
             <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400/20 via-orange-500/20 to-pink-500/20 blur-sm" />
             <img
-              src="/afro-hr-light.png"
+              src={logoSrc}
               alt="AfroHR"
-              className="relative h-11 w-auto drop-shadow-md brightness-0 invert"
+              className="relative h-11 w-auto drop-shadow-md"
             />
           </div>
           <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-amber-400/40 to-transparent sm:block" />

@@ -83,6 +83,14 @@ public class UserAPI {
 	@PostMapping("/sendOtp/{email}")
 	public ResponseEntity<ResponseDTO> sendOtp(
 			@PathVariable @Email(message = "{user.email.invalid}") String email) throws Exception {
+		userService.sendOTPForExistingUser(email);
+		ResponseDTO response = new ResponseDTO("OTP sent successfully.");
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/sendOtp/register/{email}")
+	public ResponseEntity<ResponseDTO> sendOtpForRegistration(
+			@PathVariable @Email(message = "{user.email.invalid}") String email) throws Exception {
 		userService.sendOTP(email);
 		ResponseDTO response = new ResponseDTO("OTP sent successfully.");
 		return new ResponseEntity<>(response, HttpStatus.OK);

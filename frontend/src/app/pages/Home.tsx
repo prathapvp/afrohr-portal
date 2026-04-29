@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Award, Building2, ChevronRight, ExternalLink, Facebook, Globe, GraduationCap, Instagram, MessageCircle, Play, Sparkles, TrendingUp, X, Youtube, Zap } from "lucide-react";
+import { ArrowRight, Award, Building2, ChevronRight, ExternalLink, Globe, GraduationCap, Play, Sparkles, TrendingUp, X, Zap } from "lucide-react";
 import PremiumNavbar from "../components/layout/PremiumNavbar";
+import PublicSiteFooter from "../components/layout/PublicSiteFooter";
 import { getLandingTabForAccountType } from "../store/selectors/authSelectors";
 import { errorNotification } from "../services/NotificationService";
 
@@ -589,38 +590,7 @@ export default function Home() {
   const candidateCard = home.cards.candidates;
   const employerCard = home.cards.employers;
   const studentCard = home.cards.students;
-  const currentYear = new Date().getFullYear();
   const activeVideo = activeVideoIndex !== null ? home.videos.items[activeVideoIndex] : null;
-  const socialLinks = [
-    {
-      label: "Instagram",
-      href: "https://www.instagram.com/afro_hr_?igsh=MXYxMDhrMWFlYzZ4bQ==",
-      icon: <Instagram className="h-4 w-4" />,
-    },
-    {
-      label: "Facebook",
-      href: "https://www.facebook.com/profile.php?id=61569347338452",
-      icon: <Facebook className="h-4 w-4" />,
-    },
-    {
-      label: "YouTube",
-      href: "https://www.youtube.com/@afrofinancialconsultantsaf1591",
-      icon: <Youtube className="h-4 w-4" />,
-    },
-    {
-      label: "WhatsApp",
-      href: "https://chat.whatsapp.com/DBx7w0bIl5e8KQ4KqOnfS8?mode=gi_t",
-      icon: <MessageCircle className="h-4 w-4" />,
-    },
-  ];
-
-  const brandLinks = [
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
-    { label: "Team", href: "/team" },
-    { label: "What is AfroHR", href: "/what-is-afrohr" },
-    { label: "For Employers/Candidates", href: "/afrohr-for-employers-candidates" },
-  ];
 
   const candidateChart = (
     <ResponsiveContainer width="100%" height={130}>
@@ -859,69 +829,7 @@ export default function Home() {
         </div>
       ) : null}
 
-      <section className="relative overflow-hidden px-4 py-20">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-0 left-1/3 h-64 w-64 rounded-full bg-orange-500/15 blur-3xl" />
-          <div className="absolute right-1/4 bottom-0 h-64 w-64 rounded-full bg-pink-500/15 blur-3xl" />
-        </div>
-        <div className="relative mx-auto max-w-3xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-orange-400">
-            <Sparkles className="h-3.5 w-3.5" />
-            {home.cta.badge}
-          </div>
-          <h2 className="mb-6 text-4xl font-black leading-tight sm:text-5xl">
-            {home.cta.title}
-            <br />
-            <span className="bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">{home.cta.highlight}</span>
-          </h2>
-          <p className="mb-10 text-lg leading-relaxed text-white/60">{home.cta.description}</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button onClick={() => navigateToAllowedDashboard()} className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 px-8 py-4 text-base font-bold text-white shadow-xl transition-all hover:-translate-y-0.5 hover:shadow-orange-500/30">
-              {home.cta.actionLabel}
-              <ArrowRight className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-white/10 px-4 py-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-pink-500">
-              <Zap className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="font-black">
-              {branding.name.slice(0, Math.max(branding.name.length - 2, 0))}
-              <span className="text-orange-400">{branding.name.slice(-2)}</span>
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-white/40 sm:gap-6">
-            <button onClick={() => navigateWithRoleGate("candidates")} className="transition-colors hover:text-white/70">Candidates</button>
-            <button onClick={() => navigateWithRoleGate("employers")} className="transition-colors hover:text-white/70">Employers</button>
-            {brandLinks.map((link) => (
-              <button key={link.href} onClick={() => navigate(link.href)} className="transition-colors hover:text-white/70">
-                {link.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3 text-white/60">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={link.label}
-                title={link.label}
-                className="rounded-full border border-white/15 p-2 transition-colors hover:border-white/35 hover:text-white"
-              >
-                {link.icon}
-              </a>
-            ))}
-          </div>
-          <p className="text-xs text-white/30">© {currentYear} {branding.name} · {branding.subtitle}</p>
-        </div>
-      </footer>
+      <PublicSiteFooter />
     </div>
   );
 }

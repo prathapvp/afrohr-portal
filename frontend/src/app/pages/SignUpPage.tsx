@@ -2,10 +2,12 @@ import { IconArrowLeft } from "@tabler/icons-react"
 import { SignUp, Login } from "../features/auth";
 import { useLocation, useNavigate } from "react-router";
 import { Button } from "@mantine/core";
+import { getBrandLogoSrc } from "../utils/brandLogo";
 
 const SignUpPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const logoSrc = getBrandLogoSrc();
   const isSignupRoute = location.pathname === "/signup";
   return (
     <div className="premium-shell relative min-h-screen w-full overflow-x-hidden">
@@ -20,7 +22,7 @@ const SignUpPage = () => {
                 <p className="truncate text-sm font-bold text-white">{isSignupRoute ? "Create your AfroHR account" : "Welcome back to AfroHR"}</p>
                 <p className="mt-0.5 text-[11px] text-slate-300">{isSignupRoute ? "Quick signup and email verification" : "Sign in and continue your journey"}</p>
               </div>
-              <img src="/afro-hr-light.png" alt="AfroHR" className="h-7 w-auto opacity-90" />
+              <img src={logoSrc} alt="AfroHR" className="h-7 w-auto opacity-90" />
             </div>
             <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-300">
               <span className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5">5K+ Jobs</span>
@@ -49,9 +51,9 @@ const SignUpPage = () => {
               <div className="absolute top-1/3 right-10 h-24 w-24 rounded-full bg-white/5" />
 
               <img
-                src="/afro-hr-light.png"
+                src={logoSrc}
                 alt="AfroHR"
-                className="auth-brand-logo h-20 w-auto drop-shadow-lg brightness-0 invert relative z-10"
+                className="auth-brand-logo h-20 w-auto drop-shadow-lg relative z-10"
               />
               <div className="auth-brand-title text-2xl bs-mx:text-xl md-mx:text-lg font-bold text-white text-center px-8 relative z-10">
                 Find the job made for you

@@ -1,0 +1,22 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bridgeBg" x1="24" y1="24" x2="232" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#081025" />
+      <stop offset="1" stop-color="#121A33" />
+    </linearGradient>
+    <linearGradient id="bridgeGlow" x1="64" y1="72" x2="192" y2="168" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDBA3B" />
+      <stop offset="1" stop-color="#F97316" />
+    </linearGradient>
+  </defs>
+
+  <rect x="14" y="14" width="228" height="228" rx="50" fill="url(#bridgeBg)" />
+  <rect x="14" y="14" width="228" height="228" rx="50" stroke="#F59E0B" stroke-opacity="0.45" stroke-width="2" />
+
+  <path d="M58 162C76 118 105 96 128 96C151 96 180 118 198 162" stroke="url(#bridgeGlow)" stroke-width="12" stroke-linecap="round" />
+  <rect x="72" y="148" width="14" height="34" rx="6" fill="#F59E0B" />
+  <rect x="170" y="148" width="14" height="34" rx="6" fill="#F59E0B" />
+
+  <path d="M88 168L112 92H124L148 168H135L129 151H107L101 168H88ZM111 141H125L118 118L111 141Z" fill="#F8FAFC" />
+  <path d="M152 92H165V121H186V92H199V168H186V133H165V168H152V92Z" fill="#F472B6" />
+</svg>

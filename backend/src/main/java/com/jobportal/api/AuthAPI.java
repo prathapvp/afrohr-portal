@@ -2,11 +2,13 @@ package com.jobportal.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,14 +37,21 @@ public class AuthAPI {
 	@PostMapping("/login")
 	public ResponseEntity<?> createAuthenticationToken(
 			@RequestBody @Valid AuthenticationRequest request) throws JobPortalException {
+		final UserDetails userDetails;
+		try {
+			userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+		} catch (UsernameNotFoundException e) {
+			throw new JobPortalException("User does not exist. Please sign up first.");
+		}
+
 		try {
 			authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+		} catch (BadCredentialsException e) {
+			throw new JobPortalException("Incorrect password. Please try again.");
 		} catch (AuthenticationException e) {
-			throw new JobPortalException("Incorrect username or password");
+			throw new JobPortalException("Unable to login. Please verify your account and try again.");
 		}
-
-		final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
 		final String jwt = jwtHelper.generateToken(userDetails);
 
 		return ResponseEntity.ok(new AuthenticationResponse(jwt));

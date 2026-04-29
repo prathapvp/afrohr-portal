@@ -1,0 +1,22 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="networkBg" x1="18" y1="18" x2="238" y2="238" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#09122A" />
+      <stop offset="1" stop-color="#121B35" />
+    </linearGradient>
+  </defs>
+
+  <rect x="14" y="14" width="228" height="228" rx="50" fill="url(#networkBg)" />
+  <rect x="14" y="14" width="228" height="228" rx="50" stroke="#F59E0B" stroke-opacity="0.38" stroke-width="2" />
+
+  <line x1="78" y1="78" x2="178" y2="74" stroke="#64748B" stroke-width="5" />
+  <line x1="78" y1="78" x2="128" y2="178" stroke="#64748B" stroke-width="5" />
+  <line x1="178" y1="74" x2="128" y2="178" stroke="#64748B" stroke-width="5" />
+
+  <circle cx="78" cy="78" r="17" fill="#F59E0B" />
+  <circle cx="178" cy="74" r="17" fill="#34D399" />
+  <circle cx="128" cy="178" r="17" fill="#EC4899" />
+
+  <path d="M94 150L113 96H122L141 150H131L126 137H109L104 150H94ZM111 129H124L117.5 111L111 129Z" fill="#F8FAFC" />
+  <path d="M145 96H155V118H173V96H183V150H173V126H155V150H145V96Z" fill="#F8FAFC" />
+</svg>

@@ -1,0 +1,24 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="compassBg" x1="24" y1="20" x2="236" y2="238" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#091028" />
+      <stop offset="1" stop-color="#101A36" />
+    </linearGradient>
+    <linearGradient id="compassAccent" x1="128" y1="54" x2="128" y2="202" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBBF24" />
+      <stop offset="1" stop-color="#F97316" />
+    </linearGradient>
+  </defs>
+
+  <rect x="14" y="14" width="228" height="228" rx="50" fill="url(#compassBg)" />
+  <rect x="14" y="14" width="228" height="228" rx="50" stroke="#F59E0B" stroke-opacity="0.4" stroke-width="2" />
+
+  <circle cx="128" cy="128" r="70" stroke="url(#compassAccent)" stroke-width="10" />
+  <circle cx="128" cy="128" r="48" stroke="#334155" stroke-width="3" />
+
+  <path d="M128 64L150 114L128 106L106 114L128 64Z" fill="#EC4899" />
+  <path d="M128 192L106 142L128 150L150 142L128 192Z" fill="#F59E0B" />
+
+  <circle cx="128" cy="128" r="20" fill="#0F172A" />
+  <path d="M118 128L126 136L140 122" stroke="#F8FAFC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

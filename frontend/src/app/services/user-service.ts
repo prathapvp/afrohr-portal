@@ -1,5 +1,14 @@
 import axiosInstance from "../interceptor/AxiosInterceptor";
 
+async function parseErrorMessage(response: Response, fallbackMessage: string) {
+  try {
+    const body = await response.json();
+    return body?.errorMessage || body?.message || fallbackMessage;
+  } catch {
+    return fallbackMessage;
+  }
+}
+
 export type EmployerRole = "OWNER" | "RECRUITER" | "VIEWER";
 
 export interface EmployerMember {
@@ -65,7 +74,17 @@ export async function sendOtp(email: string) {
     method: "POST",
   });
   if (!response.ok) {
-    throw new Error("Failed to send OTP");
+    throw new Error(await parseErrorMessage(response, "Failed to send OTP"));
+  }
+  return response.json();
+}
+
+export async function sendSignupOtp(email: string) {
+  const response = await fetch(`/api/ahrm/v3/users/sendOtp/register/${encodeURIComponent(email)}`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response, "Failed to send OTP"));
   }
   return response.json();
 }
@@ -73,7 +92,7 @@ export async function sendOtp(email: string) {
 export async function verifyOtp(email: string, otp: string) {
   const response = await fetch(`/api/ahrm/v3/users/verifyOtp/${encodeURIComponent(email)}/${encodeURIComponent(otp)}`);
   if (!response.ok) {
-    throw new Error("Failed to verify OTP");
+    throw new Error(await parseErrorMessage(response, "Failed to verify OTP"));
   }
   return response.json();
 }
@@ -86,7 +105,7 @@ export async function resetPassword(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
   if (!response.ok) {
-    throw new Error("Password reset failed");
+    throw new Error(await parseErrorMessage(response, "Password reset failed"));
   }
   return response.json();
 }

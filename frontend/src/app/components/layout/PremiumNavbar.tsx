@@ -4,14 +4,21 @@ import { removeJwt } from "../../store/slices/JwtSlice";
 import { clearProfile } from "../../store/slices/ProfileSlice";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { selectIsAuthenticated } from "../../store/selectors/authSelectors";
+import { getBrandLogoSrc } from "../../utils/brandLogo";
 
 function PremiumNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const logoSrc = getBrandLogoSrc();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const showHomeButton = location.pathname !== "/";
   const showProfileButton = location.pathname !== "/profile";
+  const infoTabs = [
+    { label: "About", path: "/about" },
+    { label: "Contact", path: "/contact" },
+    { label: "Team", path: "/team" },
+  ];
 
   const handleLogout = () => {
     // Ensure Redux and persisted auth/profile state are fully cleared.
@@ -34,15 +41,32 @@ function PremiumNavbar() {
           <div className="relative">
             <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400/20 via-orange-500/20 to-pink-500/20 blur-sm transition duration-300" />
             <img
-              src="/afro-hr-light.png"
+              src={logoSrc}
               alt="AfroHR"
-              className="relative h-11 w-auto drop-shadow-md brightness-0 invert"
+              className="relative h-11 w-auto drop-shadow-md"
             />
           </div>
           <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-amber-400/40 to-transparent sm:block" />
           <span className="hidden bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-[10px] font-bold uppercase tracking-[0.25em] text-transparent sm:block">
             Talent Network
           </span>
+        </div>
+        <div className="hidden items-center gap-1 sm:flex">
+          {infoTabs.map((tab) => {
+            const isActive = location.pathname === tab.path;
+
+            return (
+              <button
+                key={tab.path}
+                onClick={() => void navigate(tab.path)}
+                className={`premium-card-hover min-h-10 rounded-lg px-4 text-[13px] font-medium tracking-wide transition-colors ${
+                  isActive ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
         {/* Nav Actions */}
         <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:gap-2">
@@ -91,6 +115,23 @@ function PremiumNavbar() {
               </button>
             </>
           )}
+        </div>
+        <div className="flex w-full items-center gap-1 sm:hidden">
+          {infoTabs.map((tab) => {
+            const isActive = location.pathname === tab.path;
+
+            return (
+              <button
+                key={`mobile-${tab.path}`}
+                onClick={() => void navigate(tab.path)}
+                className={`premium-card-hover min-h-10 flex-1 rounded-lg px-3 text-[12px] font-medium tracking-wide transition-colors ${
+                  isActive ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </nav>

@@ -16,6 +16,7 @@ public interface UserService {
 	public java.util.List<UserDTO> getEmployerMembers() throws JobPortalException;
 	public UserDTO updateEmployerMemberRole(Long userId, EmployerRole employerRole) throws JobPortalException;
 	public Boolean sendOTP(String email) throws Exception;
+	public Boolean sendOTPForExistingUser(String email) throws Exception;
 	public Boolean verifyOtp(String email, String otp) throws JobPortalException;
 	public ResponseDTO changePassword(LoginDTO loginDTO) throws JobPortalException;
 }

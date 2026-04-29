@@ -35,19 +35,21 @@ const Footer = () => {
                 <div className="text-xl font-semibold">AfroHR</div>
             </div>
             <div className="text-sm text-mine-shaft-300">AfroHR helps candidates, employers, and students discover opportunities, build profiles, and manage hiring workflows.</div>
-            <div className="flex gap-3 text-bright-sun-400 [&>a]:bg-mine-shaft-900 [&>a]:p-2 [&>a]:rounded-full [&>a]:cursor-pointer hover:[&>a]:bg-mine-shaft-700">
-                {socialLinks.map((link) => (
-                    <a
-                        key={link.label}
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={link.label}
-                        title={link.label}
-                    >
-                        {link.icon}
-                    </a>
-                ))}
+            <div className="flex flex-wrap gap-3 items-center">
+                <div className="flex gap-3 text-bright-sun-400 [&>a]:bg-mine-shaft-900 [&>a]:p-2 [&>a]:rounded-full [&>a]:cursor-pointer hover:[&>a]:bg-mine-shaft-700">
+                    {socialLinks.map((link) => (
+                        <a
+                            key={link.label}
+                            href={link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={link.label}
+                            title={link.label}
+                        >
+                            {link.icon}
+                        </a>
+                    ))}
+                </div>
             </div>
         </div>
         {

@@ -25,6 +25,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
+    chunkSizeWarningLimit: Infinity,
   },
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
