@@ -230,13 +230,6 @@ public class JobServiceImpl implements JobService {
 		jobRepository.save(job);
 	}
 
-	@Override
-	public List<JobDTO> getHistory(Long id, ApplicationStatus applicationStatus) throws JobPortalException {
-		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
-		ensureHistoryAccess(id, currentUser);
-		return jobRepository.findByApplicantIdAndApplicationStatus(id, applicationStatus.name()).stream()
-				.map((x) -> x.toDTO()).toList();
-	}
 
 	@Override
 	public Page<JobDTO> getMyHistory(ApplicationStatus applicationStatus, Pageable pageable) throws JobPortalException {

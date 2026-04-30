@@ -53,6 +53,7 @@ const navItems = [
       { label: "Snapshot", icon: FileText, gradient: "from-cyan-400 via-blue-500 to-indigo-500" },
       { label: "Billing Control", icon: CreditCard, gradient: "from-violet-400 via-purple-500 to-fuchsia-500" },
       { label: "Requests", icon: CreditCard, gradient: "from-orange-400 via-amber-500 to-yellow-400" },
+      { label: "Profile Completion", icon: Users, gradient: "from-green-400 via-teal-500 to-cyan-500" },
     ],
   },
 ];

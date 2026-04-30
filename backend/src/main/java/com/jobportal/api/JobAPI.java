@@ -144,11 +144,6 @@ public class JobAPI {
 		return new ResponseEntity<>(new ResponseDTO(resumeBase64), HttpStatus.OK);
 	}
 
-	@GetMapping("/history/{id}/{applicationStatus}")
-	public ResponseEntity<List<JobDTO>> getHistory(@PathVariable Long id,
-			@PathVariable ApplicationStatus applicationStatus) throws JobPortalException {
-		return new ResponseEntity<>(jobService.getHistory(id, applicationStatus), HttpStatus.OK);
-	}
 
 	@GetMapping("/me/history/{applicationStatus}")
 	public ResponseEntity<Page<JobDTO>> getMyHistory(

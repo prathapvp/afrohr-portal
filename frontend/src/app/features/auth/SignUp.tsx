@@ -156,6 +156,9 @@ const SignUp = () => {
         interval.stop();
     }
 
+    const publicDomains = [
+      "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "aol.com", "icloud.com", "mail.com", "protonmail.com", "zoho.com", "gmx.com", "yandex.com"
+    ];
     const handleSubmit = () => {
         let valid=true, newFormError:{[key:string]:string}={};
         for(let key in data){
@@ -163,6 +166,14 @@ const SignUp = () => {
             if(key!=="confirmPassword")newFormError[key]=signupValidation(key, data[key]);
             else if(data[key]!==data["password"])newFormError[key]="Passwords do not match.";
             if(newFormError[key])valid=false;
+        }
+        // Employer email domain check
+        if (data.accountType === "EMPLOYER") {
+          const emailDomain = data.email.split("@")[1]?.toLowerCase() || "";
+          if (publicDomains.includes(emailDomain)) {
+            newFormError.email = "Employers must use a company email address (not a public domain).";
+            valid = false;
+          }
         }
         if (!termsAccepted) {
             valid = false;

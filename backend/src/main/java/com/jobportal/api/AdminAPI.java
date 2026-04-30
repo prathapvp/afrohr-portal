@@ -18,6 +18,7 @@ import com.jobportal.entity.SubscriptionRequest;
 
 import com.jobportal.dto.AdminOverviewDTO;
 import com.jobportal.dto.EmployerSubscriptionDTO;
+import com.jobportal.dto.AdminProfileCompletionDTO;
 import com.jobportal.dto.ResolveSubscriptionRequestDTO;
 import com.jobportal.dto.SubscriptionRequestDTO;
 import com.jobportal.dto.UpsertEmployerSubscriptionRequest;
@@ -38,6 +39,11 @@ public class AdminAPI {
     public AdminAPI(AdminService adminService, EmployerSubscriptionService employerSubscriptionService) {
         this.adminService = adminService;
         this.employerSubscriptionService = employerSubscriptionService;
+    }
+
+    @GetMapping("/profile-completion")
+    public ResponseEntity<List<AdminProfileCompletionDTO>> getProfileCompletion() {
+        return ResponseEntity.ok(adminService.getProfileCompletionList());
     }
 
     @GetMapping("/overview")

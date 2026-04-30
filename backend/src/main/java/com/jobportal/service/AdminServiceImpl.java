@@ -24,6 +24,7 @@ import com.jobportal.repository.JobRepository;
 import com.jobportal.repository.ProfileRepository;
 import com.jobportal.repository.UserRepository;
 import com.jobportal.security.PiiCryptoService;
+import com.jobportal.dto.AdminProfileCompletionDTO;
 
 @Service("adminService")
 public class AdminServiceImpl implements AdminService {
@@ -48,6 +49,49 @@ public class AdminServiceImpl implements AdminService {
         this.employerSubscriptionRepository = employerSubscriptionRepository;
         this.currentUserService = currentUserService;
         this.piiCryptoService = piiCryptoService;
+    }
+
+    @Override
+    public List<AdminProfileCompletionDTO> getProfileCompletionList() {
+        CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
+        if (currentUser.accountType() != AccountType.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
+        }
+        List<User> users = userRepository.findAll();
+        @SuppressWarnings("unchecked")
+        List<Long> profileIds = (List<Long>) (List<?>) users.stream().map(User::getProfileId).filter(id -> id != null).distinct().toList();
+        Map<Long, Profile> profilesById = profileRepository.findAllById(profileIds)
+            .stream().collect(Collectors.toMap(Profile::getId, p -> p));
+        return users.stream().map(user -> {
+            Profile profile = user.getProfileId() != null ? profilesById.get(user.getProfileId()) : null;
+            int percent = computeProfileCompletionPercent(profile);
+            LocalDateTime lastActive = profile != null ? profile.getUpdatedAt() : user.getUpdatedAt();
+            return new AdminProfileCompletionDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getAccountType() != null ? user.getAccountType().name() : null,
+                percent,
+                lastActive
+            );
+        }).toList();
+    }
+
+    private int computeProfileCompletionPercent(Profile profile) {
+        if (profile == null) return 0;
+        int fields = 0, filled = 0;
+        // Key fields for completion (customize as needed)
+        if (++fields > 0 && profile.getName() != null && !profile.getName().isBlank()) filled++;
+        if (++fields > 0 && profile.getEmail() != null && !profile.getEmail().isBlank()) filled++;
+        if (++fields > 0 && profile.getJobTitle() != null && !profile.getJobTitle().isBlank()) filled++;
+        if (++fields > 0 && profile.getLocation() != null && !profile.getLocation().isBlank()) filled++;
+        if (++fields > 0 && profile.getSkills() != null && !profile.getSkills().isEmpty()) filled++;
+        if (++fields > 0 && profile.getExperiences() != null && !profile.getExperiences().isEmpty()) filled++;
+        if (++fields > 0 && profile.getEducation() != null && !profile.getEducation().isEmpty()) filled++;
+        if (++fields > 0 && profile.getAbout() != null && !profile.getAbout().isBlank()) filled++;
+        if (++fields > 0 && profile.getProfileSummary() != null && !profile.getProfileSummary().isBlank()) filled++;
+        if (++fields > 0 && profile.getPicture() != null && profile.getPicture().length > 0) filled++;
+        return (int) Math.round((filled * 100.0) / fields);
     }
 
     @Override

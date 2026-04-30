@@ -9,7 +9,6 @@ import {
   type SubscriptionRequest,
 } from "../services/admin-service";
 import AdminActiveFilterChips from "./AdminActiveFilterChips";
-import AdminBillingSuiteTabs from "./AdminBillingSuiteTabs";
 
 function formatUsagePeriod(value?: string | null) {
   if (!value) return "Current month";
@@ -337,12 +336,7 @@ export default function AdminSubscriptionSnapshotPage({
           </div>
         </div>
 
-        <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
-          <AdminBillingSuiteTabs
-            activeSection="subscription-snapshot"
-            onSelect={(section) => navigate(`/dashboard?tab=admin&section=${section}`)}
-          />
-        </div>
+
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

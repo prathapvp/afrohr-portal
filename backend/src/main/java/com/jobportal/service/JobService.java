@@ -1,6 +1,8 @@
 package com.jobportal.service;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.jobportal.dto.ApplicantDTO;
 import com.jobportal.dto.Application;
@@ -19,8 +21,7 @@ public interface JobService {
 	public void deleteJob(Long id) throws JobPortalException;
 	public void applyJob(Long id, ApplicantDTO applicantDTO) throws JobPortalException;
 	public void applyCurrentUserToJob(Long id, ApplicantDTO applicantDTO) throws JobPortalException;
-	public List<JobDTO> getHistory(Long id, ApplicationStatus applicationStatus) throws JobPortalException;
-	public List<JobDTO> getMyHistory(ApplicationStatus applicationStatus) throws JobPortalException;
+	public Page<JobDTO> getMyHistory(ApplicationStatus applicationStatus, Pageable pageable) throws JobPortalException;
 	public List<JobDTO> getJobsPostedBy(Long id) throws JobPortalException;
 	public List<JobDTO> getMyPostedJobs() throws JobPortalException;
 	public List<JobDTO> getPublicJobsByPoster(Long id) throws JobPortalException;
