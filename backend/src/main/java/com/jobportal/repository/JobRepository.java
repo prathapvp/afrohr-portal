@@ -15,6 +15,8 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     List<Job> findByPostedByIn(List<Long> postedByIds);
 
+    List<Job> findByJobStatus(JobStatus jobStatus);
+
         long countByPostedByAndJobStatus(Long postedBy, JobStatus jobStatus);
 
     @Query(value = "SELECT * FROM jobs j WHERE EXISTS ("

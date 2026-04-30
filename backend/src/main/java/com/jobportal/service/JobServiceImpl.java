@@ -161,9 +161,13 @@ public class JobServiceImpl implements JobService {
 
 	@Override
 	public List<JobDTO> getAllJobs() throws JobPortalException {
-		return jobRepository.findAll().stream()
+		return jobRepository.findByJobStatus(JobStatus.ACTIVE).stream()
 				.filter(this::isPublicCandidateSafeJob)
-				.map(Job::toDTO)
+				.map(job -> {
+					JobDTO dto = job.toDTO();
+					dto.setApplicants(null);
+					return dto;
+				})
 				.toList();
 	}
 

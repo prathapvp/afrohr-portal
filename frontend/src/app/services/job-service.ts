@@ -187,6 +187,9 @@ export async function postAllJobs(payload: JobPayload[]) {
   return response.json();
 }
 
+let _publicJobsCache: { promise: Promise<unknown>; ts: number } | null = null;
+const PUBLIC_JOBS_CACHE_TTL_MS = 30_000;
+
 export async function getAllJobs(options?: { postedBy?: number | "me" }) {
   const query = new URLSearchParams();
   if (options?.postedBy !== undefined) {
@@ -194,8 +197,24 @@ export async function getAllJobs(options?: { postedBy?: number | "me" }) {
   }
 
   const url = query.size > 0 ? `/api/ahrm/v3/jobs/getAll?${query.toString()}` : "/api/ahrm/v3/jobs/getAll";
+
+  // Deduplicate concurrent public (no postedBy) calls and cache for 30 s
+  if (!options?.postedBy) {
+    const now = Date.now();
+    if (_publicJobsCache && now - _publicJobsCache.ts < PUBLIC_JOBS_CACHE_TTL_MS) {
+      return _publicJobsCache.promise;
+    }
+    const promise = fetch(url).then((r) => {
+      if (!r.ok) throw new Error("Failed to fetch jobs");
+      return r.json();
+    });
+    _publicJobsCache = { promise, ts: now };
+    promise.catch(() => { _publicJobsCache = null; });
+    return promise;
+  }
+
   const response = await fetch(url, {
-    headers: options?.postedBy !== undefined ? { ...getAuthHeaders() } : undefined,
+    headers: { ...getAuthHeaders() },
   });
   if (!response.ok) {
     throw new Error("Failed to fetch jobs");
