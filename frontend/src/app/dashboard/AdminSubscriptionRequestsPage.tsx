@@ -2,7 +2,7 @@ import { Badge, Button, Loader, Modal, Pagination, Select, Table, TextInput, Tex
 import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { AlertCircle, AlertTriangle, CheckCircle2, Paperclip, ThumbsDown, ThumbsUp, XCircle } from "lucide-react";
 import {
   getAllSubscriptionRequests,
@@ -11,10 +11,9 @@ import {
   type SubscriptionRequest,
 } from "../services/admin-service";
 import AdminActiveFilterChips from "./AdminActiveFilterChips";
-import AdminBillingSuiteTabs from "./AdminBillingSuiteTabs";
+
 
 export default function AdminSubscriptionRequestsPage() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [subRequests, setSubRequests] = useState<SubscriptionRequest[]>([]);
   const [reqLoading, setReqLoading] = useState(false);
@@ -322,12 +321,7 @@ export default function AdminSubscriptionRequestsPage() {
           </div>
         </div>
 
-        <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
-          <AdminBillingSuiteTabs
-            activeSection="subscription-requests"
-            onSelect={(section) => navigate(`/dashboard?tab=admin&section=${section}`)}
-          />
-        </div>
+
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -23,6 +23,7 @@ const AdminDashboardView = lazy(() => import("./dashboard/AdminDashboardView"));
 const AdminBillingControlPage = lazy(() => import("./dashboard/AdminBillingControlPage"));
 const AdminSubscriptionRequestsPage = lazy(() => import("./dashboard/AdminSubscriptionRequestsPage"));
 const AdminSubscriptionSnapshotPage = lazy(() => import("./dashboard/AdminSubscriptionSnapshotPage"));
+const AdminProfileCompletionPage = lazy(() => import("./dashboard/AdminProfileCompletionPage"));
 const FindJobsPage = lazy(() => import("./pages/FindJobsPage"));
 const JobHistoryPage = lazy(() => import("./pages/JobHistoryPage"));
 const SwipeJobsPage = lazy(() => import("./pages/SwipeJobsPage"));
@@ -235,6 +236,12 @@ export default function App() {
               {!loading && !error && activeTab === "admin" && adminSection === "subscription-snapshot" && (
                 <Suspense fallback={<Card><CardContent className="p-6 text-sm text-gray-400">Loading subscription snapshot...</CardContent></Card>}>
                   <AdminSubscriptionSnapshotPage overview={adminOverview} loading={adminLoading} error={adminError} />
+                </Suspense>
+              )}
+
+              {!loading && !error && activeTab === "admin" && adminSection === "profile-completion" && (
+                <Suspense fallback={<Card><CardContent className="p-6 text-sm text-gray-400">Loading profile completion...</CardContent></Card>}>
+                  <AdminProfileCompletionPage />
                 </Suspense>
               )}
             </div>

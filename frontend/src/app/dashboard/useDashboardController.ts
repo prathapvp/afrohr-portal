@@ -44,7 +44,7 @@ export function useDashboardController() {
         : querySection === "swipe"
           ? "swipe"
           : "overview";
-  const initialAdminSection: "overview" | "subscription-snapshot" | "billing-control" | "subscription-requests" =
+  const initialAdminSection: "overview" | "subscription-snapshot" | "billing-control" | "subscription-requests" | "profile-completion" =
     querySection === "overview"
       ? "overview"
       : querySection === "subscription-snapshot"
@@ -53,12 +53,14 @@ export function useDashboardController() {
         ? "billing-control"
       : querySection === "subscription-requests"
         ? "subscription-requests"
+      : querySection === "profile-completion"
+        ? "profile-completion"
         : "subscription-snapshot";
 
   const [activeTab, setActiveTab] = useState<AudienceId>(initialTab);
   const [candidateSection, setCandidateSection] = useState<"overview" | "find-jobs" | "job-history" | "swipe">(initialCandidateSection);
   const [employerSection, setEmployerSection] = useState<"overview" | "subscription" | "viewall" | "team" | "search-candidates">(initialEmployerSection);
-  const [adminSection, setAdminSection] = useState<"overview" | "subscription-snapshot" | "billing-control" | "subscription-requests">(initialAdminSection);
+  const [adminSection, setAdminSection] = useState<"overview" | "subscription-snapshot" | "billing-control" | "subscription-requests" | "profile-completion">(initialAdminSection);
   const [payload, setPayload] = useState<DashboardPayload>(emptyPayload);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -233,6 +235,8 @@ export function useDashboardController() {
           ? "billing-control"
         : querySection === "subscription-requests"
           ? "subscription-requests"
+        : querySection === "profile-completion"
+          ? "profile-completion"
           : "subscription-snapshot",
     );
   }, [activeTab, querySection]);
@@ -283,6 +287,8 @@ export function useDashboardController() {
         setSearchParams({ tab: roleTab, section: "subscription-requests" }, { replace: true });
       } else if (roleTab === "admin" && adminSection === "overview") {
         setSearchParams({ tab: roleTab, section: "overview" }, { replace: true });
+      } else if (roleTab === "admin" && adminSection === "profile-completion") {
+        setSearchParams({ tab: roleTab, section: "profile-completion" }, { replace: true });
       } else {
         setSearchParams({ tab: roleTab }, { replace: true });
       }
@@ -504,6 +510,12 @@ export function useDashboardController() {
       setSearchParams({ tab: "admin", section: "subscription-requests" }, { replace: true });
       return;
     }
+    if (label === "Profile Completion") {
+      setAdminSection("profile-completion");
+      setActiveTab("admin");
+      setSearchParams({ tab: "admin", section: "profile-completion" }, { replace: true });
+      return;
+    }
 
     if (label === "Career Roadmap") {
       setActiveTab("students");
@@ -645,6 +657,8 @@ export function useDashboardController() {
       ? "Billing Control"
       : activeTab === "admin" && adminSection === "subscription-requests"
       ? "Requests"
+      : activeTab === "admin" && adminSection === "profile-completion"
+      ? "Profile Completion"
       : activeTab === "students" && querySection === "roadmap"
       ? "Career Roadmap"
       : activeTab === "students" && querySection === "saved-goals"

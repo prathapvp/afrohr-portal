@@ -11,7 +11,7 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
-import AdminBillingSuiteTabs from "./AdminBillingSuiteTabs";
+
 import {
   deleteEmployerSubscription,
   getEmployerSubscription,
@@ -320,7 +320,6 @@ export default function AdminBillingControlPage({
           <Badge variant="light" color="cyan" className="!rounded-full !border !border-cyan-300/30 !bg-cyan-400/15 !px-3 !py-1 !text-[11px] !font-bold !tracking-[0.08em]">Direct Admin Control</Badge>
         </div>
         <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
-          <AdminBillingSuiteTabs activeSection="billing-control" onSelect={(section) => navigate(`/dashboard?tab=admin&section=${section}`)} />
           <div className="w-full max-w-sm">
             <Select
               value={selectedEmployer ? String(selectedEmployer.employerId) : null}

@@ -114,7 +114,7 @@ export const setupResponseInterceptor = (navigate: any, dispatch: any) => {
 
             // Handle rate limiting
             if (status === 429) {
-                const retryAfter = error.response?.headers['retry-after'];
+                const retryAfter = error.response?.headers?.['retry-after'];
                 const message = retryAfter 
                     ? `Too many requests. Please retry after ${retryAfter} seconds.`
                     : 'Too many requests. Please try again later.';
