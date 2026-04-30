@@ -1,6 +1,8 @@
 package com.jobportal.repository;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,14 +21,15 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
         long countByPostedByAndJobStatus(Long postedBy, JobStatus jobStatus);
 
-    @Query(value = "SELECT * FROM jobs j WHERE EXISTS ("
+        @Query(value = "SELECT * FROM jobs j WHERE EXISTS ("
             + "SELECT 1 FROM jsonb_array_elements(j.applicants) AS elem "
             + "WHERE CAST(elem->>'applicantId' AS bigint) = :applicantId "
             + "AND elem->>'applicationStatus' = :status"
             + ")", nativeQuery = true)
-    List<Job> findByApplicantIdAndApplicationStatus(
+        Page<Job> findByApplicantIdAndApplicationStatus(
             @Param("applicantId") Long applicantId,
-            @Param("status") String status);
+            @Param("status") String status,
+            Pageable pageable);
 
         long countByJobStatus(JobStatus jobStatus);
 }

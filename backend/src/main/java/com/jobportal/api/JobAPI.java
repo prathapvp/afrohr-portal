@@ -3,6 +3,9 @@ package com.jobportal.api;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -148,9 +151,10 @@ public class JobAPI {
 	}
 
 	@GetMapping("/me/history/{applicationStatus}")
-	public ResponseEntity<List<JobDTO>> getMyHistory(@PathVariable ApplicationStatus applicationStatus)
-			throws JobPortalException {
-		return new ResponseEntity<>(jobService.getMyHistory(applicationStatus), HttpStatus.OK);
+	public ResponseEntity<Page<JobDTO>> getMyHistory(
+			@PathVariable ApplicationStatus applicationStatus,
+			@PageableDefault(size = 20) Pageable pageable) throws JobPortalException {
+		return new ResponseEntity<>(jobService.getMyHistory(applicationStatus, pageable), HttpStatus.OK);
 	}
 
 	@PostMapping("/changeAppStatus")

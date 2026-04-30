@@ -3,6 +3,8 @@ package com.jobportal.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
@@ -174,7 +176,15 @@ public class JobServiceImpl implements JobService {
 	@Override
 	public JobDTO getJob(Long id) throws JobPortalException {
 		Long safeId = Objects.requireNonNull(id, "Job ID is required");
-		return jobRepository.findById(safeId).orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND")).toDTO();
+		JobDTO dto = jobRepository.findById(safeId)
+				.orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND")).toDTO();
+		if (dto.getApplicants() != null) {
+			dto.getApplicants().forEach(applicant -> {
+				applicant.setResume(null);
+				applicant.setCoverLetter(null);
+			});
+		}
+		return dto;
 	}
 
 	@Override
@@ -229,11 +239,11 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public List<JobDTO> getMyHistory(ApplicationStatus applicationStatus) throws JobPortalException {
+	public Page<JobDTO> getMyHistory(ApplicationStatus applicationStatus, Pageable pageable) throws JobPortalException {
 		CurrentUserService.CurrentUser currentUser = currentUserService.getCurrentUser();
 		ensureApplicantAccess(currentUser);
-		return jobRepository.findByApplicantIdAndApplicationStatus(currentUser.id(), applicationStatus.name()).stream()
-				.map((x) -> x.toDTO()).toList();
+		return jobRepository.findByApplicantIdAndApplicationStatus(currentUser.id(), applicationStatus.name(), pageable)
+				.map(Job::toDTO);
 	}
 
 	@Override

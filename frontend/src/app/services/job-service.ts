@@ -222,12 +222,22 @@ export async function getAllJobs(options?: { postedBy?: number | "me" }) {
   return response.json();
 }
 
+const _jobCache = new Map<number, { promise: Promise<unknown>; ts: number }>();
+const JOB_CACHE_TTL_MS = 30_000;
+
 export async function getJob(id: number) {
-  const response = await fetch(`/api/ahrm/v3/jobs/get/${id}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch job");
+  const now = Date.now();
+  const cached = _jobCache.get(id);
+  if (cached && now - cached.ts < JOB_CACHE_TTL_MS) {
+    return cached.promise;
   }
-  return response.json();
+  const promise = fetch(`/api/ahrm/v3/jobs/get/${id}`).then((r) => {
+    if (!r.ok) throw new Error("Failed to fetch job");
+    return r.json();
+  });
+  _jobCache.set(id, { promise, ts: now });
+  promise.catch(() => _jobCache.delete(id));
+  return promise;
 }
 
 export async function deleteJob(id: number) {
