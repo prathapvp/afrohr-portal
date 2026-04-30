@@ -100,7 +100,7 @@ public class Profile {
     private String reportingManager;
     private String mobileNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     private Long createdBy;

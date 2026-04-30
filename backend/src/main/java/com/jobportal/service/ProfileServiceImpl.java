@@ -114,7 +114,7 @@ public class ProfileServiceImpl implements ProfileService {
 			throw new JobPortalException("Profile ID is required");
 		}
 
-		profileRepository.findById(profileId)
+		Profile existingProfile = profileRepository.findById(profileId)
 				.orElseThrow(() -> new JobPortalException("Profile not found with ID: " + profileDTO.getId()));
 
 		try {
@@ -126,6 +126,9 @@ public class ProfileServiceImpl implements ProfileService {
 			}
 
 			Profile profileToSave = encryptProfile(profileDTO);
+			// Preserve immutable audit fields from the stored entity.
+			profileToSave.setCreatedAt(existingProfile.getCreatedAt());
+			profileToSave.setCreatedBy(existingProfile.getCreatedBy());
 			Profile savedProfile = profileRepository.save(profileToSave);
 			logger.info("Profile updated successfully with ID: {}", savedProfile.getId());
 
